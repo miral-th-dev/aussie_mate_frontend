@@ -18,7 +18,8 @@ import {
   User, 
   ShieldCheck, 
   DollarSign, 
-  MapPin 
+  MapPin,
+  BookOpen
 } from 'lucide-react';
 import ProfileBG from '../../assets/CardBG7.png';
 
@@ -190,6 +191,7 @@ const ProfilePage = () => {
         ...(user?.role !== 'Customer' ? [{ icon: MapPin, label: 'Geo-fencing', path: '/set-cleaner-location' }] : []),
         
         // Common menu items for all users
+        { icon: BookOpen, label: 'Platform Policy', path: '/platform-policy' },
         { icon: Bell, label: 'Notifications Settings', path: '/notifications-settings' },
         { icon: HelpCircle, label: 'Help & Support', path: '/help' },
     ];
