@@ -330,7 +330,7 @@ const SignupPage = () => {
               label={
                 <>
                   I agree to the{' '}
-                  <Link to="/terms" className="text-primary-500 hover:text-primary-600 font-medium underline cursor-pointer">
+                  <Link to="/platform-policy" className="text-primary-500 hover:text-primary-600 font-medium underline cursor-pointer">
                     Terms & Conditions
                   </Link>
                 </>
