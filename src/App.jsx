@@ -3,8 +3,8 @@ import React, { Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import HomePage from './pages/HomePage'
-import { ProtectedRoute, ScrollToTop, Loader } from './components'
-import { authRoutes, customerRoutes, cleanerRoutes, CLEANER_ROLES } from './routeGroups'
+import { ProtectedRoute, ScrollToTop, Loader, AppLayout } from './components'
+import { authRoutes, customerRoutes, cleanerRoutes, publicRoutes, CLEANER_ROLES } from './routeGroups'
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage'))
 
 function App() {
@@ -16,8 +16,16 @@ function App() {
           <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />
-            {authRoutes.map(({ path, component: Component }, i) => (
-              <Route key={i} path={path} element={<Component />} />
+            {publicRoutes.map(({ path, component: Component, showHeader }, i) => (
+              <Route key={i} path={path} element={
+                showHeader ? (
+                  <AppLayout showHeader={true}>
+                    <Component />
+                  </AppLayout>
+                ) : (
+                  <Component />
+                )
+              } />
             ))}
 
             {/* Customer protected */}
