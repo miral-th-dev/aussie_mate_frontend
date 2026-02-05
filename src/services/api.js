@@ -276,7 +276,47 @@ export const jobsAPI = {
     }
   },
 
-  // Get customer's jobs
+  // Upload weekly day photos
+  uploadWeeklyDayPhotos: async (jobId, day, weekNumber, files) => {
+    const formData = new FormData();
+    formData.append('day', day);
+    formData.append('weekNumber', weekNumber);
+    
+    if (files && files.length > 0) {
+      files.forEach((file, index) => {
+        formData.append('photos', file);
+      });
+    }
+
+    const token = getAuthToken();
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/weekly-day-photos`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to upload weekly photos');
+    }
+
+    return await response.json();
+  },
+
+  // Confirm weekly day completion
+  confirmWeeklyDayCompletion: async (jobId, completedDay) => {
+    return apiRequest(`/jobs/${jobId}/confirm-weekly-day-completion`, {
+      method: 'POST',
+      body: JSON.stringify({ completedDay }),
+    });
+  },
+
+  // Get weekly job progress
+  getWeeklyJobProgress: async (jobId) => {
+    return apiRequest(`/jobs/${jobId}/weekly-progress`);
+  },
   getCustomerJobs: async (customerId, params = {}) => {
     const query = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
@@ -289,13 +329,14 @@ export const jobsAPI = {
   },
 
   // Get all jobs (supports backend pagination/filters)
-  getAllJobs: async ({ status, serviceType, page = 1, limit = 20, location } = {}) => {
+  getAllJobs: async ({ status, serviceType, page = 1, limit = 20, location, search } = {}) => {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
     if (serviceType) params.set('serviceType', serviceType);
     if (page) params.set('page', String(page));
     if (limit) params.set('limit', String(limit));
     if (location) params.set('location', location);
+    if (search) params.set('search', search.trim());
     const qs = params.toString();
     return apiRequest(`/jobs${qs ? `?${qs}` : ''}`);
   },
@@ -303,6 +344,16 @@ export const jobsAPI = {
   // Get job by ID (alias for getJobDetails)
   getJobById: async (jobId) => {
     return apiRequest(`/jobs/${jobId}`);
+  },
+
+  // Get cleaner progress data for a job
+  getCleanerProgress: async (jobId) => {
+    return apiRequest(`/jobs/${jobId}/cleaner-progress`);
+  },
+
+  // Get customer progress data for a job
+  getCustomerProgress: async (jobId) => {
+    return apiRequest(`/jobs/${jobId}/customer-progress`);
   },
 
   // Update job status
@@ -845,9 +896,14 @@ export const matePointsAPI = {
 // Job Photos API
 export const jobPhotosAPI = {
   // Upload before photos
-  uploadBeforePhotos: async (jobId, files) => {
+  uploadBeforePhotos: async (jobId, files, occurrenceId) => {
     const formData = new FormData();
     files.forEach(file => formData.append('photos', file));
+    
+    // Add occurrenceId to formData if provided
+    if (occurrenceId) {
+      formData.append('occurrenceId', occurrenceId);
+    }
 
     const token = getAuthToken();
     if (!token) {
@@ -877,9 +933,14 @@ export const jobPhotosAPI = {
   },
 
   // Upload after photos
-  uploadAfterPhotos: async (jobId, files) => {
+  uploadAfterPhotos: async (jobId, files, occurrenceId) => {
     const formData = new FormData();
     files.forEach(file => formData.append('photos', file));
+    
+    // Add occurrenceId to formData if provided
+    if (occurrenceId) {
+      formData.append('occurrenceId', occurrenceId);
+    }
 
     const token = getAuthToken();
     if (!token) {
@@ -914,10 +975,17 @@ export const jobPhotosAPI = {
   },
 
   // Update job status (with photo validation)
-  updateJobStatus: async (jobId, status) => {
+  updateJobStatus: async (jobId, status, occurrenceId) => {
+    const requestBody = { status };
+    
+    // Add occurrenceId if provided (for weekly jobs)
+    if (occurrenceId) {
+      requestBody.occurrenceId = occurrenceId;
+    }
+    
     return apiRequest(`/jobs/${jobId}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status })
+      body: JSON.stringify(requestBody)
     });
   }
 };

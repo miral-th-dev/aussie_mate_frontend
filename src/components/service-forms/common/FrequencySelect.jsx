@@ -20,8 +20,8 @@ const FrequencySelect = ({
   const frequencyOptions = useMemo(() => (
     [
       { value: 'One-time', label: 'One-time' },
-      { value: 'Weekly', label: 'Weekly (coming soon)' },
-      { value: 'Custom', label: 'Custom (coming soon)' }
+      { value: 'Weekly', label: 'Weekly' },
+      { value: 'Custom', label: 'Custom' }
     ]
   ), []);
 
@@ -30,11 +30,6 @@ const FrequencySelect = ({
 
   // Handle frequency selection
   const handleFrequencySelect = (optionValue) => {
-    if (optionValue === 'Weekly' || optionValue === 'Custom') {
-      setAlertMessage('This feature is coming soon.');
-      setShowAlertModal(true);
-      return;
-    }
     onFrequencyChange(optionValue);
 
     // Clear data when switching away from Weekly or Custom

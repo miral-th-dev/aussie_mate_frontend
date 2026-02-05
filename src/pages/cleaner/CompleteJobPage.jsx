@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Loader, PageHeader, JobOverviewCard } from '../../components';
 import { Check, X, Clock } from 'lucide-react';
 import UploadCloudIcon from '../../assets/upload-cloud.svg';
@@ -11,8 +11,11 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const CompleteJobPage = () => {
   const { jobId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const occurrenceId = searchParams.get('occurrenceId');
+  console.log('CompleteJobPage - occurrenceId:', occurrenceId);
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(300);
@@ -172,7 +175,7 @@ const CompleteJobPage = () => {
       setUploadingBefore(true);
       setUploadError(null);
 
-      const response = await jobPhotosAPI.uploadBeforePhotos(jobId, selectedFiles);
+      const response = await jobPhotosAPI.uploadBeforePhotos(jobId, selectedFiles, occurrenceId);
 
       if (response.success) {
         setUploadedPhotos(response.data.beforePhotos || []);
@@ -190,7 +193,66 @@ const CompleteJobPage = () => {
     }
   };
 
-  const handleCompleteJob = async () => {
+  // const handleCompleteJob = async () => {
+  //   if (!beforePhotosUploaded || !afterPhotosUploaded) {
+  //     setUploadError('Please upload both before and after photos to complete the job');
+  //     setTimeout(() => setUploadError(null), 3000);
+  //     return;
+  //   }
+
+  //   try {
+  //     setCompletingJob(true);
+  //     setUploadError(null);
+  //     console.log("done jobs");
+
+  //     // First, try to capture the payment if job has an authorized payment
+  //     try {
+  //       console.log(`🔌 Attempting to capture payment for job ${jobId}...`);
+  //       const paymentStatusResponse = await paymentService.getPaymentStatus(jobId);
+  //       console.log("paymentStatusResponse", paymentStatusResponse);
+
+  //       if (paymentStatusResponse?.success && paymentStatusResponse?.data?.payment?._id) {
+  //         const paymentId = paymentStatusResponse.data.payment._id;
+  //         const paymentStatus = paymentStatusResponse.data.payment.status;
+
+  //         if (paymentStatus === 'authorized') {
+  //           console.log(`💰 Capturing payment ${paymentId}...`);
+  //           const captureResponse = await paymentService.capturePayment(paymentId);
+  //           if (captureResponse.success) {
+  //             console.log(`✅ Payment captured successfully for job ${jobId}`);
+  //             setSuccessMessage('Payment captured and job completed successfully!');
+  //           }
+  //         } else {
+  //           console.log(`ℹ️ Payment status is ${paymentStatus}, not capturing. Proceeding with job completion.`);
+  //         }
+  //       }
+  //     } catch (paymentError) {
+  //       console.warn('⚠️ Could not capture payment automatically:', paymentError);
+  //       // Continue with job completion even if payment capture fails
+  //     }
+
+  //     // Update job status to pending_customer_confirmation
+  //     const response = await jobPhotosAPI.updateJobStatus(jobId, 'pending_customer_confirmation');
+
+  //     if (response.success) {
+  //       if (!successMessage) {
+  //         setSuccessMessage('Job completed successfully! Redirecting...');
+  //       }
+  //       setTimeout(() => {
+  //         navigate('/cleaner-dashboard');
+  //       }, 1500);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error completing job:', error);
+  //     setUploadError(handleAPIError(error));
+  //     setTimeout(() => setUploadError(null), 5000);
+  //   } finally {
+  //     setCompletingJob(false);
+  //   }
+  // };
+
+
+    const handleCompleteJob = async () => {
     if (!beforePhotosUploaded || !afterPhotosUploaded) {
       setUploadError('Please upload both before and after photos to complete the job');
       setTimeout(() => setUploadError(null), 3000);
@@ -228,17 +290,12 @@ const CompleteJobPage = () => {
         // Continue with job completion even if payment capture fails
       }
 
-      // Update job status to pending_customer_confirmation
-      const response = await jobPhotosAPI.updateJobStatus(jobId, 'pending_customer_confirmation');
-
-      if (response.success) {
-        if (!successMessage) {
-          setSuccessMessage('Job completed successfully! Redirecting...');
-        }
-        setTimeout(() => {
-          navigate('/cleaner-dashboard');
-        }, 1500);
-      }
+      // Direct navigation to cleaner dashboard without API call
+      console.log('🔄 Directly navigating to cleaner dashboard');
+      setSuccessMessage('Job completed successfully! Redirecting...');
+      setTimeout(() => {
+        navigate('/cleaner-dashboard');
+      }, 1500);
     } catch (error) {
       console.error('Error completing job:', error);
       setUploadError(handleAPIError(error));
@@ -272,7 +329,7 @@ const CompleteJobPage = () => {
       setUploadingAfter(true);
       setUploadError(null);
 
-      const response = await jobPhotosAPI.uploadAfterPhotos(jobId, selectedAfterFiles);
+      const response = await jobPhotosAPI.uploadAfterPhotos(jobId, selectedAfterFiles, occurrenceId);
 
       if (response.success) {
         setAfterPhotos(response.data.afterPhotos || []);

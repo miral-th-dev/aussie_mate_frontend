@@ -22,41 +22,50 @@ const getPreferredDaysDisplay = (preferredDays) => {
   return days.join(', ');
 };
 
-const generateWeeklySchedule = (job) => {
-  if (!job?.preferredDays || !job?.repeatWeeks) return [];
+const generateWeeklySchedule = (job, workProgress, occurrences) => {
+  if (!occurrences || !Array.isArray(occurrences)) return [];
   
-  const preferredDays = Object.keys(job.preferredDays).filter(day => job.preferredDays[day] === true);
-  const repeatWeeks = parseInt(job.repeatWeeks);
-  const scheduledDate = new Date(job.scheduledDate);
-  
-  const schedule = [];
-  const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  for (let week = 1; week <= repeatWeeks; week++) {
-    preferredDays.forEach(day => {
-      const dayIndex = dayOrder.indexOf(day);
-      const weekStart = new Date(scheduledDate);
-      weekStart.setDate(scheduledDate.getDate() + (week - 1) * 7);
-      
-      const targetDate = new Date(weekStart);
-      targetDate.setDate(weekStart.getDate() + (dayIndex - weekStart.getDay()));
-      
-      const isCompleted = week === 1 && ['Monday', 'Saturday'].includes(day); // Mock completed for demo
-      const isInProgress = week === 2 && day === 'Monday'; // Mock in progress for demo
-      
-      schedule.push({
-        id: `${week}-${day}`,
-        week,
-        day,
-        date: targetDate,
-        status: isCompleted ? 'completed' : isInProgress ? 'in-progress' : 'pending',
-        photos: isCompleted ? (day === 'Monday' ? 2 : 1) : 0,
-        amount: 50
-      });
-    });
-  }
-  
-  return schedule;
+  return occurrences.map(occurrence => {
+    // Convert status from API to frontend format
+    let status = 'pending';
+    let photos = 0;
+    
+    switch(occurrence.status) {
+      case 'completed':
+        status = 'completed';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'in_progress':
+        status = 'in-progress';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'pending_customer_confirmation':
+        status = 'pending_customer_confirmation';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'pending':
+      default:
+        status = 'pending';
+        photos = 0;
+        break;
+    }
+    
+    // Parse week and day from label (e.g., "Monday - Week 1")
+    const labelParts = occurrence.label.split(' - ');
+    const day = labelParts[0] || 'Unknown';
+    const week = labelParts[1] ? parseInt(labelParts[1].replace('Week ', '')) : 1;
+    
+    return {
+      id: occurrence._id,
+      week,
+      day,
+      date: new Date(occurrence.scheduledDate),
+      status,
+      photos,
+      amount: occurrence.amount || workProgress?.amountPerOccurrence || 100,
+      occurrence: occurrence // Keep original occurrence data for reference
+    };
+  });
 };
 
 
@@ -67,6 +76,10 @@ const InProgressJobDetailsPage = () => {
     const [paymentStatus, setPaymentStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [customer, setCustomer] = useState(null);
+    const [acceptedQuote, setAcceptedQuote] = useState(null);
+    const [workProgress, setWorkProgress] = useState(null);
+    const [occurrences, setOccurrences] = useState([]);
+    const [weeklySchedule, setWeeklySchedule] = useState([]);
     const [error, setError] = useState('');
     const [showMap, setShowMap] = useState(false);
     const [routeInfo, setRouteInfo] = useState(null);
@@ -75,36 +88,66 @@ const InProgressJobDetailsPage = () => {
     const [customerLocation, setCustomerLocation] = useState(null);
     const [isTrackingLocation, setIsTrackingLocation] = useState(false);
     const [locationError, setLocationError] = useState(null);
-    const [weeklySchedule, setWeeklySchedule] = useState([]);
+    const [selectedWorkProgressId, setSelectedWorkProgressId] = useState(null);
     const cleanerLocationRef = useRef(null);
+
+    // Helper function to check if a date is today
+    const isToday = (date) => {
+        const today = new Date();
+        const checkDate = new Date(date);
+        return today.toDateString() === checkDate.toDateString();
+    };
+console.log("weeklySchedule =",weeklySchedule);
 
     useEffect(() => {
         const fetchJobDetails = async () => {
             try {
                 setLoading(true);
 
-                // Fetch job details and payment history
-                const [jobResponse, paymentResponse] = await Promise.all([
-                    jobsAPI.getJobById(jobId),
+                // Fetch cleaner progress data which includes job, quote, customer, workProgress, and occurrences
+                const [progressResponse, paymentResponse] = await Promise.all([
+                    jobsAPI.getCleanerProgress(jobId),
                     paymentService.getPaymentHistory().catch(() => null)
                 ]);
 
-                if (jobResponse.success && jobResponse.data) {
-                    if (jobResponse.data.status === 'completed') {
+                if (progressResponse.success && progressResponse.data) {
+                    const { job, quote, customer, workProgress, occurrences } = progressResponse.data;
+                    
+                    if (job.status === 'completed') {
                         navigate(`/cleaner-job-completed/${jobId}`, { replace: true });
                         return;
                     }
 
-                    setJob(jobResponse.data);
+                    setJob(job);
+                    setAcceptedQuote(quote);
+                    setCustomer(customer);
+                    setWorkProgress(workProgress);
+                    setOccurrences(occurrences);
                     
-                    // Generate weekly schedule for weekly jobs
-                    if (jobResponse.data.frequency === 'Weekly' && jobResponse.data.preferredDays) {
-                        const schedule = generateWeeklySchedule(jobResponse.data);
+                    // Generate weekly schedule from occurrences data
+                    if (job.frequency === 'Weekly' && occurrences && occurrences.length > 0) {
+                        const schedule = generateWeeklySchedule(job, workProgress, occurrences);
+                        console.log("Generated schedule from API:", schedule);
                         setWeeklySchedule(schedule);
+                        
+                        // Auto-select today's item if available
+                        console.log("Checking for today's item in schedule:", schedule);
+                        const todayItem = schedule.find(item => {
+                            const checkDate = typeof item.date === 'string' ? new Date(item.date) : item.date;
+                            const result = isToday(checkDate);
+                            console.log(`Item ${item.id} - Date: ${item.date} (${typeof item.date}) - Is today: ${result}`);
+                            return result;
+                        });
+                        if (todayItem) {
+                            setSelectedWorkProgressId(todayItem.id);
+                            console.log("Auto-selected today's item ID:", todayItem.id);
+                        } else {
+                            console.log("No today's item found in schedule");
+                        }
                     }
 
                     // Set customer location from job data
-                    const coords = jobResponse.data.location?.coordinates;
+                    const coords = job.location?.coordinates;
                     if (coords) {
                         let lat, lng;
                         if (typeof coords === 'string') {
@@ -123,26 +166,6 @@ const InProgressJobDetailsPage = () => {
                             setCustomerLocation({ lat, lng });
                         } else if (lat && lng && (lat > 90 || lat < -90)) {
                             setCustomerLocation({ lat: lng, lng: lat });
-                        }
-                    }
-
-                    // Use the customerId from job data
-                    const customerId = jobResponse.data.customerId ||
-                        jobResponse.data.userId ||
-                        jobResponse.data.createdBy ||
-                        jobResponse.data.customer?._id ||
-                        jobResponse.data.customerRef ||
-                        jobResponse.data.owner ||
-                        jobResponse.data.postedBy;
-
-                    if (customerId) {
-                        try {
-                            const customerResponse = await userAPI.getUserById(customerId);
-                            if (customerResponse.success) {
-                                setCustomer(customerResponse.data.user);
-                            }
-                        } catch (customerError) {
-                            console.error('Error fetching customer:', customerError);
                         }
                     }
                 } else {
@@ -333,6 +356,10 @@ const InProgressJobDetailsPage = () => {
         navigate(`/chat/${jobId}`);
     };
 
+    useEffect(() => {
+        console.log('selectedWorkProgressId changed:', selectedWorkProgressId);
+    }, [selectedWorkProgressId]);
+
     const handleCallCustomer = () => {
         // Try multiple possible phone number locations
         const phoneNumber = customer?.phone ||
@@ -355,8 +382,12 @@ const InProgressJobDetailsPage = () => {
     };
 
     const handleStartJob = () => {
-
-        navigate(`/cleaner/complete-job/${jobId}`, { replace: true });
+        console.log('Selected Work Progress ID:', selectedWorkProgressId);
+        if (selectedWorkProgressId) {
+            navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
+        } else {
+            navigate(`/cleaner/complete-job/${jobId}`, { replace: true });
+        }
     };
 
     if (loading) {
@@ -395,14 +426,6 @@ const InProgressJobDetailsPage = () => {
             </div>
         );
     }
-
-    // Find accepted quote for this cleaner
-    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-    const currentUserId = currentUser.id || currentUser._id;
-    const acceptedQuote = job.quotes?.find(quote =>
-        (quote.cleanerId === currentUserId || quote.cleanerId?._id === currentUserId) &&
-        quote.status === 'accepted'
-    );
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Date not specified';
@@ -652,7 +675,19 @@ const InProgressJobDetailsPage = () => {
                             <div className="bg-white rounded-2xl p-4 shadow-sm">
                                 <div className="space-y-3">
                                     {weeklySchedule.map((item) => (
-                                        <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div 
+                                            key={item.id} 
+                                            onClick={() => setSelectedWorkProgressId(item.id)}
+                                            className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
+                                                isToday(item.date) 
+                                                    ? 'bg-blue-50 border-blue-300 shadow-md' 
+                                                    : 'bg-gray-50 border-gray-200'
+                                            } ${
+                                                selectedWorkProgressId === item.id
+                                                    ? 'ring-2 ring-blue-500 ring-offset-2'
+                                                    : ''
+                                            }`}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="flex-shrink-0">
                                                     {item.status === 'completed' ? (
@@ -664,8 +699,13 @@ const InProgressJobDetailsPage = () => {
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <div className="font-medium text-primary-500">
+                                                    <div className="font-medium text-primary-500 flex items-center gap-2">
                                                         {item.day} - Week {item.week}
+                                                        {isToday(item.date) && (
+                                                            <span className="text-xs font-bold px-2 py-1 bg-blue-500 text-white rounded-full">
+                                                                TODAY
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
                                                         {item.date.toLocaleDateString('en-US', { 
@@ -698,7 +738,11 @@ const InProgressJobDetailsPage = () => {
                                                     </Button>
                                                 )}
                                                 {item.status === 'pending' && (
-                                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                                        isToday(item.date)
+                                                            ? 'bg-blue-100 text-blue-700 font-bold'
+                                                            : 'bg-gray-100 text-gray-600'
+                                                    }`}>
                                                         Pending
                                                     </span>
                                                 )}

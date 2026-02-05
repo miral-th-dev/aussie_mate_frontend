@@ -124,19 +124,25 @@ const CleanerJobsPage = () => {
   ];
 
   // --- NEW: helper to fetch jobs list once per (status,page) and cache ---
-  const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal }) => {
+  const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal, search = '' }) => {
     // Convert status array to comma-separated string for API
     const statusParam = Array.isArray(status) ? status.join(',') : status;
     
-    // key includes status & page so cache is per page
-    const cacheKey = `${statusParam}::page:${page}::limit:${limit}`;
+    // key includes status & page & search so cache is per page and search
+    const cacheKey = `${statusParam}::page:${page}::limit:${limit}::search:${search}`;
     
     if (apiCache.current[cacheKey]) {
       return apiCache.current[cacheKey];
     }
 
-    // call backend with status parameter
-    const result = await jobsAPI.getAllJobs({ status: statusParam, page, limit, signal });
+    // call backend with status and search parameters
+    const result = await jobsAPI.getAllJobs({ 
+      status: statusParam, 
+      page, 
+      limit, 
+      search,
+      signal 
+    });
     
     // normalize response: { jobs: [], total }
     const jobsArray = result?.data?.jobs || result?.data || [];
@@ -197,11 +203,12 @@ const CleanerJobsPage = () => {
 
         const statusParam = statusMap[activeTab] || 'posted';
         
-        // Fetch jobs directly from API with status parameter
+        // Fetch jobs directly from API with status and search parameters
         const result = await fetchJobsList({ 
           status: statusParam, 
           page: currentPage, 
           limit: jobsPerPage, 
+          search: searchQuery.trim(), // Pass search query to backend
           signal: controller.signal 
         });
         
@@ -383,16 +390,8 @@ const CleanerJobsPage = () => {
     // Filter logic can be applied here if needed
   };
 
-  // Filter jobs by search query
-  const filteredJobs = useMemo(() => {
-    if (!searchQuery.trim()) return jobs;
-    const query = searchQuery.toLowerCase();
-    return jobs.filter(job =>
-      job.title.toLowerCase().includes(query) ||
-      job.location.toLowerCase().includes(query) ||
-      job.type.toLowerCase().includes(query)
-    );
-  }, [jobs, searchQuery]);
+  // Jobs are now filtered on backend, no need for client-side filtering
+  const filteredJobs = jobs;
 
   useEffect(() => setCurrentPage(1), [activeTab]);
 

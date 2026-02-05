@@ -16,42 +16,50 @@ import { socketService } from '../../services/socketService';
 import { calculatePayoutAmounts } from '../../utils/paymentCalculations';
 
 // Helper functions for weekly job history
-const generateWeeklySchedule = (job) => {
-  if (!job?.preferredDays || !job?.repeatWeeks) return [];
+const generateWeeklySchedule = (job, workProgress, occurrences) => {
+  if (!occurrences || !Array.isArray(occurrences)) return [];
   
-  const preferredDays = Object.keys(job.preferredDays).filter(day => job.preferredDays[day] === true);
-  const repeatWeeks = parseInt(job.repeatWeeks);
-  const scheduledDate = new Date(job.scheduledDate);
-  
-  const schedule = [];
-  const dayOrder = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  
-  for (let week = 1; week <= repeatWeeks; week++) {
-    preferredDays.forEach(day => {
-      const dayIndex = dayOrder.indexOf(day);
-      const weekStart = new Date(scheduledDate);
-      weekStart.setDate(scheduledDate.getDate() + (week - 1) * 7);
-      
-      const targetDate = new Date(weekStart);
-      targetDate.setDate(weekStart.getDate() + (dayIndex - weekStart.getDay()));
-      
-      const isCompleted = week === 1 && ['Monday', 'Saturday'].includes(day); // Mock completed for demo
-      const isPendingConfirmation = week === 2 && day === 'Monday'; // Mock pending confirmation for demo
-      const isInProgress = week === 2 && day === 'Saturday'; // Mock in progress for demo
-      
-      schedule.push({
-        id: `${week}-${day}`,
-        week,
-        day,
-        date: targetDate,
-        status: isCompleted ? 'completed' : isPendingConfirmation ? 'pending_customer_confirmation' : isInProgress ? 'in-progress' : 'pending',
-        photos: isCompleted ? (day === 'Monday' ? 2 : 1) : isPendingConfirmation ? 2 : 0,
-        amount: 50
-      });
-    });
-  }
-  
-  return schedule;
+  return occurrences.map(occurrence => {
+    // Convert status from API to frontend format
+    let status = 'pending';
+    let photos = 0;
+    
+    switch(occurrence.status) {
+      case 'completed':
+        status = 'completed';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'in_progress':
+        status = 'in-progress';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'pending_customer_confirmation':
+        status = 'pending_customer_confirmation';
+        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+        break;
+      case 'pending':
+      default:
+        status = 'pending';
+        photos = 0;
+        break;
+    }
+    
+    // Parse week and day from label (e.g., "Monday - Week 1")
+    const labelParts = occurrence.label.split(' - ');
+    const day = labelParts[0] || 'Unknown';
+    const week = labelParts[1] ? parseInt(labelParts[1].replace('Week ', '')) : 1;
+    
+    return {
+      id: occurrence._id,
+      week,
+      day,
+      date: new Date(occurrence.scheduledDate),
+      status,
+      photos,
+      amount: occurrence.amount || workProgress?.amountPerOccurrence || 100,
+      occurrence: occurrence // Keep original occurrence data for reference
+    };
+  });
 };
 
 const CustomerInProgressJobDetailsPage = () => {
@@ -72,6 +80,8 @@ const CustomerInProgressJobDetailsPage = () => {
   const [showExtraTimeModal, setShowExtraTimeModal] = useState(false);
   const [extraTimeRequest, setExtraTimeRequest] = useState(null);
   const [processingRequest, setProcessingRequest] = useState(false);
+  const [workProgress, setWorkProgress] = useState(null);
+  const [occurrences, setOccurrences] = useState([]);
   const [weeklySchedule, setWeeklySchedule] = useState([]);
   const scrollPositionRef = useRef(null);
 
@@ -81,28 +91,34 @@ const CustomerInProgressJobDetailsPage = () => {
         setLoading(true);
         setError('');
 
-        // Fetch job details and payment history in parallel
-        const [jobResponse, paymentResponse] = await Promise.all([
-          jobsAPI.getJobById(jobId),
+        // Fetch customer progress data which includes job, cleaner, workProgress, and occurrences
+        const [progressResponse, paymentResponse] = await Promise.all([
+          jobsAPI.getCustomerProgress(jobId),
           paymentService.getPaymentHistory().catch(() => null)
         ]);
 
-        if (jobResponse.success && jobResponse.data) {
-          setJob(jobResponse.data);
+        if (progressResponse.success && progressResponse.data) {
+          const { job, cleaner, workProgress, occurrences, paymentSummary } = progressResponse.data;
           
-          // Generate weekly schedule for weekly jobs
-          if (jobResponse.data.frequency === 'Weekly' && jobResponse.data.preferredDays) {
-            const schedule = generateWeeklySchedule(jobResponse.data);
+          setJob(job);
+          setCleaner(cleaner);
+          setWorkProgress(workProgress);
+          setOccurrences(occurrences);
+          
+          // Generate weekly schedule from occurrences data
+          if (job.frequency === 'Weekly' && occurrences && occurrences.length > 0) {
+            const schedule = generateWeeklySchedule(job, workProgress, occurrences);
+            console.log("Generated customer schedule from API:", schedule);
             setWeeklySchedule(schedule);
           }
 
           // Check if job is completed - show modal
-          if (jobResponse.data.status === 'completed') {
+          if (job.status === 'completed') {
             // Redirect to completed page if needed
           }
 
           // Set customer location from job data
-          const coords = jobResponse.data.location?.coordinates;
+          const coords = job.location?.coordinates;
           if (coords) {
             let lat, lng;
             if (typeof coords === 'string') {
@@ -123,34 +139,6 @@ const CustomerInProgressJobDetailsPage = () => {
               setCustomerLocation({ lat: lng, lng: lat });
             }
           }
-
-          // Find accepted quote and cleaner info
-          const acceptedQuote = jobResponse.data.quotes?.find(quote => quote.status === 'accepted');
-
-          if (acceptedQuote) {
-            const cleanerData = acceptedQuote.cleanerId || acceptedQuote.cleaner;
-
-            // Check if cleanerData is an object with user details or just an ID string
-            if (cleanerData && typeof cleanerData === 'object' && cleanerData.firstName) {
-              // It's already a cleaner object
-              setCleaner(cleanerData);
-            } else {
-              // It's just an ID string, need to fetch cleaner details
-              const cleanerId = acceptedQuote.cleanerId?._id || acceptedQuote.cleanerId;
-
-              if (cleanerId) {
-                try {
-                  const cleanerResponse = await userAPI.getUserById(cleanerId);
-
-                  if (cleanerResponse.success) {
-                    setCleaner(cleanerResponse.data.user || cleanerResponse.data);
-                  }
-                } catch (cleanerError) {
-                  console.error('Error fetching cleaner details:', cleanerError);
-                }
-              }
-            }
-          }
         } else {
           setError('Job not found');
         }
@@ -158,10 +146,9 @@ const CustomerInProgressJobDetailsPage = () => {
         if (paymentResponse) {
           setPaymentStatus(paymentResponse);
         }
-
       } catch (err) {
-        console.error('Error fetching job details:', err);
         setError('Failed to load job details');
+        console.error('Error fetching job:', err);
       } finally {
         setLoading(false);
       }

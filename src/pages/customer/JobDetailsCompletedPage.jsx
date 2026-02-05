@@ -28,6 +28,8 @@ const JobDetailsCompletedPage = () => {
   const [existingReview, setExistingReview] = useState(null);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [completingJob, setCompletingJob] = useState(false);
+  const [occurrences, setOccurrences] = useState([]);
+  const [workProgress, setWorkProgress] = useState(null);
 
   const resolveImageSrc = (image) => {
     if (!image) return '';
@@ -61,15 +63,67 @@ const JobDetailsCompletedPage = () => {
       try {
         setLoading(true);
         
-        // Fetch job details and photos in parallel
-        const [jobResponse, photosResponse] = await Promise.all([
-          jobsAPI.getJobById(jobId),
-          jobPhotosAPI.getJobPhotos(jobId).catch(() => ({ data: { beforePhotos: [], afterPhotos: [] } }))
-        ]);
+        // Try to get customer progress data first (for weekly jobs)
+        let progressResponse;
+        try {
+          progressResponse = await jobsAPI.getCustomerProgress(jobId);
+          console.log('📊 Customer progress data:', progressResponse);
+        } catch (progressError) {
+          console.log('⚠️ Could not fetch customer progress, trying regular job details:', progressError);
+        }
         
-        if (jobResponse.success && jobResponse.data) {
-          const job = jobResponse.data;
-          const photosData = photosResponse.data || photosResponse;
+        let job, photosData;
+        
+        if (progressResponse?.success && progressResponse?.data) {
+          // Use customer progress data for weekly jobs
+          const { job: jobData, cleaner, workProgress, occurrences, paymentSummary } = progressResponse.data;
+          job = { ...jobData, cleaner };
+          
+          // Set occurrences and work progress state
+          setOccurrences(occurrences || []);
+          setWorkProgress(workProgress);
+          
+          // Mock photos data for now
+          photosData = { beforePhotos: [], afterPhotos: [] };
+          
+          console.log('📊 Using customer progress data - Job:', job);
+          console.log('📊 Occurrences:', occurrences);
+          console.log('📊 Work Progress:', workProgress);
+        } else {
+          // Fallback to regular job details for one-time jobs
+          const [jobResponse, photosResponse] = await Promise.all([
+            jobsAPI.getJobById(jobId),
+            jobPhotosAPI.getJobPhotos(jobId).catch(() => ({ data: { beforePhotos: [], afterPhotos: [] } }))
+          ]);
+          
+          if (jobResponse.success && jobResponse.data) {
+            job = jobResponse.data;
+            photosData = photosResponse.data || photosResponse;
+          }
+        }
+        
+        if (job) {
+          // Debug logging to understand the data structure
+          console.log('📸 Job data:', job);
+          console.log('📸 Photos data:', photosData);
+          console.log('📸 Job photos:', job.photos);
+          console.log('📸 Job beforePhotos:', job.beforePhotos);
+          console.log('📸 Job afterPhotos:', job.afterPhotos);
+          console.log('📸 Job completionProof:', job.completionProof);
+          console.log('📸 Job weeklyProgress:', job.weeklyProgress);
+          
+          // Check if this is a weekly job and show completed days
+          if (job.weeklyProgress && job.weeklyProgress.weeklyCompletions) {
+            const completedDays = Object.entries(job.weeklyProgress.weeklyCompletions)
+              .filter(([key, completion]) => completion.status === 'completed')
+              .map(([key, completion]) => ({
+                day: key.split('-')[1],
+                week: key.split('-')[0],
+                photos: completion.photos ? completion.photos.length : 0,
+                completedAt: completion.completedAt
+              }));
+            console.log('📸 Completed days:', completedDays);
+          }
           
           // Transform job data to match expected format
           const acceptedQuote = job.quotes?.find(q => q.status === 'accepted');
@@ -80,11 +134,15 @@ const JobDetailsCompletedPage = () => {
               ? acceptedQuote.cleanerId
               : null;
           
-          // Get photos from multiple possible sources
+          // Get photos from multiple possible sources with better handling
           const beforeImages = photosData.beforePhotos || job.beforePhotos || [];
           const afterImages = photosData.afterPhotos || job.afterPhotos || [];
           // Get original job photos
           const jobPhotos = job.photos || [];
+          
+          console.log('📸 Processed beforeImages:', beforeImages);
+          console.log('📸 Processed afterImages:', afterImages);
+          console.log('📸 Processed jobPhotos:', jobPhotos);
           
           const transformedData = {
             jobId: job.jobId || job._id,
@@ -121,6 +179,7 @@ const JobDetailsCompletedPage = () => {
             }
           };
           
+          console.log('📸 Final transformed data:', transformedData);
           setJobData(transformedData);
           
           // Check if review already exists
@@ -252,6 +311,30 @@ const JobDetailsCompletedPage = () => {
       setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleMarkOccurrenceCompleted = async (occurrenceId) => {
+    try {
+      setCompletingJob(true);
+      setErrorMessage(null);
+
+      console.log(`🔄 Marking occurrence ${occurrenceId} as completed`);
+      const response = await jobPhotosAPI.updateJobStatus(jobId, 'completed', occurrenceId);
+
+      if (response.success) {
+        setSuccessMessage('Occurrence marked as completed successfully!');
+        // Refresh the data to update the UI
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Error completing occurrence:', error);
+      setErrorMessage(handleAPIError(error));
+      setTimeout(() => setErrorMessage(null), 5000);
+    } finally {
+      setCompletingJob(false);
     }
   };
 
@@ -503,6 +586,30 @@ const JobDetailsCompletedPage = () => {
           </div>
         )}
 
+        {/* Completed Days Summary for Weekly Jobs */}
+        {jobData.completionProof && (jobData.completionProof.beforeImages.length > 0 || jobData.completionProof.afterImages.length > 0) && (
+          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="font-semibold text-primary-500 mb-3">Completed Work Summary</h3>
+            <div className="space-y-2">
+              <div className="text-sm text-gray-600">
+                <span className="font-medium text-green-600">
+                  {jobData.completionProof.beforeImages.length + jobData.completionProof.afterImages.length > 0 ? 'Work completed with photo proof' : 'Work completed'}
+                </span>
+              </div>
+              {jobData.completionProof.beforeImages.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  Before photos: {jobData.completionProof.beforeImages.length}
+                </div>
+              )}
+              {jobData.completionProof.afterImages.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  After photos: {jobData.completionProof.afterImages.length}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Completion Proof */}
         <div className="mx-4 mt-4">
           <CompletionProofSection
@@ -511,8 +618,106 @@ const JobDetailsCompletedPage = () => {
           />
         </div>
 
-        {/* Complete Job Button - Show if job is not completed yet */}
-        {jobData.status?.toLowerCase() !== 'completed' && jobData.status !== 'Completed' && (
+        {/* Weekly Job Occurrences Section */}
+        {occurrences.length > 0 && (
+          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+            <h3 className="text-lg font-semibold text-primary-500 mb-4">Work Progress</h3>
+            <div className="space-y-3">
+              {occurrences.map((occurrence) => (
+                <div 
+                  key={occurrence._id} 
+                  className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+                    occurrence.status === 'completed' 
+                      ? 'bg-green-50 border-green-300' 
+                      : occurrence.status === 'pending_customer_confirmation'
+                      ? 'bg-blue-50 border-blue-300'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {occurrence.status === 'completed' ? (
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" strokeWidth={2} />
+                        </div>
+                      ) : occurrence.status === 'pending_customer_confirmation' ? (
+                        <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-300" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium text-primary-500">
+                        {occurrence.label}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(occurrence.scheduledDate).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-primary-600">
+                        ${occurrence.amount}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {occurrence.beforePhotosCount + occurrence.afterPhotosCount} photos
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        occurrence.status === 'completed' 
+                          ? 'bg-green-100 text-green-700'
+                          : occurrence.status === 'pending_customer_confirmation'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {occurrence.statusDisplay}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mark Job as Completed Section */}
+        {occurrences.length > 0 ? (
+          // Show buttons for individual occurrences that need confirmation
+          occurrences.filter(occ => occ.status === 'pending_customer_confirmation').length > 0 && (
+            <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
+              <h3 className="text-lg font-semibold text-primary-500 mb-4">Pending Confirmation</h3>
+              <div className="space-y-3">
+                {occurrences
+                  .filter(occ => occ.status === 'pending_customer_confirmation')
+                  .map((occurrence) => (
+                    <div key={occurrence._id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <div>
+                        <div className="font-medium text-primary-500">{occurrence.label}</div>
+                        <div className="text-sm text-gray-500">
+                          ${occurrence.amount} • {occurrence.beforePhotosCount + occurrence.afterPhotosCount} photos
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleMarkOccurrenceCompleted(occurrence._id)}
+                        disabled={completingJob}
+                        size="sm"
+                        variant="primary"
+                      >
+                        {completingJob ? 'Completing...' : 'Mark as Completed'}
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )
+        ) : (
+          // Show regular completion button for one-time jobs
           <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
             <div className="flex flex-col items-center justify-center py-4">
               <p className="text-primary-500 font-semibold mb-4 text-center">
@@ -533,133 +738,131 @@ const JobDetailsCompletedPage = () => {
         {(jobData.status?.toLowerCase() === 'completed' || jobData.status === 'Completed') && (
           <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
             {hasReviewed ? (
-            // Show existing review
-            <>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-primary-500">Your Review</h3>
-                <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200">
-                   Submitted
-                </span>
-              </div>
-              
-              
-              
-              {/* Star Rating - Display Only */}
-              <div className="flex space-x-1 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <img 
-                    key={star}
-                    src={star <= selectedRating ? RatingIcon : Rating2Icon} 
-                    alt={`Star ${star}`} 
-                    className="w-8 h-8"
-                  />
-                ))}
-              </div>
-              
-              {/* Selected Tags - Display Only */}
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">What you liked:</p>
-                {selectedTags.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-3 py-1 rounded-full text-sm font-medium bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No specific aspects selected</p>
-                )}
-              </div>
-              
-              {/* Feedback - Display Only */}
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Your feedback:</p>
-                {feedback ? (
-                  <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
-                    <p className="text-sm text-gray-700">{feedback}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 italic">No additional feedback provided</p>
-                )}
-              </div>
-              
-              {/* Go to Dashboard Button */}
-              <div className="flex justify-end mt-4">
-                <Button
-                  onClick={() => navigate('/customer-dashboard')}
-                  variant="primary"
-                >
-                  Go to Dashboard
-                </Button>
-              </div>
-            </>
-          ) : (
-            // Show review form
-            <>
-              <h3 className="font-semibold text-primary-500 mb-1">Rate Your Cleaner</h3>
-              
-              {/* Star Rating */}
-              <div className="flex space-x-1 mb-4">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    onClick={() => setSelectedRating(star)}
-                    className="focus:outline-none cursor-pointer" 
-                  >
+              // Show existing review
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-primary-500">Your Review</h3>
+                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200">
+                    Submitted
+                  </span>
+                </div>
+                
+                {/* Star Rating - Display Only */}
+                <div className="flex space-x-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <img 
+                      key={star}
                       src={star <= selectedRating ? RatingIcon : Rating2Icon} 
                       alt={`Star ${star}`} 
                       className="w-8 h-8"
                     />
-                  </button>
-                ))}
-              </div>
-              
-              {/* Feedback Question */}
-              <p className="text-gray-700 mb-3">What did you like about your cleaner?</p>
-              
-              {/* Feedback Tags */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {feedbackTags.map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagSelect(tag)}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                      selectedTags.includes(tag)
-                        ? 'bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]'
-                        : 'bg-[#F9FAFB] text-[#374151] border border-primary-200'
-                    }`}
+                  ))}
+                </div>
+                
+                {/* Selected Tags - Display Only */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">What you liked:</p>
+                  {selectedTags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedTags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 rounded-full text-sm font-medium bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No specific aspects selected</p>
+                  )}
+                </div>
+                
+                {/* Feedback - Display Only */}
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Your feedback:</p>
+                  {feedback ? (
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                      <p className="text-sm text-gray-700">{feedback}</p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">No additional feedback provided</p>
+                  )}
+                </div>
+                
+                {/* Go to Dashboard Button */}
+                <div className="flex justify-end mt-4">
+                  <Button
+                    onClick={() => navigate('/customer-dashboard')}
+                    variant="primary"
                   >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Feedback Text Area */}
-              <div className="text-primary-500 font-semibold text-sm mb-1"> Anything specific we should know? <span className="text-primary-200 font-medium text-sm">(Optional)</span></div>
-              <textarea
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Write your feedback here..."
-                className="w-full p-3 border border-primary-200 rounded-xl! resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
-              />
-              
-              {/* Submit Button */}
-              <div className="flex justify-end mt-4">
-                <Button
-                  onClick={handleSubmitReview}
-                  disabled={submittingReview || !selectedRating}
-                >
-                  {submittingReview ? 'Submitting...' : 'Submit Review'}
-                </Button>
-              </div>
-            </>
-          )}
+                    Go to Dashboard
+                  </Button>
+                </div>
+              </>
+            ) : (
+              // Show review form
+              <>
+                <h3 className="font-semibold text-primary-500 mb-1">Rate Your Cleaner</h3>
+                
+                {/* Star Rating */}
+                <div className="flex space-x-1 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setSelectedRating(star)}
+                      className="focus:outline-none cursor-pointer" 
+                    >
+                      <img 
+                        src={star <= selectedRating ? RatingIcon : Rating2Icon} 
+                        alt={`Star ${star}`} 
+                        className="w-8 h-8"
+                      />
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Feedback Question */}
+                <p className="text-gray-700 mb-3">What did you like about your cleaner?</p>
+                
+                {/* Feedback Tags */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {feedbackTags.map((tag) => (
+                    <button
+                      key={tag}
+                      onClick={() => handleTagSelect(tag)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+                        selectedTags.includes(tag)
+                          ? 'bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]'
+                          : 'bg-[#F9FAFB] text-[#374151] border border-primary-200'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Feedback Text Area */}
+                <div className="text-primary-500 font-semibold text-sm mb-1"> Anything specific we should know? <span className="text-primary-200 font-medium text-sm">(Optional)</span></div>
+                <textarea
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Write your feedback here..."
+                  className="w-full p-3 border border-primary-200 rounded-xl! resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
+                
+                {/* Submit Button */}
+                <div className="flex justify-end mt-4">
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={submittingReview || !selectedRating}
+                  >
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
