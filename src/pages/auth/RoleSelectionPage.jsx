@@ -149,7 +149,7 @@ const RoleSelectionPage = () => {
               <div>
                 <h3 className="text-sm font-semibold text-amber-700">Student work limits</h3>
                 <p className="mt-1 text-sm text-amber-600">
-                  As a Student Cleaner you’re permitted to work up to 20 hours per week in line with Australian visa
+                  As a Student Cleaner you’re permitted to work up to 24 hours per week in line with Australian visa
                   regulations. Please plan your availability accordingly.
                 </p>
               </div>

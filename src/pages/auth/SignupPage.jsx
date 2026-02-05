@@ -34,7 +34,7 @@ const SignupPage = () => {
     const params = new URLSearchParams(location.search);
     const role = params.get('role');
     const ndis = params.get('ndis') === 'true';
-    
+
     if (role) {
       setFormData(prev => ({
         ...prev,
@@ -50,12 +50,12 @@ const SignupPage = () => {
     // Special handling for phone number - only allow digits, ignore leading 0, limit to 9 characters
     if (name === 'phone') {
       let digitsOnly = value.replace(/[^\d]/g, '');
-      
+
       // Remove leading 0 if present
       if (digitsOnly.startsWith('0')) {
         digitsOnly = digitsOnly.substring(1);
       }
-      
+
       // Limit to 9 characters maximum
       if (digitsOnly.length <= 9) {
         setFormData({
@@ -110,7 +110,7 @@ const SignupPage = () => {
         password: userData.password,
         confirmPassword: userData.confirmPassword,
         userType: roleMapping[userData.role] || userData.role.toLowerCase(),
-        role: userData.role, 
+        role: userData.role,
       };
 
       await register(apiData);
@@ -137,7 +137,7 @@ const SignupPage = () => {
         errorMessage = 'Invalid data provided. Please check all fields and try again.';
         if (error.response && error.response.errors) {
           const errors = error.response.errors;
-          
+
           // Handle array format with objects containing msg, path, type
           if (Array.isArray(errors)) {
             const errorMessages = errors.map(errorObj => {
@@ -237,18 +237,37 @@ const SignupPage = () => {
                 onChange={handleInputChange}
                 required
               />
-              
-              <FloatingLabelInput
-                id="phone"
-                name="phone"
-                label="Phone Number"
-                type="tel"
-                value={formData.phone}
-                onChange={handleInputChange}
-                placeholder="123456789"
-                maxLength={9}
-                required
-              />
+
+              {/* Phone Number with Country Code */}
+              <div className="relative">
+                <div className="flex gap-2">
+                  {/* Country Code Dropdown (Static) */}
+                  <div className="relative w-16 flex-shrink-0">
+                    <select
+                      className="w-full h-14 px-3 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                      disabled
+                      value="+61"
+                    >
+                      <option value="+61">+61</option>
+                    </select>
+                  </div>
+
+                  {/* Phone Number Input */}
+                  <div className="flex-1">
+                    <FloatingLabelInput
+                      id="phone"
+                      name="phone"
+                      label="Phone Number"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="479040431"
+                      maxLength={9}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
               <FloatingLabelInput
                 id="password"
                 name="password"
@@ -293,10 +312,10 @@ const SignupPage = () => {
                 </button>
               </FloatingLabelInput>
               {error && (
-            <div className=" text-red-500 font-medium rounded-lg text-sm leading-4 mt-0">
-              {error}
-            </div>
-          )}
+                <div className=" text-red-500 font-medium rounded-lg text-sm leading-4 mt-0">
+                  {error}
+                </div>
+              )}
             </div>
 
             {/* Terms & Conditions Checkbox */}
@@ -328,8 +347,8 @@ const SignupPage = () => {
               {formData.role === 'Customer' && formData.isNDISParticipant
                 ? 'Continue For NDIS Verification'
                 : formData.role === 'Customer'
-                ? 'Continue & Set My Location'
-                : 'Continue For Verification'
+                  ? 'Continue & Set My Location'
+                  : 'Continue For Verification'
               }
             </Button>
           </form>
