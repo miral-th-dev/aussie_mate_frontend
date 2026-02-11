@@ -130,25 +130,31 @@ const JobOverviewCard = ({
             <div className="text-xs sm:text-sm text-primary-200 font-medium">
               {jobId}
             </div>
-          )}    
+          )}
           {title && (
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-primary-500 leading-tight">
-              {title}
-            </h2>
+
+            <>
+
+              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-primary-500 leading-tight">
+                {title === "Petsitting " ? "Pet Sitting" : title}
+              </h2>
+            </>
+
           )}
 
+
           {serviceDetail && (
-          <div className="text-xl text-primary-500 font-medium flex items-center gap-2">
+            <div className="text-xl text-primary-500 font-medium flex items-center gap-2">
               {serviceTypeIcon}
               <span>{serviceDetail}</span>
             </div>
           )}
 
-        {instructions && (
-          <p className="text-sm text-primary-300 font-medium leading-relaxed">
-            {instructions}
-          </p>
-        )}
+          {instructions && (
+            <p className="text-sm text-primary-300 font-medium leading-relaxed">
+              {instructions}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1">
@@ -157,15 +163,15 @@ const JobOverviewCard = ({
               <CalendarDays className="w-4 h-4 text-primary-500 flex-shrink-0" strokeWidth={2.2} />
               <div>
                 <div className="flex items-center gap-2">
-                <div className="text-base text-primary-200 font-medium">
-                  {scheduledDate}
-                </div>
-                <span className="bg-gray-500 font-medium w-1 h-1 rounded-full"></span>
-                {frequency && (
                   <div className="text-base text-primary-200 font-medium">
-                    {frequency}
+                    {scheduledDate}
                   </div>
-                )}
+                  <span className="bg-gray-500 font-medium w-1 h-1 rounded-full"></span>
+                  {frequency && (
+                    <div className="text-base text-primary-200 font-medium">
+                      {frequency}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -174,7 +180,7 @@ const JobOverviewCard = ({
           {location && (
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" strokeWidth={2.2} />
-              <div> 
+              <div>
                 <div className="text-base text-primary-200 font-medium leading-snug">
                   {location}
                 </div>
@@ -331,9 +337,8 @@ const JobOverviewCard = ({
                     key={`${photo}-thumb-${idx}`}
                     type="button"
                     onClick={() => setActivePhotoIndex(idx)}
-                    className={`h-16 w-16 sm:h-20 sm:w-20 rounded-xl! overflow-hidden border-2 ${
-                      idx === activePhotoIndex ? 'border-primary-500' : 'border-transparent'
-                    } cursor-pointer`}
+                    className={`h-16 w-16 sm:h-20 sm:w-20 rounded-xl! overflow-hidden border-2 ${idx === activePhotoIndex ? 'border-primary-500' : 'border-transparent'
+                      } cursor-pointer`}
                   >
                     <img
                       src={photo}

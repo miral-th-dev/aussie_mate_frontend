@@ -14,58 +14,58 @@ import { socketService } from '../../services/socketService';
 
 // Helper functions for weekly job history
 const getPreferredDaysDisplay = (preferredDays) => {
-  if (!preferredDays || typeof preferredDays !== 'object') return '';
-  
-  const days = Object.keys(preferredDays).filter(day => preferredDays[day] === true);
-  if (days.length === 0) return '';
-  
-  return days.join(', ');
+    if (!preferredDays || typeof preferredDays !== 'object') return '';
+
+    const days = Object.keys(preferredDays).filter(day => preferredDays[day] === true);
+    if (days.length === 0) return '';
+
+    return days.join(', ');
 };
 
 const generateWeeklySchedule = (job, workProgress, occurrences) => {
-  if (!occurrences || !Array.isArray(occurrences)) return [];
-  
-  return occurrences.map(occurrence => {
-    // Convert status from API to frontend format
-    let status = 'pending';
-    let photos = 0;
-    
-    switch(occurrence.status) {
-      case 'completed':
-        status = 'completed';
-        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
-        break;
-      case 'in_progress':
-        status = 'in-progress';
-        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
-        break;
-      case 'pending_customer_confirmation':
-        status = 'pending_customer_confirmation';
-        photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
-        break;
-      case 'pending':
-      default:
-        status = 'pending';
-        photos = 0;
-        break;
-    }
-    
-    // Parse week and day from label (e.g., "Monday - Week 1")
-    const labelParts = occurrence.label.split(' - ');
-    const day = labelParts[0] || 'Unknown';
-    const week = labelParts[1] ? parseInt(labelParts[1].replace('Week ', '')) : 1;
-    
-    return {
-      id: occurrence._id,
-      week,
-      day,
-      date: new Date(occurrence.scheduledDate),
-      status,
-      photos,
-      amount: occurrence.amount || workProgress?.amountPerOccurrence || 100,
-      occurrence: occurrence // Keep original occurrence data for reference
-    };
-  });
+    if (!occurrences || !Array.isArray(occurrences)) return [];
+
+    return occurrences.map(occurrence => {
+        // Convert status from API to frontend format
+        let status = 'pending';
+        let photos = 0;
+
+        switch (occurrence.status) {
+            case 'completed':
+                status = 'completed';
+                photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+                break;
+            case 'in_progress':
+                status = 'in-progress';
+                photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+                break;
+            case 'pending_customer_confirmation':
+                status = 'pending_customer_confirmation';
+                photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
+                break;
+            case 'pending':
+            default:
+                status = 'pending';
+                photos = 0;
+                break;
+        }
+
+        // Parse week and day from label (e.g., "Monday - Week 1")
+        const labelParts = occurrence.label.split(' - ');
+        const day = labelParts[0] || 'Unknown';
+        const week = labelParts[1] ? parseInt(labelParts[1].replace('Week ', '')) : 1;
+
+        return {
+            id: occurrence._id,
+            week,
+            day,
+            date: new Date(occurrence.scheduledDate),
+            status,
+            photos,
+            amount: occurrence.amount || workProgress?.amountPerOccurrence || 100,
+            occurrence: occurrence // Keep original occurrence data for reference
+        };
+    });
 };
 
 
@@ -97,7 +97,7 @@ const InProgressJobDetailsPage = () => {
         const checkDate = new Date(date);
         return today.toDateString() === checkDate.toDateString();
     };
-console.log("weeklySchedule =",weeklySchedule);
+    console.log("weeklySchedule =", weeklySchedule);
 
     useEffect(() => {
         const fetchJobDetails = async () => {
@@ -112,7 +112,7 @@ console.log("weeklySchedule =",weeklySchedule);
 
                 if (progressResponse.success && progressResponse.data) {
                     const { job, quote, customer, workProgress, occurrences } = progressResponse.data;
-                    
+
                     if (job.status === 'completed') {
                         navigate(`/cleaner-job-completed/${jobId}`, { replace: true });
                         return;
@@ -123,26 +123,30 @@ console.log("weeklySchedule =",weeklySchedule);
                     setCustomer(customer);
                     setWorkProgress(workProgress);
                     setOccurrences(occurrences);
-                    
+
                     // Generate weekly schedule from occurrences data
                     if (job.frequency === 'Weekly' && occurrences && occurrences.length > 0) {
                         const schedule = generateWeeklySchedule(job, workProgress, occurrences);
                         console.log("Generated schedule from API:", schedule);
                         setWeeklySchedule(schedule);
-                        
-                        // Auto-select today's item if available
-                        console.log("Checking for today's item in schedule:", schedule);
+
+                        // Auto-select today's item if available and pending
+                        console.log("Checking for today's pending item in schedule:", schedule);
                         const todayItem = schedule.find(item => {
                             const checkDate = typeof item.date === 'string' ? new Date(item.date) : item.date;
-                            const result = isToday(checkDate);
-                            console.log(`Item ${item.id} - Date: ${item.date} (${typeof item.date}) - Is today: ${result}`);
+                            const isTodayDate = isToday(checkDate);
+                            const isPending = item.status === 'pending';
+                            const result = isTodayDate && isPending;
+                            console.log(`Item ${item.id} - Date: ${item.date} (${typeof item.date}) - Status: ${item.status} - Is today & pending: ${result}`);
                             return result;
                         });
                         if (todayItem) {
                             setSelectedWorkProgressId(todayItem.id);
-                            console.log("Auto-selected today's item ID:", todayItem.id);
+                            console.log("Auto-selected today's pending item ID:", todayItem.id);
                         } else {
-                            console.log("No today's item found in schedule");
+                            console.log("No today's pending item found in schedule");
+                            // Don't auto-select any item if today's item is not pending
+                            setSelectedWorkProgressId(null);
                         }
                     }
 
@@ -382,11 +386,27 @@ console.log("weeklySchedule =",weeklySchedule);
     };
 
     const handleStartJob = () => {
-        console.log('Selected Work Progress ID:', selectedWorkProgressId);
-        if (selectedWorkProgressId) {
-            navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
+        console.log('Starting job. Frequency:', job?.frequency);
+
+        if (job?.frequency === 'Weekly') {
+            const selectedOccurrence = weeklySchedule.find(item => item.id === selectedWorkProgressId);
+
+            if (selectedOccurrence && selectedOccurrence.status === 'pending') {
+                navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
+            } else if (selectedOccurrence && selectedOccurrence.status === 'completed') {
+                alert('This occurrence is already completed. You cannot start a completed job.');
+            } else {
+                alert('Please select a pending occurrence for today to start the job.');
+            }
         } else {
-            navigate(`/cleaner/complete-job/${jobId}`, { replace: true });
+            // For One Time jobs, navigate directly without occurrence selection
+            // If there's a specific occurrence ID available (like occurrences[0]._id), we could pass it
+            const occurrenceId = occurrences?.[0]?._id;
+            const url = occurrenceId
+                ? `/cleaner/complete-job/${jobId}?occurrenceId=${occurrenceId}`
+                : `/cleaner/complete-job/${jobId}`;
+
+            navigate(url, { replace: true });
         }
     };
 
@@ -675,18 +695,16 @@ console.log("weeklySchedule =",weeklySchedule);
                             <div className="bg-white rounded-2xl p-4 shadow-sm">
                                 <div className="space-y-3">
                                     {weeklySchedule.map((item) => (
-                                        <div 
-                                            key={item.id} 
+                                        <div
+                                            key={item.id}
                                             onClick={() => setSelectedWorkProgressId(item.id)}
-                                            className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                                                isToday(item.date) 
-                                                    ? 'bg-blue-50 border-blue-300 shadow-md' 
+                                            className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${isToday(item.date)
+                                                    ? 'bg-blue-50 border-blue-300 shadow-md'
                                                     : 'bg-gray-50 border-gray-200'
-                                            } ${
-                                                selectedWorkProgressId === item.id
+                                                } ${selectedWorkProgressId === item.id
                                                     ? 'ring-2 ring-blue-500 ring-offset-2'
                                                     : ''
-                                            }`}
+                                                }`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className="flex-shrink-0">
@@ -708,8 +726,8 @@ console.log("weeklySchedule =",weeklySchedule);
                                                         )}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
-                                                        {item.date.toLocaleDateString('en-US', { 
-                                                            month: 'short', 
+                                                        {item.date.toLocaleDateString('en-US', {
+                                                            month: 'short',
                                                             day: 'numeric',
                                                             year: 'numeric'
                                                         })}
@@ -738,11 +756,10 @@ console.log("weeklySchedule =",weeklySchedule);
                                                     </Button>
                                                 )}
                                                 {item.status === 'pending' && (
-                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                                                        isToday(item.date)
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isToday(item.date)
                                                             ? 'bg-blue-100 text-blue-700 font-bold'
                                                             : 'bg-gray-100 text-gray-600'
-                                                    }`}>
+                                                        }`}>
                                                         Pending
                                                     </span>
                                                 )}
@@ -750,17 +767,17 @@ console.log("weeklySchedule =",weeklySchedule);
                                         </div>
                                     ))}
                                 </div>
-                                
+
                                 {/* Progress Summary */}
                                 <div className="mt-4 pt-4 border-t border-gray-200">
                                     <div className="flex items-center justify-between">
                                         <div className="text-sm text-gray-600">
                                             <span className="font-medium text-green-600">
                                                 {weeklySchedule.filter(item => item.status === 'completed').length}
-                                            </span> completed • 
+                                            </span> completed •
                                             <span className="font-medium text-blue-600 ml-1">
                                                 {weeklySchedule.filter(item => item.status === 'in-progress').length}
-                                            </span> in progress • 
+                                            </span> in progress •
                                             <span className="font-medium text-gray-600 ml-1">
                                                 {weeklySchedule.filter(item => item.status === 'pending').length}
                                             </span> pending

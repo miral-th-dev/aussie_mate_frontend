@@ -22,26 +22,26 @@ const PaymentsPayoutsPage = () => {
         try {
             setBackendStatus('checking');
             const response = await paymentService.getStripeAccountStatus();
-            
+
             if (response.success) {
                 // Handle both response structures: response.data or response.account
                 const accountData = response.data || response.account;
-                
+
                 if (accountData) {
                     // Map backend response to frontend format
                     const mappedStatus = {
                         accountId: accountData.id || accountData.accountId,
-                        status: accountData.transfers === 'active' || (accountData.charges && accountData.payouts) 
-                            ? 'active' 
-                            : accountData.detailsSubmitted 
-                            ? 'pending' 
-                            : 'pending',
+                        status: accountData.transfers === 'active' || (accountData.charges && accountData.payouts)
+                            ? 'active'
+                            : accountData.detailsSubmitted
+                                ? 'pending'
+                                : 'pending',
                         isReady: accountData.charges && accountData.payouts,
                         chargesEnabled: accountData.charges || false,
                         payoutsEnabled: accountData.payouts || false,
                         onboardingUrl: null
                     };
-                    
+
                     setStripeAccountStatus(mappedStatus);
                 } else {
                     setStripeAccountStatus(null);
@@ -53,7 +53,7 @@ const PaymentsPayoutsPage = () => {
             }
         } catch (err) {
             setStripeAccountStatus(null);
-            
+
             // Check if backend is offline
             if (err.message?.includes('Failed to fetch') || err.message?.includes('Network')) {
                 setBackendStatus('offline');
@@ -66,36 +66,43 @@ const PaymentsPayoutsPage = () => {
     // Check Stripe account status on component mount and when returning from Stripe
     useEffect(() => {
         checkStripeStatus();
-        
+
         const handleStripeUpdate = () => {
             checkStripeStatus();
         };
-        
+
         window.addEventListener('stripeAccountUpdated', handleStripeUpdate);
-        
+
         return () => {
             window.removeEventListener('stripeAccountUpdated', handleStripeUpdate);
         };
     }, []);
 
-    // Handle Stripe Connect account creation
+    // Handle Stripe Connect account creation and onboarding
     const handleStripeConnect = async () => {
         try {
             setStripeLoading(true);
             setError('');
             setSuccessMessage('');
 
-            const response = await paymentService.createStripeConnectAccount();
-            
+            // Step 1: Create Stripe Connect Account (and save ID in DB)
+            const createResponse = await paymentService.createStripeConnectAccount();
+
+            if (!createResponse.success) {
+                throw new Error(createResponse.message || 'Failed to create Stripe Connect account.');
+            }
+
+            // Step 2: Get Onboarding Link
+            const linkResponse = await paymentService.getStripeOnboardingLink(createResponse.accountId);
+
             // Support both shapes: { success, data: { onboardingUrl } } and { success, onboardingUrl }
-            const onboardingUrl = response?.data?.onboardingUrl || response?.onboardingUrl;
-            
-            if (response.success && onboardingUrl) {
+            const onboardingUrl = linkResponse?.data?.onboardingUrl || linkResponse?.onboardingUrl || linkResponse?.url;
+
+            if (linkResponse.success && onboardingUrl) {
                 setSuccessMessage('Redirecting to Stripe setup...');
                 window.location.href = onboardingUrl;
             } else {
-                // Safe fallback
-                setError(response.message || 'Stripe onboarding URL not available. Please try again.');
+                setError(linkResponse.message || 'Stripe onboarding URL not available. Please try again.');
             }
         } catch (err) {
             setError(handlePaymentError(err));
@@ -108,10 +115,10 @@ const PaymentsPayoutsPage = () => {
         try {
             setLoading(true);
             setError('');
-            
+
             // Update payout method
             await userAPI.updatePayoutMethod({ method: selectedMethod });
-            
+
             setError('Settings saved successfully!');
             setTimeout(() => setError(''), 3000);
         } catch (error) {
@@ -195,21 +202,21 @@ const PaymentsPayoutsPage = () => {
                                     <Rocket className="w-4 h-4 sm:w-5 sm:h-5 text-white" strokeWidth={2} />
                                 )}
                                 <h2 className="text-base sm:text-lg font-bold">
-                                    {stripeAccountStatus?.accountId && stripeAccountStatus?.status === 'active' 
+                                    {stripeAccountStatus?.accountId && stripeAccountStatus?.status === 'active'
                                         ? 'Stripe Account Active'
                                         : stripeAccountStatus?.accountId
-                                        ? 'Stripe Account Pending'
-                                        : 'Connect Your Stripe Account'}
+                                            ? 'Stripe Account Pending'
+                                            : 'Connect Your Stripe Account'}
                                 </h2>
                             </div>
                             <p className="text-xs sm:text-sm text-white/90 mb-3 sm:mb-4">
                                 {stripeAccountStatus?.accountId && stripeAccountStatus?.status === 'active'
                                     ? 'Your Stripe account is verified and ready to receive payments. Customers can now book and pay for your services!'
                                     : stripeAccountStatus?.accountId
-                                    ? 'Your Stripe account is connected but still pending verification. Complete the onboarding process to start receiving payments.'
-                                    : 'Set up your Stripe account to receive instant payments from customers. Required to accept online payments for your services.'}
+                                        ? 'Your Stripe account is connected but still pending verification. Complete the onboarding process to start receiving payments.'
+                                        : 'Set up your Stripe account to receive instant payments from customers. Required to accept online payments for your services.'}
                             </p>
-                            
+
                             {stripeAccountStatus?.accountId && stripeAccountStatus?.status === 'active' ? (
                                 <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
                                     <span className="bg-primary-500 text-white px-2 sm:px-3 py-1 rounded-full flex items-center gap-1">
@@ -244,7 +251,7 @@ const PaymentsPayoutsPage = () => {
                             )}
                         </div>
                     </div>
-                    
+
                     {!stripeAccountStatus && (
                         <div className="mt-4 pt-4 border-t border-white/20">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs text-white/80">
