@@ -69,8 +69,15 @@ export const paymentService = {
 
   // Stripe Connect (cleaner onboarding)
   createStripeConnectAccount: async () => {
-    return paymentApiRequest('/payments/stripe/connect', {
+    return paymentApiRequest('/payments/connect/create-account', {
       method: 'POST',
+    });
+  },
+
+  getStripeOnboardingLink: async (accountId) => {
+    return paymentApiRequest('/payments/connect/onboarding-link', {
+      method: 'POST',
+      body: JSON.stringify({ accountId }),
     });
   },
 

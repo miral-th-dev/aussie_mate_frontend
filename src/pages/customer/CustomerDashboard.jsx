@@ -199,48 +199,7 @@ const CustomerDashboard = () => {
           </div>
         </div>
 
-          {/* Book a cleaner section */}
-          <div className="bg-white px-4 sm:px-6 py-4 rounded-2xl shadow-custom mb-4 sm:mb-6">
-            <h2 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1">Book a cleaner in minutes</h2>
-            <p className="text-xs sm:text-sm md:text-base text-primary-200 font-medium mb-3 sm:mb-4">Post job → Receive quotes → Choose & pay securely</p>
-            
-          {/* Service Categories Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
-            {serviceCategories.map((service) => (
-              <div
-                key={service.id}
-                className="relative bg-white border border-gray-200 rounded-2xl sm:rounded-3xl p-2 sm:p-3 md:p-6 text-center hover:shadow-custom-5 transition-shadow cursor-pointer overflow-hidden shadow-custom"
-              >
-                {/* Top-left background image */}
-                <div className="absolute top-0 left-0 w-12 h-16 sm:w-20 sm:h-24 overflow-hidden rounded-tl-xl sm:rounded-tl-2xl">
-                  <img src={CardBG3} alt="Card Background" className="w-full h-full object-cover" />
-                </div>
-                
-                {/* Top-right background image */}
-                <div className="absolute top-0 right-0 w-12 h-16 sm:w-20 sm:h-24 overflow-hidden rounded-tr-xl sm:rounded-tr-2xl">
-                  <img src={CardBG2} alt="Card Background" className="w-full h-full object-cover" />
-                </div>
-                
-                {/* Bottom-left background image */}
-                <div className="absolute bottom-0 left-0 w-12 h-16 sm:w-20 sm:h-24 overflow-hidden rounded-bl-xl sm:rounded-bl-2xl">
-                  <img src={CardBG4} alt="Card Background" className="w-full h-full object-cover" />
-                </div>
-                
-                {/* Service Image */}
-                <div className="relative z-10 mb-1 sm:mb-2 flex justify-center">
-                  <img 
-                    src={service.image} 
-                    alt={service.name}
-                    className="w-8 h-8 sm:w-12 sm:h-12 md:w-20 md:h-20 object-contain"
-                  />
-                </div>
-                
-                {/* Service Name */}
-                <div className="relative z-10 text-xs sm:text-sm md:text-lg font-medium text-gray-900">{service.name}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+     
 
         {/* MatePoints Section */}
         <div className="my-4 sm:my-6 rounded-2xl shadow-custom">

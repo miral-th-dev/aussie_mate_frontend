@@ -310,7 +310,7 @@ const ConfirmYourCleanerPage = () => {
 
                 {/* Commission */}
                 <div className="flex justify-between">
-                  <span>Commission (15%):</span>
+                  <span>Platform Charge (15%):</span>
                   <span className="font-semibold text-primary-500">
                     ${payoutAmounts.adminCommission}
                   </span>
