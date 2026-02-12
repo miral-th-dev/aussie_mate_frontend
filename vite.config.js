@@ -11,17 +11,43 @@ export default defineConfig({
     tailwindcss(),
   ],
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'mui': ['@mui/material', '@mui/x-date-pickers', '@emotion/react', '@emotion/styled'],
-          'maps-leaflet': ['leaflet', 'react-leaflet', '@react-google-maps/api'],
-          'stripe': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          'utils': ['lucide-react', 'date-fns', 'dayjs', 'socket.io-client', 'yup'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom')) {
+              return 'vendor-react-dom';
+            }
+            if (id.includes('react') || id.includes('react-router-dom')) {
+              return 'vendor-react-core';
+            }
+            if (id.includes('@mui/material')) {
+              return 'vendor-mui-material';
+            }
+            if (id.includes('@mui') || id.includes('@emotion')) {
+              return 'vendor-mui-others';
+            }
+            if (id.includes('leaflet') || id.includes('react-leaflet') || id.includes('@react-google-maps')) {
+              return 'vendor-maps';
+            }
+            if (id.includes('@stripe')) {
+              return 'vendor-stripe';
+            }
+            if (
+              id.includes('lucide-react') ||
+              id.includes('date-fns') ||
+              id.includes('dayjs') ||
+              id.includes('socket.io-client') ||
+              id.includes('yup') ||
+              id.includes('swiper')
+            ) {
+              return 'vendor-utils';
+            }
+            return 'vendor-others';
+          }
         }
       }
     }
   }
 })
-
