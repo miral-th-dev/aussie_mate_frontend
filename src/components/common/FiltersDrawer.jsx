@@ -1,15 +1,10 @@
-import React from 'react';
+
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
 import Button from '../form-controls/Button';
 import Calendar from '../form-controls/Calendar';
 import Checkbox from '../form-controls/Checkbox';
 import { X } from 'lucide-react';
-
-
-
-
-
 
 const FiltersDrawer = ({
   open,
