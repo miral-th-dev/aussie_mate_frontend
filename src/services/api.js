@@ -166,7 +166,7 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    localStorage.removeItem('userLocation'); 
+    localStorage.removeItem('userLocation');
   },
 
 
@@ -281,7 +281,7 @@ export const jobsAPI = {
     const formData = new FormData();
     formData.append('day', day);
     formData.append('weekNumber', weekNumber);
-    
+
     if (files && files.length > 0) {
       files.forEach((file, index) => {
         formData.append('photos', file);
@@ -329,7 +329,7 @@ export const jobsAPI = {
   },
 
   // Get all jobs (supports backend pagination/filters)
-  getAllJobs: async ({ status, serviceType, page = 1, limit = 20, location, search } = {}) => {
+  getAllJobs: async ({ status, serviceType, page = 1, limit = 20, location, search, cleanerId, quotedBy } = {}) => {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
     if (serviceType) params.set('serviceType', serviceType);
@@ -337,6 +337,8 @@ export const jobsAPI = {
     if (limit) params.set('limit', String(limit));
     if (location) params.set('location', location);
     if (search) params.set('search', search.trim());
+    if (cleanerId) params.set('cleanerId', cleanerId);
+    if (quotedBy) params.set('quotedBy', quotedBy);
     const qs = params.toString();
     return apiRequest(`/jobs${qs ? `?${qs}` : ''}`);
   },
@@ -899,7 +901,7 @@ export const jobPhotosAPI = {
   uploadBeforePhotos: async (jobId, files, occurrenceId) => {
     const formData = new FormData();
     files.forEach(file => formData.append('photos', file));
-    
+
     // Add occurrenceId to formData if provided
     if (occurrenceId) {
       formData.append('occurrenceId', occurrenceId);
@@ -936,7 +938,7 @@ export const jobPhotosAPI = {
   uploadAfterPhotos: async (jobId, files, occurrenceId) => {
     const formData = new FormData();
     files.forEach(file => formData.append('photos', file));
-    
+
     // Add occurrenceId to formData if provided
     if (occurrenceId) {
       formData.append('occurrenceId', occurrenceId);
@@ -977,12 +979,12 @@ export const jobPhotosAPI = {
   // Update job status (with photo validation)
   updateJobStatus: async (jobId, status, occurrenceId) => {
     const requestBody = { status };
-    
+
     // Add occurrenceId if provided (for weekly jobs)
     if (occurrenceId) {
       requestBody.occurrenceId = occurrenceId;
     }
-    
+
     return apiRequest(`/jobs/${jobId}/status`, {
       method: 'PUT',
       body: JSON.stringify(requestBody)

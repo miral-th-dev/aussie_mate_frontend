@@ -398,6 +398,19 @@ const InProgressJobDetailsPage = () => {
             } else {
                 alert('Please select a pending occurrence for today to start the job.');
             }
+        } else if (job?.frequency === 'Custom') {
+            // For Custom jobs, use the selected occurrence from occurrences array
+            const selectedOccurrence = occurrences.find(occ => occ._id === selectedWorkProgressId);
+            
+            if (selectedOccurrence && selectedOccurrence.status === 'pending' && isToday(selectedOccurrence.scheduledDate)) {
+                navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
+            } else if (selectedOccurrence && selectedOccurrence.status === 'completed') {
+                alert('This occurrence is already completed. You cannot start a completed job.');
+            } else if (selectedOccurrence && !isToday(selectedOccurrence.scheduledDate)) {
+                alert('You can only start jobs scheduled for today. Please select today\'s pending occurrence.');
+            } else {
+                alert('Please select a pending occurrence for today to start the job.');
+            }
         } else {
             // For One Time jobs, navigate directly without occurrence selection
             // If there's a specific occurrence ID available (like occurrences[0]._id), we could pass it
@@ -500,7 +513,10 @@ const InProgressJobDetailsPage = () => {
                 <div className="px-4 py-4">
                     <PageHeader
                         title={headerTitle}
-                        onBack={() => navigate(-1)}
+                        onBack={() => {
+                            const savedTab = localStorage.getItem('cleanerActiveTab');
+                            navigate('/cleaner-jobs', { state: { tab: savedTab || 'accepted' }, replace: true });
+                        }}
                     />
                 </div>
 
@@ -688,6 +704,114 @@ const InProgressJobDetailsPage = () => {
                         </div>
                     )}
 
+                    {/* Custom Job Dates Section */}
+                    {job?.frequency === 'Custom' && occurrences && occurrences.length > 0 && (
+                        <div className="mb-4">
+                            <h3 className="text-lg font-semibold text-primary-500 mb-3">Job Schedule</h3>
+                            <div className="bg-white rounded-2xl p-4 shadow-sm">
+                                <div className="space-y-3">
+                                    {occurrences.map((occurrence, index) => (
+                                        <div
+                                            key={occurrence._id || index}
+                                            onClick={() => setSelectedWorkProgressId(occurrence._id)}
+                                            className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${isToday(occurrence.scheduledDate)
+                                                    ? 'bg-blue-50 border-blue-300 shadow-md'
+                                                    : 'bg-gray-50 border-gray-200'
+                                                } ${selectedWorkProgressId === occurrence._id
+                                                    ? 'ring-2 ring-blue-500 ring-offset-2'
+                                                    : ''
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-shrink-0">
+                                                    {occurrence.status === 'completed' ? (
+                                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                                    ) : occurrence.status === 'in_progress' ? (
+                                                        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                                    ) : (
+                                                        <Circle className="w-5 h-5 text-gray-400" />
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="font-medium text-primary-500 flex items-center gap-2">
+                                                        {occurrence.label || `Job ${index + 1}`}
+                                                        {isToday(occurrence.scheduledDate) && (
+                                                            <span className="text-xs font-bold px-2 py-1 bg-blue-500 text-white rounded-full">
+                                                                TODAY
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-sm text-gray-500">
+                                                        {new Date(occurrence.scheduledDate).toLocaleDateString('en-US', {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <div className="text-sm font-medium text-primary-600">
+                                                        ${occurrence.amount || workProgress?.amountPerOccurrence || 0}
+                                                    </div>
+                                                    {(occurrence.beforePhotosCount + occurrence.afterPhotosCount) > 0 && (
+                                                        <div className="text-xs text-gray-500">
+                                                            {(occurrence.beforePhotosCount + occurrence.afterPhotosCount)} photo{(occurrence.beforePhotosCount + occurrence.afterPhotosCount) > 1 ? 's' : ''}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {occurrence.status === 'completed' && (
+                                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                                                        Completed
+                                                    </span>
+                                                )}
+                                                {occurrence.status === 'in_progress' && (
+                                                    <Button size="sm" variant="primary">
+                                                        Mark Complete
+                                                    </Button>
+                                                )}
+                                                {occurrence.status === 'pending' && (
+                                                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isToday(occurrence.scheduledDate)
+                                                            ? 'bg-blue-100 text-blue-700 font-bold'
+                                                            : 'bg-gray-100 text-gray-600'
+                                                        }`}>
+                                                        Pending
+                                                    </span>
+                                                )}
+                                                {occurrence.status === 'pending_customer_confirmation' && (
+                                                    <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                                                        Pending Confirmation
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Progress Summary */}
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-sm text-gray-600">
+                                            <span className="font-medium text-green-600">
+                                                {occurrences.filter(occ => occ.status === 'completed').length}
+                                            </span> completed •
+                                            <span className="font-medium text-blue-600 ml-1">
+                                                {occurrences.filter(occ => occ.status === 'in_progress').length}
+                                            </span> in progress •
+                                            <span className="font-medium text-gray-600 ml-1">
+                                                {occurrences.filter(occ => occ.status === 'pending' || occ.status === 'pending_customer_confirmation').length}
+                                            </span> pending
+                                        </div>
+                                        <div className="text-sm font-medium text-primary-600">
+                                            Total: ${occurrences.reduce((sum, occ) => sum + (occ.amount || workProgress?.amountPerOccurrence || 0), 0)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Work Progress Section for Weekly Jobs */}
                     {weeklySchedule.length > 0 && (
                         <div className="mb-4">
@@ -699,8 +823,8 @@ const InProgressJobDetailsPage = () => {
                                             key={item.id}
                                             onClick={() => setSelectedWorkProgressId(item.id)}
                                             className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${isToday(item.date)
-                                                    ? 'bg-blue-50 border-blue-300 shadow-md'
-                                                    : 'bg-gray-50 border-gray-200'
+                                                ? 'bg-blue-50 border-blue-300 shadow-md'
+                                                : 'bg-gray-50 border-gray-200'
                                                 } ${selectedWorkProgressId === item.id
                                                     ? 'ring-2 ring-blue-500 ring-offset-2'
                                                     : ''
@@ -757,8 +881,8 @@ const InProgressJobDetailsPage = () => {
                                                 )}
                                                 {item.status === 'pending' && (
                                                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isToday(item.date)
-                                                            ? 'bg-blue-100 text-blue-700 font-bold'
-                                                            : 'bg-gray-100 text-gray-600'
+                                                        ? 'bg-blue-100 text-blue-700 font-bold'
+                                                        : 'bg-gray-100 text-gray-600'
                                                         }`}>
                                                         Pending
                                                     </span>

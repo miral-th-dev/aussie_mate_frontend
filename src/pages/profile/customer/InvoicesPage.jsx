@@ -103,14 +103,14 @@ const InvoicesPage = () => {
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleOutside = (e) => {
-          if (showDropdown && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-            setShowDropdown(null);
-          }
+            if (showDropdown && dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setShowDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleOutside);
         return () => document.removeEventListener('mousedown', handleOutside);
-      }, [showDropdown]);
-      
+    }, [showDropdown]);
+
 
 
     // Filter invoices based on search query and date range
@@ -149,9 +149,138 @@ const InvoicesPage = () => {
         setShowDropdown(showDropdown === invoiceId ? null : invoiceId);
     };
 
+    const generateInvoiceHTML = (invoice) => {
+        return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Invoice ${invoice.id}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+                @page { size: auto; margin: 15mm; }
+                body { font-family: 'Outfit', sans-serif; color: #1f2937; margin: 0; padding: 20px; background: white; line-height: 1.4; }
+                .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px; }
+                .logo { font-size: 24px; font-weight: 700; color: #1e40af; }
+                .invoice-meta { text-align: right; }
+                .invoice-title { font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 5px 0; }
+                .meta-item { color: #6b7280; font-size: 13px; margin-bottom: 2px; }
+                .client-vendor { display: grid; grid-template-cols: 1fr 1fr; gap: 40px; margin-bottom: 30px; }
+                .section-label { color: #9ca3af; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+                .address-name { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 4px; }
+                .address-text { font-size: 13px; color: #4b5563; line-height: 1.5; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                th { text-align: left; padding: 12px; background: #f9fafb; color: #4b5563; font-weight: 600; font-size: 13px; text-transform: uppercase; }
+                td { padding: 15px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+                .item-title { font-weight: 600; color: #111827; margin-bottom: 2px; }
+                .item-desc { font-size: 12px; color: #6b7280; }
+                .totals { margin-left: auto; width: 250px; }
+                .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+                .grand-total { border-top: 2px solid #111827; margin-top: 8px; padding-top: 15px; font-size: 20px; font-weight: 700; color: #1e40af; }
+                .status-badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 15px; }
+                .status-paid { background: #ecfdf5; color: #059669; }
+                .status-pending { background: #fffbeb; color: #d97706; }
+                .status-overdue { background: #fef2f2; color: #dc2626; }
+                .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #f3f4f6; text-align: center; font-size: 12px; color: #9ca3af; }
+                @media print { body { padding: 0; } .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div>
+                    <div class="logo">Aussie Mate</div>
+                    <div class="meta-item" style="margin-top: 10px;">Australian ABN: 12 345 678 901</div>
+                </div>
+                <div class="invoice-meta">
+                    <h1 class="invoice-title">INVOICE</h1>
+                    <div class="meta-item">Invoice ID: <strong>${invoice.id}</strong></div>
+                    <div class="meta-item">Date: <strong>${invoice.date}</strong></div>
+                </div>
+            </div>
+
+            <div class="client-vendor">
+                <div>
+                    <div class="section-label">Billed From</div>
+                    <div class="address-name">Aussie Mate Services</div>
+                    <div class="address-text">123 Mate Street, Sydney<br/>NSW 2000, Australia</div>
+                </div>
+                <div>
+                    <div class="section-label">Billed To</div>
+                    <div class="address-name">Customer Name</div>
+                    <div class="address-text">Registered Address<br/>Location Details provided in profile</div>
+                </div>
+            </div>
+
+            <div class="status-badge status-${invoice.status}">
+                ${invoice.status}
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60%">Service Description</th>
+                        <th style="text-align: right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="item-title">${invoice.title}</div>
+                            <div class="item-desc">Service completed successfully on ${invoice.date}</div>
+                        </td>
+                        <td style="text-align: right; font-weight: 600;">$${invoice.price.toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="totals">
+                <div class="total-row">
+                    <span style="color: #6b7280">Subtotal</span>
+                    <span>$${invoice.price.toFixed(2)}</span>
+                </div>
+                <div class="total-row">
+                    <span style="color: #6b7280">Tax (GST 10%)</span>
+                    <span>$0.00</span>
+                </div>
+                <div class="total-row grand-total">
+                    <span>Total Amount</span>
+                    <span>$${invoice.price.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <div class="footer">
+                Thank you for choosing Aussie Mate. If you have any questions about this invoice, <br/>
+                please contact our support team via the Help section in the app.
+            </div>
+        </body>
+        </html>
+        `;
+    };
+
     const handleInvoiceAction = (action, invoiceId) => {
         if (action === 'download') {
-            console.log(`Download invoice ${invoiceId}`);
+            const invoice = filteredInvoices.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+
+            const html = generateInvoiceHTML(invoice);
+
+            // Create a hidden iframe for printing
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(html);
+            iframe.contentDocument.close();
+
+            iframe.contentWindow.onload = () => {
+                iframe.contentWindow.focus();
+                iframe.contentWindow.print();
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 1000);
+            };
+
             setShowDropdown(null);
         }
     };
@@ -159,19 +288,19 @@ const InvoicesPage = () => {
     const handleConfirmDelete = async () => {
         try {
             setIsDeleting(true);
-            
+
             // Here you would call the API to delete the invoice
             // const response = await invoicesAPI.deleteInvoice(invoiceToDelete);
-            
+
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             setShowDeleteModal(false);
             setInvoiceToDelete(null);
-            
+
             // You might want to refresh the invoices list here
             // fetchInvoices();
-            
+
         } catch (error) {
             console.error('Error deleting invoice:', error);
         } finally {
@@ -279,61 +408,61 @@ const InvoicesPage = () => {
                 <div className="space-y-3">
                     {filteredInvoices.map((invoice) => (
                         <div key={invoice.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                             {/* Top Row: Invoice ID, Price, Three Dots */}
-                             <div className="flex items-center justify-between mb-1">
-                                 <div className="text-sm font-medium text-primary-200">{invoice.id}</div>
-                                 <div className="relative">
-                                     <button
-                                         onClick={() => toggleDropdown(invoice.id)}
-                                         className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-                                     >
-                                         <img src={ThreeDotIcon} alt="More options" className="w-5 h-5" />
-                                     </button>
-                                     
-                                     {/* Three Dot Menu Dropdown */}
-                                     {showDropdown === invoice.id && (
-                                         <div 
-                                             className="invoice-dropdown absolute right-0 top-full w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-40"
-                                             onClick={(e) => e.stopPropagation()}
-                                         >
-                                             <div className="py-1">
-                                                 <button
-                                                     onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         handleInvoiceAction('download', invoice.id);
-                                                     }}
-                                                     className="w-full px-4 py-3 text-left text-sm text-primary-200 font-medium hover:bg-gray-100 transition-colors flex items-center gap-3 cursor-pointer"
-                                                 >
-                                                     <img src={DownloadIcon} alt="Download" className="w-4 h-4" />
-                                                     Download PDF
-                                                 </button>
-                                                 <button
-                                                     onClick={() => {
-                                                         setInvoiceToDelete(invoice.id);
-                                                         setShowDeleteModal(true);
-                                                         setShowDropdown(null);
-                                                     }}
-                                                     className="w-full px-4 py-3 text-left text-sm text-red-500 font-medium hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
-                                                 >
-                                                     <img src={TrashRedIcon} alt="Delete" className="w-4 h-4" />
-                                                     Delete Invoice
-                                                 </button>
-                                             </div>
-                                         </div>
-                                     )}
-                                 </div>
-                             </div>
+                            {/* Top Row: Invoice ID, Price, Three Dots */}
+                            <div className="flex items-center justify-between mb-1">
+                                <div className="text-sm font-medium text-primary-200">{invoice.id}</div>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => toggleDropdown(invoice.id)}
+                                        className="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+                                    >
+                                        <img src={ThreeDotIcon} alt="More options" className="w-5 h-5" />
+                                    </button>
+
+                                    {/* Three Dot Menu Dropdown */}
+                                    {showDropdown === invoice.id && (
+                                        <div
+                                            className="invoice-dropdown absolute right-0 top-full w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-40"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="py-1">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleInvoiceAction('download', invoice.id);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm text-primary-200 font-medium hover:bg-gray-100 transition-colors flex items-center gap-3 cursor-pointer"
+                                                >
+                                                    <img src={DownloadIcon} alt="Download" className="w-4 h-4" />
+                                                    Download PDF
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setInvoiceToDelete(invoice.id);
+                                                        setShowDeleteModal(true);
+                                                        setShowDropdown(null);
+                                                    }}
+                                                    className="w-full px-4 py-3 text-left text-sm text-red-500 font-medium hover:bg-red-50 transition-colors flex items-center gap-3 cursor-pointer"
+                                                >
+                                                    <img src={TrashRedIcon} alt="Delete" className="w-4 h-4" />
+                                                    Delete Invoice
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
                             {/* Service Title */}
                             <div className="flex items-center gap-1 mb-2">
                                 <h3 className="text-base font-semibold text-primary-500">{invoice.title}</h3>
-                                <span  className='w-2 h-2 bg-primary-500 rounded-full'>  </span>
+                                <span className='w-2 h-2 bg-primary-500 rounded-full'>  </span>
                                 <span className="text-lg font-semibold text-blue-600">${invoice.price}</span>
                             </div>
 
 
-                             {/* Date */}
-                             <div className="text-sm text-primary-200 font-medium">{invoice.date}</div>
+                            {/* Date */}
+                            <div className="text-sm text-primary-200 font-medium">{invoice.date}</div>
                         </div>
                     ))}
                 </div>

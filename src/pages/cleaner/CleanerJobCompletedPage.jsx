@@ -83,13 +83,13 @@ const CleanerJobCompletedPage = () => {
             const reviews = reviewResponse.data.reviews || reviewResponse.data;
             const jobReview = Array.isArray(reviews)
               ? reviews.find(
-                  (r) =>
-                    r.jobId === jobId ||
-                    r.jobId?._id === jobId ||
-                    r.job === jobId ||
-                    r.job?._id === jobId ||
-                    r.job?.jobId === jobId,
-                )
+                (r) =>
+                  r.jobId === jobId ||
+                  r.jobId?._id === jobId ||
+                  r.job === jobId ||
+                  r.job?._id === jobId ||
+                  r.job?.jobId === jobId,
+              )
               : null;
 
             if (jobReview) {
@@ -133,11 +133,14 @@ const CleanerJobCompletedPage = () => {
   }
 
   return (
-    <>  
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-3 sm:px-4">
+    <>
+      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-3 sm:px-4 pb-6">
         <PageHeader
           title="Job Completed"
-          onBack={() => navigate('/cleaner-jobs')}
+          onBack={() => {
+            const savedTab = localStorage.getItem('cleanerActiveTab');
+            navigate('/cleaner-jobs', { state: { tab: savedTab || 'completed' }, replace: true });
+          }}
           className="py-2 sm:py-3"
         />
 

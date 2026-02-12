@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { PageHeader, JobOverviewCard } from '../../components';
 import ChatIcon from '../../assets/message2.svg';
 import { jobsAPI } from '../../services/api';
@@ -7,6 +7,7 @@ import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays } 
 
 const JobDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { jobId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,11 +18,11 @@ const JobDetailsPage = () => {
       try {
         setLoading(true);
         setError('');
-        
+
         // Fetch job details from API
         const response = await jobsAPI.getJobById(jobId);
-        
-        
+
+
         if (response.success && response.data) {
           const jobData = response.data;
           setJob(jobData);
@@ -91,10 +92,10 @@ const JobDetailsPage = () => {
 
   const getPreferredDaysDisplay = (preferredDays) => {
     if (!preferredDays || typeof preferredDays !== 'object') return '';
-    
+
     const days = Object.keys(preferredDays).filter(day => preferredDays[day] === true);
     if (days.length === 0) return '';
-    
+
     return days.join(', ');
   };
 
@@ -223,7 +224,10 @@ const JobDetailsPage = () => {
       <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
         <PageHeader
           title={getJobTitle(job)}
-          onBack={() => navigate(-1)}
+          onBack={() => {
+            const savedTab = localStorage.getItem('cleanerActiveTab');
+            navigate('/cleaner-jobs', { state: { tab: savedTab || 'live-jobs' }, replace: true });
+          }}
           className="px-4 sm:px-6 lg:px-8 py-2 sm:py-4"
           titleClassName="text-lg sm:text-xl font-semibold text-primary-500 truncate"
         />
@@ -257,7 +261,7 @@ const JobDetailsPage = () => {
               onClick={handleChatWithCustomer}
               className="bg-primary-500  text-white  cursor-pointer shadow-custom border border-[#EBF2FD] font-medium py-2 px-3 sm:py-3 sm:px-4 rounded-xl transition-colors duration-200 flex items-center gap-2 "
             >
-            <img src={ChatIcon} alt="Chat" className="w-5 h-5 brightness-0 invert" />
+              <img src={ChatIcon} alt="Chat" className="w-5 h-5 brightness-0 invert" />
               Chat with Customer
             </button>
           </div>

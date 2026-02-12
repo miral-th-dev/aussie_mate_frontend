@@ -645,12 +645,12 @@ const CleanerChatPage = () => {
     }
 
     return (
-        <>
+        <div className='px-3 md:px-4'>
             <div className="max-w-6xl mx-auto py-4 px-1">
                 <PageHeader title={getJobTitle(job)} onBack={() => navigate(-1)} />
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 bg-white rounded-2xl shadow-custom py-4">
+            <div className="max-w-6xl mx-auto px-4 bg-white rounded-2xl shadow-custom py-4">
             {/* Error Message */}
                 {error && (
                     <div className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mb-4">
@@ -1013,7 +1013,7 @@ const CleanerChatPage = () => {
                 }}
                 isVisible={showPhoneAlert}
             />
-        </>
+        </div>
     );
 };
 

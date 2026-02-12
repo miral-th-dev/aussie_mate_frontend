@@ -108,17 +108,19 @@ const CustomerDashboard = () => {
           const dateLabel = formatDate(j.createdAt);
           const title = j.title || j.serviceTypeDisplay || `${(j.serviceType || '').toString().replace(/\b\w/g, c => c.toUpperCase())}`.trim();
           const statusChip = getStatusChip(status);
-          
+
           return {
             id: j.jobId || j._id || j.reference || j.id,
+            rawId: j.id || j._id, // Add raw database ID for navigation if needed
             title,
             status: statusChip.label,
+            rawStatus: status.toLowerCase(),
             date: dateLabel,
             action: getActionText(status),
             assignedTo
           };
         });
-        
+
         setOngoingJobs(normalized);
       } catch (e) {
         setError('Failed to load jobs');
@@ -127,7 +129,7 @@ const CustomerDashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchJobs();
   }, [currentUserId]);
 
@@ -174,7 +176,7 @@ const CustomerDashboard = () => {
   return (
     <>
       {/* Main Content Container */}
-      <div className="max-w-7xl mx-auto py-1 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto py-1 px-4 sm:px-6 lg:px-8 pb-6">
         {/* Search Section */}
         <div className="bg-white px-4 sm:px-6 py-4 rounded-2xl mb-4 sm:mb-6 mt-4 shadow-custom">
           <div className="flex flex-col sm:flex-row gap-3">
@@ -188,8 +190,8 @@ const CustomerDashboard = () => {
                 className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-sm text-primary-200 font-medium focus:outline-none"
               />
             </div>
-            <Button 
-              onClick={() => navigate('/post-new-job')} 
+            <Button
+              onClick={() => navigate('/post-new-job')}
               size="sm"
               icon={PlusIcon}
             >
@@ -199,7 +201,7 @@ const CustomerDashboard = () => {
           </div>
         </div>
 
-     
+
 
         {/* MatePoints Section */}
         <div className="my-4 sm:my-6 rounded-2xl shadow-custom">
@@ -208,14 +210,14 @@ const CustomerDashboard = () => {
             <div className="absolute inset-0">
               <img src={RewardImage} alt="Reward Background" className="w-full h-full object-cover" />
             </div>
-            
+
             {/* Content Overlay */}
             <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 text-center sm:text-left">
                 <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1">Earn MatePoints with Every Booking</h3>
                 <p className="text-xs sm:text-sm md:text-base text-[#374151] mb-2 sm:mb-3">Collect points on each job completed and redeem them for discounts & perks.</p>
-                <Button 
-                  onClick={handleViewRewards} 
+                <Button
+                  onClick={handleViewRewards}
                   size="sm"
                   className="bg-[#111827] hover:bg-[#111827] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-[8px] text-xs sm:text-sm font-medium"
                 >
@@ -223,7 +225,7 @@ const CustomerDashboard = () => {
                 </Button>
               </div>
             </div>
-            
+
             {/* Coin in right bottom corner */}
             <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10">
               <img src={CoinImage} alt="Coin" className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24" />
@@ -235,20 +237,20 @@ const CustomerDashboard = () => {
         <div className="bg-white px-4 sm:px-7 py-4 sm:py-6 rounded-2xl shadow-custom">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
             <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500">Ongoing Jobs</h3>
-            
+
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-              <Button 
-                onClick={handleViewJobs} 
+              <Button
+                onClick={handleViewJobs}
                 size="sm"
                 className="rounded-full px-3 sm:px-5 py-1.5 sm:py-2 flex items-center gap-2"
               >
                 <BriefcaseBusiness className="w-4 h-4" strokeWidth={2} />
                 <span>View Jobs</span>
               </Button>
-              
+
               <div className="flex space-x-2">
-                <Button 
+                <Button
                   onClick={goToPrev}
                   variant="ghost"
                   size="sm"
@@ -256,8 +258,8 @@ const CustomerDashboard = () => {
                 >
                   <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" strokeWidth={2} />
                 </Button>
-                
-                <Button 
+
+                <Button
                   onClick={goToNext}
                   variant="ghost"
                   size="sm"
@@ -268,25 +270,25 @@ const CustomerDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           {loading && (
             <div className="py-8">
               <Loader message="Loading your jobs..." />
             </div>
           )}
-          
+
           {error && (
             <div className="text-center py-8">
               <div className="text-sm text-red-600">{error}</div>
             </div>
           )}
-          
+
           {!loading && !error && ongoingJobs.length === 0 && (
             <div className="text-center py-8">
               <div className="text-sm text-gray-500">No jobs found</div>
             </div>
           )}
-          
+
           {!loading && !error && ongoingJobs.length > 0 && (
             <Swiper
               ref={swiperRef}
@@ -298,10 +300,10 @@ const CustomerDashboard = () => {
                   slidesPerView: 2,
                   spaceBetween: 16,
                 },
-                  1024: {
-                    slidesPerView: 3,
-                    spaceBetween: 16,
-                  },
+                1024: {
+                  slidesPerView: 3,
+                  spaceBetween: 16,
+                },
               }}
               autoplay={{
                 delay: 3000,
@@ -314,23 +316,33 @@ const CustomerDashboard = () => {
             >
               {ongoingJobs.map((job) => (
                 <SwiperSlide key={job.id}>
-                  <div className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 shadow-custom h-44 sm:h-48">
+                  <div
+                    onClick={() => {
+                      if (job.rawStatus === 'completed' || job.rawStatus === 'pending_customer_confirmation') {
+                        navigate(`/job-completed/${job.rawId}`);
+                      } else if (job.rawStatus === 'in_progress') {
+                        navigate(`/customer-in-progress-job/${job.rawId}`);
+                      } else {
+                        navigate(`/customer-job-details/${job.rawId}`);
+                      }
+                    }}
+                    className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 shadow-custom h-44 sm:h-48 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+                  >
                     <div className="flex flex-col justify-between h-full">
                       <div>
                         <div className="flex justify-between items-start mb-2">
                           <div className="text-xs sm:text-sm text-primary-200 font-medium">#{job.id}</div>
                           {job.status && (
-                            <span className={`inline-block font-semibold text-xs px-2 py-1 rounded-full ${
-                              job.status === 'Pending Quotes' 
+                            <span className={`inline-block font-semibold text-xs px-2 py-1 rounded-full ${job.rawStatus === 'quoted' || job.rawStatus === 'posted'
                                 ? 'bg-[#E5F3FF] text-[#0088FF] border border-[#DDEFFF]'
-                                : job.status === 'In Progress'
-                                ? 'bg-[#FFEBCA] text-yellow-500 border border-yellow-500'
-                                : job.status === 'Completed'
-                                ? 'bg-green-500 text-[#10B981] border border-[#D2F8E0]'
-                                : 'bg-[#E5F3FF] text-[#0088FF] border border-[#E5F3FF]'
-                            }`}> 
+                                : job.rawStatus === 'in_progress'
+                                  ? 'bg-[#FFEBCA] text-yellow-500 border border-yellow-500'
+                                  : job.rawStatus === 'completed'
+                                    ? 'bg-green-500 text-[#10B981] border border-[#D2F8E0]'
+                                    : 'bg-[#E5F3FF] text-[#0088FF] border border-[#E5F3FF]'
+                              }`}>
                               {job.status}
-                            </span>  
+                            </span>
                           )}
                         </div>
                         <h4 className="font-semibold text-primary-500 mb-2 line-clamp-2 text-sm sm:text-base capitalize" >{job.title}</h4>
@@ -345,8 +357,8 @@ const CustomerDashboard = () => {
                           </div>
                         )}
                       </div>
-                      <Button 
-                        variant="secondary" 
+                      <Button
+                        variant="secondary"
                         size="xs"
                         className="w-full mt-2 sm:mt-3 text-xs sm:text-sm font-medium"
                       >

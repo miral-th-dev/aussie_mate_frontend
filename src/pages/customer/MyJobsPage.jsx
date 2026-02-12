@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { PageHeader, PaginationRanges, Checkbox, FiltersDrawer, Loader } from '../../components';
 import SearchIcon from '../../assets/search.svg';
@@ -59,7 +59,7 @@ const formatDate = (iso) => {
 const formatCleanerData = (quote) => {
   const cleaner = quote.cleanerId || quote.cleaner;
   const cleanerId = cleaner?._id || cleaner?.id || quote.cleanerId || quote._id || quote.id;
-  
+
   return {
     id: cleanerId,
     quoteId: quote._id || quote.id,
@@ -79,11 +79,11 @@ const formatCleanerData = (quote) => {
 const getMessageCountForJob = async (jobId) => {
   try {
     const response = await chatAPI.getUnreadCount();
-    
+
     if (response.success && response.data) {
       // Handle different response formats
       let dataArray = [];
-      
+
       if (Array.isArray(response.data)) {
         dataArray = response.data;
       } else if (response.data.messages && Array.isArray(response.data.messages)) {
@@ -95,9 +95,9 @@ const getMessageCountForJob = async (jobId) => {
         const jobData = response.data[jobId] || response.data[jobId?.toString()];
         return jobData ? (jobData.unreadCount || jobData.count || 0) : 0;
       }
-      
+
       // Find messages for this specific job
-      const jobMessages = dataArray.find(item => 
+      const jobMessages = dataArray.find(item =>
         item.jobId === jobId || item.jobId?._id === jobId || item.jobId?.id === jobId
       );
       return jobMessages ? (jobMessages.unreadCount || jobMessages.count || 0) : 0;
@@ -111,10 +111,27 @@ const getMessageCountForJob = async (jobId) => {
 
 const MyJobsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [activeTab, setActiveTab] = useState('all');
+
+  // Initialize tab from location state or localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    return location.state?.tab || localStorage.getItem('customerActiveTab') || 'all';
+  });
+
+  // Update tab if location state changes
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
+
+  // Save tab to localStorage
+  useEffect(() => {
+    localStorage.setItem('customerActiveTab', activeTab);
+  }, [activeTab]);
   const [jobs, setJobs] = useState([]);
   const [allJobs, setAllJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -384,16 +401,15 @@ const MyJobsPage = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search jobs..."
-              className="w-full pl-9 pr-3 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none"  
+              className="w-full pl-9 pr-3 py-2 sm:py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none"
             />
           </div>
           <button
             onClick={() => setShowFilters(true)}
-            className={`p-2 sm:p-3 rounded-xl! border cursor-pointer transition ${
-              isFiltersApplied || isDateRangeApplied
-                ? 'bg-blue-50 border-blue-300 text-primary-500'
-                : 'bg-white border-gray-200 text-gray-600'
-            }`}
+            className={`p-2 sm:p-3 rounded-xl! border cursor-pointer transition ${isFiltersApplied || isDateRangeApplied
+              ? 'bg-blue-50 border-blue-300 text-primary-500'
+              : 'bg-white border-gray-200 text-gray-600'
+              }`}
             title="Filters"
           >
             <SlidersHorizontal className="w-5 h-5" />
@@ -409,16 +425,15 @@ const MyJobsPage = () => {
           )}
         </div>
 
-  
+
         {/* Tabs */}
         <div className="flex items-center gap-2 mb-4 overflow-x-auto no-scrollbar">
           {tabs.map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${
-                activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600' : 'bg-white text-gray-600 border border-gray-200  focus:outline-none'
-              }`}
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600' : 'bg-white text-gray-600 border border-gray-200  focus:outline-none'
+                }`}
             >
               {t.label}
             </button>
@@ -443,8 +458,8 @@ const MyJobsPage = () => {
         )}
         <div className="space-y-3">
           {jobs.map((job) => (
-            <div 
-              key={job.id} 
+            <div
+              key={job.id}
               onClick={() => {
                 if (job.status === 'completed') {
                   navigate(`/job-completed/${job.id}`);
@@ -460,7 +475,7 @@ const MyJobsPage = () => {
             >
               <div className="flex items-start justify-between">
                 <div className="text-[15px] text-primary-200 font-medium">#{job.jobId}</div>
-                {(() => { 
+                {(() => {
                   if (job.status === 'pending_customer_confirmation') {
                     return (
                       <div className={`text-[11px] px-2 py-1 rounded-full font-medium ${job.statusClass} text-center`}>
@@ -489,7 +504,7 @@ const MyJobsPage = () => {
               </div>
               <h3 className="text-sm sm:text-base capitalize font-semibold text-primary-500 mb-2 line-clamp-2">{job.title}</h3>
 
-             
+
               <div className="flex items-center text-xs text-primary-200 font-medium mb-1">
                 <img src={CalendarIcon} alt="Date" className="w-4 h-4 mr-2" />
                 {job.dateLabel}
@@ -533,30 +548,30 @@ const MyJobsPage = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Chat Button for Accepted Jobs only (not in_progress) */} 
+                  {/* Chat Button for Accepted Jobs only (not in_progress) */}
                   {job.status === 'accepted' && (
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
-                        
+
                         try {
                           // Fetch detailed job data for accepted jobs
                           const jobResponse = await jobsAPI.getJobById(job.id);
                           let jobData = job.originalJob || job;
-                          
+
                           if (jobResponse.success && jobResponse.data) {
                             jobData = jobResponse.data;
                           }
-                          
+
                           const acceptedQuote = jobData.quotes?.find(quote => quote.status === 'accepted');
-                          
+
                           if (acceptedQuote) {
                             const cleanerData = formatCleanerData(acceptedQuote);
-                            
+
                             if (cleanerData.id && cleanerData.id !== 'undefined' && cleanerData.id !== 'null') {
                               navigate(`/customer-chat/${job.id}?cleaner=${cleanerData.id}`);
                             }
-                            
+
                           }
                         } catch (error) {
                           console.error('Error fetching job details for chat:', error);
@@ -573,6 +588,8 @@ const MyJobsPage = () => {
             </div>
           ))}
         </div>
+
+
         <PaginationRanges
           count={totalPages}
           page={page}

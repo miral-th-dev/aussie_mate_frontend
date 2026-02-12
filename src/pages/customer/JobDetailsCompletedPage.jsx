@@ -62,7 +62,7 @@ const JobDetailsCompletedPage = () => {
     const fetchJobDetails = async () => {
       try {
         setLoading(true);
-        
+
         // Try to get customer progress data first (for weekly jobs)
         let progressResponse;
         try {
@@ -71,21 +71,21 @@ const JobDetailsCompletedPage = () => {
         } catch (progressError) {
           console.log('⚠️ Could not fetch customer progress, trying regular job details:', progressError);
         }
-        
+
         let job, photosData;
-        
+
         if (progressResponse?.success && progressResponse?.data) {
           // Use customer progress data for weekly jobs
           const { job: jobData, cleaner, workProgress, occurrences, paymentSummary } = progressResponse.data;
           job = { ...jobData, cleaner };
-          
+
           // Set occurrences and work progress state
           setOccurrences(occurrences || []);
           setWorkProgress(workProgress);
-          
+
           // Mock photos data for now
           photosData = { beforePhotos: [], afterPhotos: [] };
-          
+
           console.log('📊 Using customer progress data - Job:', job);
           console.log('📊 Occurrences:', occurrences);
           console.log('📊 Work Progress:', workProgress);
@@ -95,13 +95,13 @@ const JobDetailsCompletedPage = () => {
             jobsAPI.getJobById(jobId),
             jobPhotosAPI.getJobPhotos(jobId).catch(() => ({ data: { beforePhotos: [], afterPhotos: [] } }))
           ]);
-          
+
           if (jobResponse.success && jobResponse.data) {
             job = jobResponse.data;
             photosData = photosResponse.data || photosResponse;
           }
         }
-        
+
         if (job) {
           // Debug logging to understand the data structure
           console.log('📸 Job data:', job);
@@ -111,7 +111,7 @@ const JobDetailsCompletedPage = () => {
           console.log('📸 Job afterPhotos:', job.afterPhotos);
           console.log('📸 Job completionProof:', job.completionProof);
           console.log('📸 Job weeklyProgress:', job.weeklyProgress);
-          
+
           // Check if this is a weekly job and show completed days
           if (job.weeklyProgress && job.weeklyProgress.weeklyCompletions) {
             const completedDays = Object.entries(job.weeklyProgress.weeklyCompletions)
@@ -124,26 +124,26 @@ const JobDetailsCompletedPage = () => {
               }));
             console.log('📸 Completed days:', completedDays);
           }
-          
+
           // Transform job data to match expected format
           const acceptedQuote = job.quotes?.find(q => q.status === 'accepted');
           // Use completedBy if it's an object, otherwise try acceptedQuote cleanerId
-          const cleaner = (job.completedBy && typeof job.completedBy === 'object') 
-            ? job.completedBy 
+          const cleaner = (job.completedBy && typeof job.completedBy === 'object')
+            ? job.completedBy
             : (acceptedQuote?.cleanerId && typeof acceptedQuote.cleanerId === 'object')
               ? acceptedQuote.cleanerId
               : null;
-          
+
           // Get photos from multiple possible sources with better handling
           const beforeImages = photosData.beforePhotos || job.beforePhotos || [];
           const afterImages = photosData.afterPhotos || job.afterPhotos || [];
           // Get original job photos
           const jobPhotos = job.photos || [];
-          
+
           console.log('📸 Processed beforeImages:', beforeImages);
           console.log('📸 Processed afterImages:', afterImages);
           console.log('📸 Processed jobPhotos:', jobPhotos);
-          
+
           const transformedData = {
             jobId: job.jobId || job._id,
             title: job.title || job.serviceTypeDisplay || job.serviceType,
@@ -152,9 +152,9 @@ const JobDetailsCompletedPage = () => {
             instructions: job.specialInstructions || job.instructions || job.additionalNotes || '',
             frequency: job.frequency || job.recurringFrequency || job.schedule?.frequency || '',
             status: job.status || 'Completed',
-            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
+            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
@@ -178,10 +178,10 @@ const JobDetailsCompletedPage = () => {
               afterImages: afterImages
             }
           };
-          
+
           console.log('📸 Final transformed data:', transformedData);
           setJobData(transformedData);
-          
+
           // Check if review already exists
           // First check localStorage for recently submitted review
           const recentReviewKey = `review_${jobId}`;
@@ -198,22 +198,22 @@ const JobDetailsCompletedPage = () => {
               // Error parsing localStorage review
             }
           }
-          
+
           try {
             const reviewStatusResponse = await reviewsAPI.checkReviewStatus(jobId);
-            
+
             if (reviewStatusResponse.success && reviewStatusResponse.data) {
               const reviewData = reviewStatusResponse.data;
-              
+
               if (reviewData.hasReviewed || reviewData.existingReview || reviewData.review || reviewData.rating || reviewData.likedAspects) {
                 // Extract review data from different possible structures
                 const actualReview = reviewData.existingReview || reviewData.review || reviewData;
-                
+
                 // Try multiple field names for each data type
                 const rating = actualReview.rating || reviewData.rating || actualReview.starRating || reviewData.starRating || 0;
                 const tags = actualReview.likedAspects || actualReview.tags || reviewData.tags || reviewData.likedAspects || [];
                 const feedbackText = actualReview.feedback || reviewData.feedback || actualReview.comment || reviewData.comment || '';
-                
+
                 // Only set hasReviewed to true if we actually have meaningful data
                 if (rating > 0 || tags.length > 0 || feedbackText.trim() !== '') {
                   setHasReviewed(true);
@@ -247,7 +247,7 @@ const JobDetailsCompletedPage = () => {
               // Direct review fetch failed
             }
           }
-          
+
           // Fetch invoice data if available
           try {
             const invoiceResponse = await jobDetailsAPI.getStripeInvoice(jobId);
@@ -280,7 +280,7 @@ const JobDetailsCompletedPage = () => {
     try {
       setSubmittingReview(true);
       setErrorMessage(null);
-      
+
       const response = await reviewsAPI.createReview(
         jobId,
         selectedRating,
@@ -295,14 +295,14 @@ const JobDetailsCompletedPage = () => {
           feedback: feedback,
           submittedAt: new Date().toISOString()
         };
-        
+
         setHasReviewed(true);
         setExistingReview(reviewData);
-        
+
         // Store in localStorage for immediate display
         const recentReviewKey = `review_${jobId}`;
         localStorage.setItem(recentReviewKey, JSON.stringify(reviewData));
-        
+
         setSuccessMessage('Review submitted successfully!');
         setTimeout(() => setSuccessMessage(null), 3000);
       }
@@ -342,20 +342,20 @@ const JobDetailsCompletedPage = () => {
     try {
       setCompletingJob(true);
       setErrorMessage(null);
-      
+
       // Update job status to completed
       const response = await jobsAPI.updateJobStatus(jobId, 'completed');
-      
+
       if (response.success) {
         // Update local job data status
         setJobData(prev => ({
           ...prev,
           status: 'completed'
         }));
-        
+
         setSuccessMessage('Job marked as completed! You can now review your cleaner.');
         setTimeout(() => setSuccessMessage(null), 3000);
-        
+
         // Refresh job data to get updated status
         const jobResponse = await jobsAPI.getJobById(jobId);
         if (jobResponse.success && jobResponse.data) {
@@ -363,15 +363,15 @@ const JobDetailsCompletedPage = () => {
           setJobData(prev => ({
             ...prev,
             status: job.status || 'completed',
-            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
+            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
-            }) : new Date().toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'short', 
+            }) : new Date().toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
               day: 'numeric',
               hour: '2-digit',
               minute: '2-digit'
@@ -399,7 +399,7 @@ const JobDetailsCompletedPage = () => {
 
     try {
       const blob = await jobDetailsAPI.downloadInvoice(jobId);
-      
+
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -409,7 +409,7 @@ const JobDetailsCompletedPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       setSuccessMessage('Invoice downloaded successfully!');
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (error) {
@@ -428,7 +428,10 @@ const JobDetailsCompletedPage = () => {
         <div className="max-w-7xl mx-auto min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="text-lg text-red-600 mb-4">{error}</div>
-            <Button onClick={() => navigate(-1)}>Go Back</Button>
+            <Button onClick={() => {
+              const savedTab = localStorage.getItem('customerActiveTab');
+              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            }}>Go Back</Button>
           </div>
         </div>
       </>
@@ -441,7 +444,10 @@ const JobDetailsCompletedPage = () => {
         <div className="max-w-7xl mx-auto min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="text-lg text-gray-600">Job not found</div>
-            <Button onClick={() => navigate(-1)}>Go Back</Button>
+            <Button onClick={() => {
+              const savedTab = localStorage.getItem('customerActiveTab');
+              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            }}>Go Back</Button>
           </div>
         </div>
       </>
@@ -451,7 +457,14 @@ const JobDetailsCompletedPage = () => {
   return (
     <>
       <div className="max-w-7xl mx-auto min-h-screen">
-        <PageHeader title={`Job #${jobData.jobId} - ${jobData.title}`} className="py-3 pl-3" />
+        <PageHeader
+          title={`Job #${jobData.jobId} - ${jobData.title}`}
+          className="py-3 pl-3"
+          onBack={() => {
+            const savedTab = localStorage.getItem('customerActiveTab');
+            navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+          }}
+        />
 
         {/* Success Message */}
         {successMessage && (
@@ -478,7 +491,7 @@ const JobDetailsCompletedPage = () => {
           <div className="flex items-center">
             <div className="w-2 h-2 bg-[#1EB154] rounded-full mr-3"></div>
             <span className="text-green-500 font-medium">
-              Completed on 
+              Completed on
             </span>
           </div>
         </div>
@@ -490,37 +503,36 @@ const JobDetailsCompletedPage = () => {
             <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
               <UserRound className="w-6 h-6 text-gray-400" strokeWidth={2} />
             </div>
-            
+
             <div className="flex-1">
               <div className="flex items-center space-x-2">
                 <h3 className="font-semibold text-primary-500">Cleaner #{jobData.cleaner.id}</h3>
               </div>
-              
+
               <div className="flex items-center mt-1 space-x-2">
                 <div className="flex items-center space-x-1 bg-[#FFF2DE] px-2 py-1 rounded-full" >
                   <img src={RatingIcon} alt="Rating" className="w-4 h-4" />
                   <span className="text-sm font-medium text-primary-500 font-medium">{jobData.cleaner.rating}</span>
                 </div>
                 {jobData.cleaner.tier && jobData.cleaner.tier !== 'none' && (
-                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border ${
-                    jobData.cleaner.tier === 'gold' 
-                      ? 'bg-gradient-to-r from-white to-[#FFDBAE] border-[#FFDBAE]'
-                      : jobData.cleaner.tier === 'silver'
+                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border ${jobData.cleaner.tier === 'gold'
+                    ? 'bg-gradient-to-r from-white to-[#FFDBAE] border-[#FFDBAE]'
+                    : jobData.cleaner.tier === 'silver'
                       ? 'bg-gradient-to-r from-white to-[#E9E9E9] border-primary-200'
                       : jobData.cleaner.tier === 'bronze'
-                      ? 'bg-gradient-to-r from-white to-[#D4A574] border-[#CD7F32]'
-                      : 'bg-gradient-to-r from-white to-gray-200 border-gray-300'
-                  }`}>
-                    <img 
+                        ? 'bg-gradient-to-r from-white to-[#D4A574] border-[#CD7F32]'
+                        : 'bg-gradient-to-r from-white to-gray-200 border-gray-300'
+                    }`}>
+                    <img
                       src={
-                        jobData.cleaner.tier === 'gold' 
-                          ? GoldBadgeIcon 
+                        jobData.cleaner.tier === 'gold'
+                          ? GoldBadgeIcon
                           : jobData.cleaner.tier === 'silver'
-                          ? SilverBadgeIcon
-                          : BronzeBadgeIcon
-                      } 
-                      alt="Badge" 
-                      className="w-5 h-5" 
+                            ? SilverBadgeIcon
+                            : BronzeBadgeIcon
+                      }
+                      alt="Badge"
+                      className="w-5 h-5"
                     />
                     <span className="text-sm text-primary-500 font-medium ml-1 capitalize">{jobData.cleaner.tier} Tier</span>
                   </div>
@@ -567,19 +579,18 @@ const JobDetailsCompletedPage = () => {
                 <img src={PdfIcon} alt="PDF" className="w-5 h-5 mr-2" />
                 <span className="text-gray-700">Invoice_{jobData.jobId}.pdf</span>
               </div>
-              <button 
+              <button
                 onClick={handleDownloadInvoice}
                 className="cursor-pointer hover:opacity-75"
               >
                 <img src={DownloadIcon} alt="Download" className="w-5 h-5 text-gray-500" />
               </button>
             </div>
-            
+
             {/* Stripe Invoice Status */}
             <div className="mt-2 text-xs text-gray-500">
-              Status: <span className={`font-medium ${
-                invoiceData.status === 'paid' ? 'text-green-600' : 'text-yellow-600'
-              }`}>
+              Status: <span className={`font-medium ${invoiceData.status === 'paid' ? 'text-green-600' : 'text-yellow-600'
+                }`}>
                 {invoiceData.status?.toUpperCase()}
               </span>
             </div>
@@ -624,15 +635,14 @@ const JobDetailsCompletedPage = () => {
             <h3 className="text-lg font-semibold text-primary-500 mb-4">Work Progress</h3>
             <div className="space-y-3">
               {occurrences.map((occurrence) => (
-                <div 
-                  key={occurrence._id} 
-                  className={`flex items-center justify-between p-3 rounded-lg border-2 ${
-                    occurrence.status === 'completed' 
-                      ? 'bg-green-50 border-green-300' 
-                      : occurrence.status === 'pending_customer_confirmation'
+                <div
+                  key={occurrence._id}
+                  className={`flex items-center justify-between p-3 rounded-lg border-2 ${occurrence.status === 'completed'
+                    ? 'bg-green-50 border-green-300'
+                    : occurrence.status === 'pending_customer_confirmation'
                       ? 'bg-blue-50 border-blue-300'
                       : 'bg-gray-50 border-gray-200'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
@@ -651,8 +661,8 @@ const JobDetailsCompletedPage = () => {
                         {occurrence.label}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {new Date(occurrence.scheduledDate).toLocaleDateString('en-US', { 
-                          month: 'short', 
+                        {new Date(occurrence.scheduledDate).toLocaleDateString('en-US', {
+                          month: 'short',
                           day: 'numeric',
                           year: 'numeric'
                         })}
@@ -669,13 +679,12 @@ const JobDetailsCompletedPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        occurrence.status === 'completed' 
-                          ? 'bg-green-100 text-green-700'
-                          : occurrence.status === 'pending_customer_confirmation'
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${occurrence.status === 'completed'
+                        ? 'bg-green-100 text-green-700'
+                        : occurrence.status === 'pending_customer_confirmation'
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-gray-100 text-gray-600'
-                      }`}>
+                        }`}>
                         {occurrence.statusDisplay}
                       </span>
                     </div>
@@ -746,19 +755,19 @@ const JobDetailsCompletedPage = () => {
                     Submitted
                   </span>
                 </div>
-                
+
                 {/* Star Rating - Display Only */}
                 <div className="flex space-x-1 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <img 
+                    <img
                       key={star}
-                      src={star <= selectedRating ? RatingIcon : Rating2Icon} 
-                      alt={`Star ${star}`} 
+                      src={star <= selectedRating ? RatingIcon : Rating2Icon}
+                      alt={`Star ${star}`}
                       className="w-8 h-8"
                     />
                   ))}
                 </div>
-                
+
                 {/* Selected Tags - Display Only */}
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2">What you liked:</p>
@@ -777,7 +786,7 @@ const JobDetailsCompletedPage = () => {
                     <p className="text-sm text-gray-500 italic">No specific aspects selected</p>
                   )}
                 </div>
-                
+
                 {/* Feedback - Display Only */}
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2">Your feedback:</p>
@@ -789,7 +798,7 @@ const JobDetailsCompletedPage = () => {
                     <p className="text-sm text-gray-500 italic">No additional feedback provided</p>
                   )}
                 </div>
-                
+
                 {/* Go to Dashboard Button */}
                 <div className="flex justify-end mt-4">
                   <Button
@@ -804,44 +813,43 @@ const JobDetailsCompletedPage = () => {
               // Show review form
               <>
                 <h3 className="font-semibold text-primary-500 mb-1">Rate Your Cleaner</h3>
-                
+
                 {/* Star Rating */}
                 <div className="flex space-x-1 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
                       onClick={() => setSelectedRating(star)}
-                      className="focus:outline-none cursor-pointer" 
+                      className="focus:outline-none cursor-pointer"
                     >
-                      <img 
-                        src={star <= selectedRating ? RatingIcon : Rating2Icon} 
-                        alt={`Star ${star}`} 
+                      <img
+                        src={star <= selectedRating ? RatingIcon : Rating2Icon}
+                        alt={`Star ${star}`}
                         className="w-8 h-8"
                       />
                     </button>
                   ))}
                 </div>
-                
+
                 {/* Feedback Question */}
                 <p className="text-gray-700 mb-3">What did you like about your cleaner?</p>
-                
+
                 {/* Feedback Tags */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {feedbackTags.map((tag) => (
                     <button
                       key={tag}
                       onClick={() => handleTagSelect(tag)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer ${
-                        selectedTags.includes(tag)
-                          ? 'bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]'
-                          : 'bg-[#F9FAFB] text-[#374151] border border-primary-200'
-                      }`}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors cursor-pointer ${selectedTags.includes(tag)
+                        ? 'bg-[#EBF2FD] text-primary-600 border border-[#9CC0F6]'
+                        : 'bg-[#F9FAFB] text-[#374151] border border-primary-200'
+                        }`}
                     >
                       {tag}
                     </button>
                   ))}
                 </div>
-                
+
                 {/* Feedback Text Area */}
                 <div className="text-primary-500 font-semibold text-sm mb-1"> Anything specific we should know? <span className="text-primary-200 font-medium text-sm">(Optional)</span></div>
                 <textarea
@@ -851,7 +859,7 @@ const JobDetailsCompletedPage = () => {
                   className="w-full p-3 border border-primary-200 rounded-xl! resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
                 />
-                
+
                 {/* Submit Button */}
                 <div className="flex justify-end mt-4">
                   <Button

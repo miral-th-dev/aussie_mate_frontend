@@ -29,30 +29,27 @@ const HelpSupportPage = () => {
 
         {/* Need Help Section */}
         <div className="mb-6 rounded-2xl shadow-custom">
-          <div className="relative rounded-xl p-4 sm:p-10 overflow-hidden">
+          <div className="relative rounded-xl p-6 sm:p-10 overflow-hidden flex flex-col sm:block items-center sm:items-start text-center sm:text-left">
             {/* Background Image */}
             <div className="absolute inset-0">
               <img src={HelpBG} alt="Help Background" className="w-full h-full object-cover" />
             </div>
-            
+
             {/* Question Marks Background */}
-            <div className="absolute right-4 top-4 flex items-center justify-center">
-              <div className="relative">
-                {/* Main Question Mark */}
-                <img 
-                  src={QuestionMarkIcon} 
-                  alt="Question Mark" 
-                  className="w-32 h-32"
-                />
-              </div>
+            <div className="relative sm:absolute right-4 top-4 flex items-center justify-center mb-6 sm:mb-0 order-1 sm:order-none">
+              <img
+                src={QuestionMarkIcon}
+                alt="Question Mark"
+                className="w-24 h-24 sm:w-32 sm:h-32"
+              />
             </div>
 
             {/* Content Overlay */}
-            <div className="relative z-10 pr-20">
-              <h2 className="text-3xl font-semibold text-primary-500 mb-2">
+            <div className="relative z-10 sm:pr-24 order-2 sm:order-none">
+              <h2 className="text-2xl sm:text-3xl font-semibold text-primary-500 mb-2">
                 Need help?
               </h2>
-              <p className="text-[#374151] font-medium text-lg leading-relaxed">
+              <p className="text-[#374151] font-medium text-base sm:text-lg leading-relaxed max-w-[280px] sm:max-w-none mx-auto sm:mx-0">
                 We're here to assist you with bookings, payments, and more.
               </p>
             </div>
@@ -61,7 +58,7 @@ const HelpSupportPage = () => {
 
         {/* Live Chat Support Section */}
         <div className="mb-6">
-          <div 
+          <div
             className="bg-white rounded-2xl border border-gray-200 shadow-custom p-4 cursor-pointer hover:shadow-lg transition-shadow"
             onClick={handleLiveChat}
           >
@@ -70,7 +67,7 @@ const HelpSupportPage = () => {
               <div className="flex-shrink-0">
                 <img src={MessageIcon} alt="Live Chat" className="w-10 h-10" />
               </div>
-              
+
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-semibold text-primary-500 mb-1">
@@ -80,7 +77,7 @@ const HelpSupportPage = () => {
                   Talk directly to an Aussie Mate support admin.
                 </p>
               </div>
-              
+
               {/* Arrow Icon */}
               <div className="flex-shrink-0">
                 <img src={RightIcon} alt="Arrow" className="w-5 h-5 text-gray-400" />

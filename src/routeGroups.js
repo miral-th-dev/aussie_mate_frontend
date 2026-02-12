@@ -1,7 +1,5 @@
 import React from 'react'
-
-// Shared pages
-const HomePage = React.lazy(() => import('./pages/HomePage'))
+import PlatformPolicyPage from './pages/legal/PlatformPolicyPage'
 
 export const CLEANER_ROLES = [
   'Professional Cleaner',
@@ -20,9 +18,6 @@ const NDISPlanInfoPage = React.lazy(() => import('./pages/auth/NDISPlanInfoPage'
 const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'))
 const ResetPasswordPage = React.lazy(() => import('./pages/auth/ResetPasswordPage'))
 const VerifyDocumentsPage = React.lazy(() => import('./pages/auth/VerifyDocumentsPage'))
-
-// Legal pages
-const PlatformPolicyPage = React.lazy(() => import('./pages/legal/PlatformPolicyPage'))
 
 // Customer pages
 const CustomerDashboard = React.lazy(() => import('./pages/customer/CustomerDashboard'))
@@ -69,17 +64,6 @@ const EarningsPage = React.lazy(() => import('./pages/cleaner/EarningsPage'))
 // Shared pages
 const StripeSuccessPage = React.lazy(() => import('./pages/StripeSuccessPage'))
 
-export const publicRoutes = [
-  { path: '/', component: HomePage },
-  { path: '/login', component: LoginPage },
-  { path: '/select-role', component: RoleSelectionPage },
-  { path: '/signup', component: SignupPage },
-  { path: '/ndis-plan-info', component: NDISPlanInfoPage },
-  { path: '/forgot-password', component: ForgotPasswordPage },
-  { path: '/reset-password', component: ResetPasswordPage },
-  { path: '/platform-policy', component: PlatformPolicyPage, showHeader: true },
-]
-
 export const authRoutes = [
   { path: '/login', component: LoginPage },
   { path: '/select-role', component: RoleSelectionPage },
@@ -87,6 +71,7 @@ export const authRoutes = [
   { path: '/ndis-plan-info', component: NDISPlanInfoPage },
   { path: '/forgot-password', component: ForgotPasswordPage },
   { path: '/reset-password', component: ResetPasswordPage },
+  { path: '/platform-policy', component: PlatformPolicyPage, showHeader: true },
 ]
 
 export const customerRoutes = [
@@ -118,7 +103,7 @@ export const cleanerRoutes = [
   { path: '/verify-documents', component: VerifyDocumentsPage, showHeader: false },
   { path: '/verification', component: VerificationStatusPage },
   { path: '/availability', component: AvailabilityPage },
-  { path: '/payments', component: PaymentsPayoutsPage, showHeader: true },
+  { path: '/payments', component: PaymentsPayoutsPage },
   { path: '/reviews', component: ReviewsPage },
   { path: '/set-cleaner-location', component: SetCleanerLocationPage },
   { path: '/cleaner-dashboard', component: CleanerDashboard },
@@ -131,7 +116,7 @@ export const cleanerRoutes = [
   { path: '/chat/:jobId', component: CleanerChatPage },
   { path: '/earnings', component: EarningsPage },
   { path: '/cleaner/stripe/success', component: StripeSuccessPage },
-  { path: '/location', component: LocationPage, allowedRoles: ['Customer', ...CLEANER_ROLES], showHeader: false },
   { path: '/platform-policy', component: PlatformPolicyPage },
+  { path: '/location', component: LocationPage, allowedRoles: ['Customer', ...CLEANER_ROLES], showHeader: false },
 ]
 

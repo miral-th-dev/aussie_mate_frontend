@@ -2,13 +2,14 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/layout/PageHeader';
+import AppLayout from '../../components/layout/AppLayout';
 
 const PlatformPolicyPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <AppLayout>
+      <div className="max-w-4xl mx-auto  py-8 px-4">
         {/* Header */}
         {/* <div className="text-center mb-8">
    
@@ -19,15 +20,15 @@ const PlatformPolicyPage = () => {
             Premium Marketplace Standards – Independent Contractor Model – No Insurance Provided
           </p>
         </div> */}
-         <PageHeader
-  title="Platform Policy"
-  onBack={() => navigate(-1)}
-  className="mb-4 sm:mb-6"
-  titleClassName="text-base sm:text-lg md:text-xl font-semibold text-primary-500"
-/>
+        <PageHeader
+          title="Platform Policy"
+          onBack={() => navigate(-1)}
+          className="mb-4 sm:mb-6"
+          titleClassName="text-base sm:text-lg md:text-xl font-semibold text-primary-500"
+        />
         {/* Policy Content */}
         <div className="bg-white rounded-lg shadow-sm p-6 md:p-8 space-y-8">
-          
+
           {/* Section 1: Definitions */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. DEFINITIONS</h2>
@@ -66,12 +67,12 @@ const PlatformPolicyPage = () => {
           {/* Section 3: Platform Overview */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">3. PLATFORM OVERVIEW</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">3.1 About AUSSIEMATE</h3>
               <p className="text-gray-700 leading-relaxed">
-                AUSSIEMATE is a digital marketplace connecting customers with independent contractors for 
-                a wide range of services. The platform facilitates communication, booking, and payment but 
+                AUSSIEMATE is a digital marketplace connecting customers with independent contractors for
+                a wide range of services. The platform facilitates communication, booking, and payment but
                 does not provide the services listed.
               </p>
             </div>
@@ -95,7 +96,7 @@ const PlatformPolicyPage = () => {
           {/* Section 4: Customer Policy */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">4. CUSTOMER POLICY</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">4.1 Job Posting Requirements</h3>
               <p className="text-gray-700 mb-3">Customers must ensure job listings:</p>
@@ -154,7 +155,7 @@ const PlatformPolicyPage = () => {
           {/* Section 5: Contractor Policy */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">5. CONTRACTOR POLICY</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">5.1 Eligibility Requirements</h3>
               <p className="text-gray-700 mb-3">Contractors must:</p>
@@ -208,7 +209,7 @@ const PlatformPolicyPage = () => {
           {/* Section 6: Cancellation Policy */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">6. CANCELLATION POLICY</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">6.1 Customer Cancellations</h3>
               <div className="mb-4">
@@ -277,7 +278,7 @@ const PlatformPolicyPage = () => {
           {/* Section 7: Safety & Risk Policy */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">7. SAFETY & RISK POLICY</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">7.1 General Safety</h3>
               <p className="text-gray-700 mb-3">All users must:</p>
@@ -321,7 +322,7 @@ const PlatformPolicyPage = () => {
           {/* Section 8: Service Category Standards */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">8. SERVICE CATEGORY STANDARDS</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">8.1 Commercial Cleaning</h3>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
@@ -403,7 +404,7 @@ const PlatformPolicyPage = () => {
           {/* Section 9: User Content & Communication */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">9. USER CONTENT & COMMUNICATION</h2>
-            
+
             <div className="mb-6">
               <p className="text-gray-700 mb-3">Users must not upload or send:</p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
@@ -433,7 +434,7 @@ const PlatformPolicyPage = () => {
           {/* Section 10: Prohibited Use of Platform */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">10. PROHIBITED USE OF PLATFORM</h2>
-            
+
             <p className="text-gray-700 mb-3">Users must not:</p>
             <ul className="list-disc pl-6 space-y-2 text-gray-700">
               <li>Circumvent AUSSIEMATE fees</li>
@@ -449,7 +450,7 @@ const PlatformPolicyPage = () => {
           {/* Section 11: Intellectual Property */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">11. INTELLECTUAL PROPERTY</h2>
-            
+
             <div className="mb-6">
               <p className="text-gray-700 mb-3">
                 All AUSSIEMATE branding, logos, designs, text, images, and technology are the property of AUSSIEMATE.
@@ -474,7 +475,7 @@ const PlatformPolicyPage = () => {
           {/* Section 12: Account Termination Rights */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">12. ACCOUNT TERMINATION RIGHTS</h2>
-            
+
             <div className="mb-6">
               <p className="text-gray-700 mb-3">
                 AUSSIEMATE may suspend or terminate accounts at its discretion for:
@@ -500,7 +501,7 @@ const PlatformPolicyPage = () => {
           {/* Section 13: Dispute Resolution */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">13. DISPUTE RESOLUTION</h2>
-            
+
             <div className="mb-6">
               <p className="text-gray-700 mb-3">AUSSIEMATE may request:</p>
               <ul className="list-disc pl-6 space-y-2 text-gray-700">
@@ -534,7 +535,7 @@ const PlatformPolicyPage = () => {
           {/* Section 14: Fees & Charges */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">14. FEES & CHARGES</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">14.1 Platform Service Fee</h3>
               <p className="text-gray-700">
@@ -581,7 +582,7 @@ const PlatformPolicyPage = () => {
           {/* Section 15: Limitation of Liability */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">15. LIMITATION OF LIABILITY</h2>
-            
+
             <p className="text-gray-700 mb-3">AUSSIEMATE is not liable for:</p>
             <ul className="list-disc pl-6 space-y-2 text-gray-700">
               <li>Injury</li>
@@ -602,7 +603,7 @@ const PlatformPolicyPage = () => {
           {/* Section 16: Indemnity */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">16. INDEMNITY</h2>
-            
+
             <p className="text-gray-700 mb-3">
               Customers and contractors agree to indemnify AUSSIEMATE against:
             </p>
@@ -621,7 +622,7 @@ const PlatformPolicyPage = () => {
           {/* Section 17: Governing Law */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">17. GOVERNING LAW</h2>
-            
+
             <p className="text-gray-700">
               These policies are governed by the laws of Queensland, Australia.
             </p>
@@ -630,7 +631,7 @@ const PlatformPolicyPage = () => {
           {/* Section 18: Amendments */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">18. AMENDMENTS</h2>
-            
+
             <p className="text-gray-700 mb-3">
               AUSSIEMATE may update these policies at any time.
             </p>
@@ -642,7 +643,7 @@ const PlatformPolicyPage = () => {
           {/* Section 19: Severability */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">19. SEVERABILITY</h2>
-            
+
             <p className="text-gray-700">
               If any part of this document is found invalid, the remaining sections remain fully enforceable.
             </p>
@@ -651,7 +652,7 @@ const PlatformPolicyPage = () => {
           {/* Section 20: App Store Compliance & Verification Policy */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">20. APP STORE COMPLIANCE & VERIFICATION POLICY</h2>
-            
+
             <div className="mb-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">20.1 Transparency Requirements</h3>
               <p className="text-gray-700">
@@ -720,20 +721,20 @@ const PlatformPolicyPage = () => {
           {/* Navigation */}
           <div className="border-t pt-6 mt-8">
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-              <Link 
+              <Link
                 to="/"
                 className="text-blue-600 hover:text-blue-700 font-medium flex items-center"
               >
                 ← Back to Home
               </Link>
               <div className="flex gap-4">
-                <Link 
+                <Link
                   to="/terms"
                   className="text-blue-600 hover:text-blue-700 font-medium"
                 >
                   Terms of Service
                 </Link>
-                <Link 
+                <Link
                   to="/privacy"
                   className="text-blue-600 hover:text-blue-700 font-medium"
                 >
@@ -749,7 +750,7 @@ const PlatformPolicyPage = () => {
           <p>Last updated: {new Date().toLocaleDateString()}</p>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

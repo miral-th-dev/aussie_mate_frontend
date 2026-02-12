@@ -18,13 +18,13 @@ import { calculatePayoutAmounts } from '../../utils/paymentCalculations';
 // Helper functions for weekly job history
 const generateWeeklySchedule = (job, workProgress, occurrences) => {
   if (!occurrences || !Array.isArray(occurrences)) return [];
-  
+
   return occurrences.map(occurrence => {
     // Convert status from API to frontend format
     let status = 'pending';
     let photos = 0;
-    
-    switch(occurrence.status) {
+
+    switch (occurrence.status) {
       case 'completed':
         status = 'completed';
         photos = occurrence.beforePhotosCount + occurrence.afterPhotosCount;
@@ -43,12 +43,12 @@ const generateWeeklySchedule = (job, workProgress, occurrences) => {
         photos = 0;
         break;
     }
-    
+
     // Parse week and day from label (e.g., "Monday - Week 1")
     const labelParts = occurrence.label.split(' - ');
     const day = labelParts[0] || 'Unknown';
     const week = labelParts[1] ? parseInt(labelParts[1].replace('Week ', '')) : 1;
-    
+
     return {
       id: occurrence._id,
       week,
@@ -99,12 +99,12 @@ const CustomerInProgressJobDetailsPage = () => {
 
         if (progressResponse.success && progressResponse.data) {
           const { job, cleaner, workProgress, occurrences, paymentSummary } = progressResponse.data;
-          
+
           setJob(job);
           setCleaner(cleaner);
           setWorkProgress(workProgress);
           setOccurrences(occurrences);
-          
+
           // Generate weekly schedule from occurrences data
           if (job.frequency === 'Weekly' && occurrences && occurrences.length > 0) {
             const schedule = generateWeeklySchedule(job, workProgress, occurrences);
@@ -381,11 +381,11 @@ const CustomerInProgressJobDetailsPage = () => {
     try {
       // For customer side, this confirms completion and releases payment
       // The cleaner should have already uploaded photos and status should be pending_customer_confirmation
-      
+
       // Update local state first for immediate UI feedback
-      setWeeklySchedule(prev => 
-        prev.map(item => 
-          item.id === sessionId 
+      setWeeklySchedule(prev =>
+        prev.map(item =>
+          item.id === sessionId
             ? { ...item, status: 'completed', photos: item.photos || 2, amount: item.amount || 50 }
             : item
         )
@@ -393,15 +393,15 @@ const CustomerInProgressJobDetailsPage = () => {
 
       // Call API to confirm weekly completion and release payment to cleaner
       await jobsAPI.confirmWeeklyCompletion(jobId, sessionId);
-      
+
       // Show success message
       alert('Session confirmed! Payment has been released to cleaner.');
     } catch (error) {
       console.error('Error confirming weekly completion:', error);
       // Revert state on error
-      setWeeklySchedule(prev => 
-        prev.map(item => 
-          item.id === sessionId 
+      setWeeklySchedule(prev =>
+        prev.map(item =>
+          item.id === sessionId
             ? { ...item, status: 'pending_customer_confirmation' }
             : item
         )
@@ -494,10 +494,10 @@ const CustomerInProgressJobDetailsPage = () => {
 
   const getPreferredDaysDisplay = (preferredDays) => {
     if (!preferredDays || typeof preferredDays !== 'object') return '';
-    
+
     const days = Object.keys(preferredDays).filter(day => preferredDays[day] === true);
     if (days.length === 0) return '';
-    
+
     return days.join(', ');
   };
 
@@ -511,9 +511,9 @@ const CustomerInProgressJobDetailsPage = () => {
     const frequency = job.frequency || job.serviceFrequency || job.schedule?.frequency || 'One-time';
     const preferredDays = getPreferredDaysDisplay(job?.preferredDays);
     const repeatWeeks = getRepeatWeeksDisplay(job?.repeatWeeks);
-    
+
     let display = frequency;
-    
+
     if (preferredDays && repeatWeeks) {
       display += ` • ${preferredDays} • ${repeatWeeks}`;
     } else if (preferredDays) {
@@ -521,7 +521,7 @@ const CustomerInProgressJobDetailsPage = () => {
     } else if (repeatWeeks) {
       display += ` • ${repeatWeeks}`;
     }
-    
+
     return display;
   };
 
@@ -622,7 +622,10 @@ const CustomerInProgressJobDetailsPage = () => {
           <div className="bg-white rounded-2xl p-6 text-center">
             <p className="text-red-500">{error || 'Job not found'}</p>
             <Button
-              onClick={() => navigate(-1)}
+              onClick={() => {
+                const savedTab = localStorage.getItem('customerActiveTab');
+                navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+              }}
               variant="primary"
               className="mt-4"
             >
@@ -642,7 +645,10 @@ const CustomerInProgressJobDetailsPage = () => {
       <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
         <PageHeader
           title={`#${job.jobId || job._id?.slice(-6)} - ${getJobTitle(job)}`}
-          onBack={() => navigate(-1)}
+          onBack={() => {
+            const savedTab = localStorage.getItem('customerActiveTab');
+            navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+          }}
           className="py-4 px-4"
           titleClassName="text-lg font-semibold text-primary-500 truncate"
         />
@@ -767,16 +773,15 @@ const CustomerInProgressJobDetailsPage = () => {
                           {getCleanerRating()}
                         </div>
                         {getCleanerTier() && getCleanerTier() !== 'none' && (
-                          <div className={`flex items-center text-primary-500 font-medium px-2 py-1 rounded-full text-xs border-[0.6px] ${
-                            getCleanerTier() === 'gold'
-                              ? 'bg-gradient-to-r from-[#FFDBAE] to-[#FFE7C4] border-[#FFDBAE]'
-                              : getCleanerTier() === 'silver'
+                          <div className={`flex items-center text-primary-500 font-medium px-2 py-1 rounded-full text-xs border-[0.6px] ${getCleanerTier() === 'gold'
+                            ? 'bg-gradient-to-r from-[#FFDBAE] to-[#FFE7C4] border-[#FFDBAE]'
+                            : getCleanerTier() === 'silver'
                               ? 'bg-gradient-to-r from-[#FDFDFD] to-[#E9E9E9] border-[#E9E9E9]'
                               : getCleanerTier() === 'bronze'
-                              ? 'bg-gradient-to-r from-[#D4A574] to-[#E6C7A3] border-[#CD7F32]'
-                              : 'bg-gray-100 border-gray-300'
-                          }`}>
-                            <img 
+                                ? 'bg-gradient-to-r from-[#D4A574] to-[#E6C7A3] border-[#CD7F32]'
+                                : 'bg-gray-100 border-gray-300'
+                            }`}>
+                            <img
                               src={
                                 getCleanerTier() === 'gold'
                                   ? GoldBadgeIcon
@@ -856,8 +861,8 @@ const CustomerInProgressJobDetailsPage = () => {
                             {item.day} - Week {item.week}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {item.date.toLocaleDateString('en-US', { 
-                              month: 'short', 
+                            {item.date.toLocaleDateString('en-US', {
+                              month: 'short',
                               day: 'numeric',
                               year: 'numeric'
                             })}
@@ -902,20 +907,20 @@ const CustomerInProgressJobDetailsPage = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Progress Summary */}
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-600">
                       <span className="font-medium text-green-600">
                         {weeklySchedule.filter(item => item.status === 'completed').length}
-                      </span> completed • 
+                      </span> completed •
                       <span className="font-medium text-orange-600 ml-1">
                         {weeklySchedule.filter(item => item.status === 'pending_customer_confirmation').length}
-                      </span> pending confirmation • 
+                      </span> pending confirmation •
                       <span className="font-medium text-blue-600 ml-1">
                         {weeklySchedule.filter(item => item.status === 'in-progress').length}
-                      </span> in progress • 
+                      </span> in progress •
                       <span className="font-medium text-gray-600 ml-1">
                         {weeklySchedule.filter(item => item.status === 'pending').length}
                       </span> pending

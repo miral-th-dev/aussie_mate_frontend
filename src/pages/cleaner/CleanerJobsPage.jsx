@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PageHeader, PaginationRanges, Button } from '../../components';
 import DownIcon from '../../assets/down2.svg';
 import CalendarIcon from '../../assets/Calendar.svg';
@@ -11,7 +11,25 @@ import ChatIcon from '../../assets/message2.svg';
 
 const CleanerJobsPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('live-jobs');
+  const location = useLocation();
+
+  // Persistent activeTab using localStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    // Priority: location.state > localStorage > default
+    return location.state?.tab || localStorage.getItem('cleanerActiveTab') || 'live-jobs';
+  });
+
+  // Update tab if location state changes (e.g. navigating from dashboard to a specific tab)
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    localStorage.setItem('cleanerActiveTab', activeTab);
+  }, [activeTab]);
+
   const [showSortModal, setShowSortModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [jobs, setJobs] = useState([]); // jobs for the current page
@@ -124,26 +142,28 @@ const CleanerJobsPage = () => {
   ];
 
   // --- NEW: helper to fetch jobs list once per (status,page) and cache ---
-  const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal, search = '' }) => {
+  const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal, search = '', currentUserId }) => {
     // Convert status array to comma-separated string for API
     const statusParam = Array.isArray(status) ? status.join(',') : status;
-    
+
     // key includes status & page & search so cache is per page and search
-    const cacheKey = `${statusParam}::page:${page}::limit:${limit}::search:${search}`;
-    
+    const cacheKey = `${statusParam}::page:${page}::limit:${limit}::search:${search}::cleaner:${currentUserId}`;
+
     if (apiCache.current[cacheKey]) {
       return apiCache.current[cacheKey];
     }
 
     // call backend with status and search parameters
-    const result = await jobsAPI.getAllJobs({ 
-      status: statusParam, 
-      page, 
-      limit, 
+    const result = await jobsAPI.getAllJobs({
+      status: statusParam,
+      page,
+      limit,
       search,
-      signal 
+      cleanerId: statusParam.includes('accepted') || statusParam.includes('completed') ? currentUserId : undefined,
+      quotedBy: statusParam.includes('quotedByMe') ? currentUserId : undefined,
+      signal
     });
-    
+
     // normalize response: { jobs: [], total }
     const jobsArray = result?.data?.jobs || result?.data || [];
     const total = result?.data?.total || result?.total || jobsArray.length;
@@ -161,12 +181,12 @@ const CleanerJobsPage = () => {
       // If it has quotes array and assignedCleanerId, we can skip fetching full details
       const hasQuotes = Array.isArray(job.quotes) && job.quotes.length >= 0;
       const hasAssignedCleaner = job.assignedCleanerId !== undefined;
-      
+
       // If job already has the essential data, return it without making API call
       if (hasQuotes && hasAssignedCleaner) {
         return job;
       }
-      
+
       try {
         const details = await jobsAPI.getJobById(job._id || job.jobId || job.id, { signal });
         return (details.success && details.data) ? details.data : job;
@@ -202,21 +222,24 @@ const CleanerJobsPage = () => {
         };
 
         const statusParam = statusMap[activeTab] || 'posted';
-        
-        // Fetch jobs directly from API with status and search parameters
-        const result = await fetchJobsList({ 
-          status: statusParam, 
-          page: currentPage, 
-          limit: jobsPerPage, 
-          search: searchQuery.trim(), // Pass search query to backend
-          signal: controller.signal 
+        // Add a signature for my-bids to filter in fetchJobsList if needed
+        const effectiveStatus = activeTab === 'my-bids' ? `${statusParam},quotedByMe` : statusParam;
+
+        // Fetch a larger set to allow proper frontend filtering/pagination
+        const result = await fetchJobsList({
+          status: effectiveStatus,
+          page: 1, // Fetch bulk
+          limit: 200, // Increase limit to ensure we have enough to filter
+          search: searchQuery.trim(),
+          currentUserId,
+          signal: controller.signal
         });
-        
+
         let jobsList = result.jobs || [];
 
         // If 'my-bids', we need to filter for jobs where current cleaner has a pending quote
         if (activeTab === 'my-bids') {
-          // Fetch details for all jobs on this page to check quotes
+          // Fetch details for jobs to check quotes (we fetch more to ensure we can find 10 matches)
           const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
           const myFiltered = jobsWithDetails.filter(job => {
             if (!job.quotes || job.quotes.length === 0) return false;
@@ -225,10 +248,15 @@ const CleanerJobsPage = () => {
               return (qCleanerId === currentUserId || qCleanerId?.toString() === currentUserId?.toString()) && q.status === 'pending';
             });
           });
-          
-          setJobs(myFiltered.map(j => ({ ...transformJobForUI(j) })));
-          setTotalJobs(result.total || 0); // Use total from API for pagination
-          setTotalPages(Math.max(1, Math.ceil((result.total || 0) / jobsPerPage)));
+
+          const transformedAll = myFiltered.map(transformJobForUI);
+          const totalFiltered = transformedAll.length;
+          const startIndex = (currentPage - 1) * jobsPerPage;
+          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
+
+          setJobs(pageJobs);
+          setTotalJobs(totalFiltered);
+          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
           setLoading(false);
           return;
         }
@@ -236,31 +264,35 @@ const CleanerJobsPage = () => {
         // For 'accepted' tab, filter for jobs assigned to current cleaner
         if (activeTab === 'accepted') {
           const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-          
+
           // Filter for jobs assigned to current cleaner
           const acceptedJobs = jobsWithDetails.filter(job => {
             const isAccepted = job.status === 'accepted' || job.status === 'in_progress';
-            const isAssigned = 
+            const isAssigned =
               job.assignedCleanerId === currentUserId ||
               job.assignedCleanerId?.toString() === currentUserId?.toString() ||
               job.cleanerId === currentUserId ||
               job.cleanerId?.toString() === currentUserId?.toString() ||
               job.acceptedBy === currentUserId ||
               job.acceptedBy?.toString() === currentUserId?.toString();
-            
+
             // Also check if any quote from current cleaner is accepted
             const hasAcceptedQuote = job.quotes?.some(q => {
               const qCleanerId = q.cleanerId?._id || q.cleanerId?.id || q.cleanerId;
               return (qCleanerId === currentUserId || qCleanerId?.toString() === currentUserId?.toString()) && q.status === 'accepted';
             });
-            
+
             return isAccepted && (isAssigned || hasAcceptedQuote);
           });
-          
-          const transformed = acceptedJobs.map(transformJobForUI);
-          setJobs(transformed);
-          setTotalJobs(result.total || 0);
-          setTotalPages(Math.max(1, Math.ceil((result.total || 0) / jobsPerPage)));
+
+          const transformedAll = acceptedJobs.map(transformJobForUI);
+          const totalFiltered = transformedAll.length;
+          const startIndex = (currentPage - 1) * jobsPerPage;
+          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
+
+          setJobs(pageJobs);
+          setTotalJobs(totalFiltered);
+          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
           setLoading(false);
           return;
         }
@@ -268,7 +300,7 @@ const CleanerJobsPage = () => {
         // For 'completed' tab, filter for jobs completed by current cleaner
         if (activeTab === 'completed') {
           const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-          
+
           const completedJobs = jobsWithDetails.filter(job => {
             if (job.status !== 'completed') return false;
             return (
@@ -282,32 +314,37 @@ const CleanerJobsPage = () => {
               job.completedBy?._id?.toString() === currentUserId?.toString()
             );
           });
-          
-          const transformed = completedJobs.map(transformJobForUI);
-          setJobs(transformed);
-          setTotalJobs(result.total || 0);
-          setTotalPages(Math.max(1, Math.ceil((result.total || 0) / jobsPerPage)));
+
+          const transformedAll = completedJobs.map(transformJobForUI);
+          const totalFiltered = transformedAll.length;
+          const startIndex = (currentPage - 1) * jobsPerPage;
+          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
+
+          setJobs(pageJobs);
+          setTotalJobs(totalFiltered);
+          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
           setLoading(false);
           return;
         }
 
-        // For 'live-jobs' tab, we don't need detailed job info, just transform directly
-        if (activeTab === 'live-jobs') {
-          const transformed = jobsList.map(transformJobForUI);
-          setJobs(transformed);
-          setTotalJobs(result.total || 0);
-          setTotalPages(Math.max(1, Math.ceil((result.total || 0) / jobsPerPage)));
-          setLoading(false);
-          return;
-        }
+        // All tabs now fall through to the logic below which handles 
+        // searchable filtering and slicing for the current page.
 
-        // For other tabs, fetch details and transform
-        const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-        const transformed = jobsWithDetails.map(transformJobForUI);
+        // Filter and transform for all tabs (including live-jobs)
+        const allTransformed = jobsList.map(transformJobForUI);
+        const filteredAll = allTransformed.filter(job => {
+          if (searchQuery.trim() === '') return true;
+          return job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            job.id?.toString().toLowerCase().includes(searchQuery.toLowerCase());
+        });
 
-        setJobs(transformed);
-        setTotalJobs(result.total || 0);
-        setTotalPages(Math.max(1, Math.ceil((result.total || 0) / jobsPerPage)));
+        const totalFiltered = filteredAll.length;
+        const startIndex = (currentPage - 1) * jobsPerPage;
+        const pageJobs = filteredAll.slice(startIndex, startIndex + jobsPerPage);
+
+        setJobs(pageJobs);
+        setTotalJobs(totalFiltered);
+        setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
       } catch (err) {
         if (err.name === 'AbortError') {
           // request aborted - ignore
@@ -400,11 +437,11 @@ const CleanerJobsPage = () => {
   // The UI uses `jobs`, `loading`, `error`, `totalPages`, `currentPage` etc. which are unchanged
 
   return (
-    <>
+    <div className='pb-6'>
       <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
         <PageHeader
           title="Jobs"
-          onBack={() => navigate(-1)}
+          onBack={() => navigate('/cleaner-dashboard')}
           className="py-3"
           rightSlot={
             <div
@@ -517,7 +554,7 @@ const CleanerJobsPage = () => {
                           {activeTab === 'completed' ? `Completed: ${job.date}` : job.date}
                         </span>
                       </div>
-                      
+
                       {/* My Quote Amount for My Bids tab */}
                       {activeTab === 'my-bids' && job.myQuote && (
                         <div className="flex items-center">
@@ -543,7 +580,7 @@ const CleanerJobsPage = () => {
                         </button>
                       </div>
                     )}
-                    
+
                     {/* View Details Button for In Progress Jobs */}
                     {activeTab === 'accepted' && job.originalJob?.status === 'in_progress' && (
                       <div className="flex items-center justify-end cursor-pointer mt-3">
@@ -565,9 +602,16 @@ const CleanerJobsPage = () => {
           </div>
 
           {/* Pagination */}
-          {!loading && filteredJobs.length > 0 && (
-            <div className="px-4 pb-6">
-              <PaginationRanges count={totalPages} page={currentPage} onChange={handlePageChange} siblingCount={1} boundaryCount={1} stackProps={{ className: 'mt-6' }} />
+          {!loading && (
+            <div className="px-4 pb-6 flex justify-center">
+              <PaginationRanges
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
+                siblingCount={1}
+                boundaryCount={1}
+                stackProps={{ className: 'mt-6' }}
+              />
             </div>
           )}
         </div>
@@ -697,7 +741,7 @@ const CleanerJobsPage = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

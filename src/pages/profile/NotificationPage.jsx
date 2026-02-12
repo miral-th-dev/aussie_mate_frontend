@@ -87,7 +87,7 @@ const NotificationPage = () => {
           className="mb-4 sm:mb-6"
           titleClassName="text-xl sm:text-2xl font-bold text-gray-900"
           rightSlot={
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
               <img src={SettingsIcon} alt="Settings" className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           }
@@ -143,13 +143,13 @@ const NotificationPage = () => {
                       <p className="text-xs sm:text-sm text-primary-200 font-medium mb-2 sm:mb-3 line-clamp-2">
                         {notification.description}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <button
+                      <div className="flex items-center justify-end">
+                        {/* <button
                           onClick={(e) => handleActionClick(notification, e)}
                           className="text-primary-600 hover:text-[#0088FF] text-xs sm:text-sm font-medium cursor-pointer"
                         >
                           {notification.action}
-                        </button>
+                        </button> */}
                         <span className="text-xs text-primary-200 font-medium ml-2">
                           {notification.timestamp}
                         </span>

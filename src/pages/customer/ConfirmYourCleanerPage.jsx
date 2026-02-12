@@ -47,8 +47,8 @@ const PaymentForm = ({ amount, jobId, paymentId, onClose, onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <PaymentElement />
+    <form onSubmit={handleSubmit} className="space-y-4 min-h-[300px]">
+      <PaymentElement options={{ layout: 'accordion' }} />
 
       {!paymentId && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
@@ -213,7 +213,7 @@ const ConfirmYourCleanerPage = () => {
       setError(msg);
     } catch (err) {
       console.error('❌ Payment error:', err);
-      setError(handlePaymentError(err));q
+      setError(handlePaymentError(err)); q
     } finally {
       setProcessing(false);
     }
@@ -377,7 +377,7 @@ const ConfirmYourCleanerPage = () => {
       {/* Payment Modal */}
       {showPaymentModal && clientSecret && paymentId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 relative animate-fade-in shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 relative animate-fade-in shadow-xl max-h-[95vh] overflow-visible">
             <button
               onClick={() => setShowPaymentModal(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"

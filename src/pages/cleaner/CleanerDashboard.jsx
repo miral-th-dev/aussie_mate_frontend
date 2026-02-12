@@ -8,7 +8,7 @@ import 'swiper/css/pagination'
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, BriefcaseBusiness, Calendar } from 'lucide-react'
 import { Button, Loader } from '../../components'
 import { useAuth } from '../../contexts/AuthContext'
-import { jobsAPI } from '../../services/api'
+import { jobsAPI, authAPI } from '../../services/api'
 import { getStatusColors } from '../../utils/statusUtils'
 import CleanerBG from '../../assets/cleanerBG.jpg'
 import BoldJobIcon from '../../assets/boldJob.svg'
@@ -146,15 +146,15 @@ const CleanerDashboard = () => {
         // Prefer scheduledDate, fallback to createdAt
         const dateToUse = job.scheduledDate || job.createdAt || job.updatedAt;
         if (!dateToUse) return 'Date not specified';
-        
+
         try {
           const date = new Date(dateToUse);
           if (Number.isNaN(date.getTime())) return 'Date not specified';
-          
+
           const day = date.getDate().toString().padStart(2, '0');
           const month = date.toLocaleDateString('en-AU', { month: 'short' });
           const year = date.getFullYear();
-          
+
           return `${day} ${month} ${year}`;
         } catch (error) {
           return 'Date not specified';
@@ -163,7 +163,7 @@ const CleanerDashboard = () => {
 
       const getAcceptedQuotePrice = (job, cleanerId) => {
         if (!job.quotes || !Array.isArray(job.quotes) || !cleanerId) return null;
-        
+
         // Find accepted quote for this cleaner
         const acceptedQuote = job.quotes.find(quote => {
           const quoteCleanerId = quote.cleanerId?._id || quote.cleanerId?.id || quote.cleanerId;
@@ -171,11 +171,11 @@ const CleanerDashboard = () => {
           const isAccepted = quote.status === 'accepted';
           return isMyQuote && isAccepted;
         });
-        
+
         if (acceptedQuote) {
           return acceptedQuote.price || acceptedQuote.quoteAmount || acceptedQuote.amount || null;
         }
-        
+
         return null;
       }
 
@@ -200,6 +200,10 @@ const CleanerDashboard = () => {
       const completedStatuses = new Set(['completed'])
 
       try {
+        // Fetch current user details to get the most accurate completedJobs count
+        const profileResponse = await authAPI.getCurrentUser().catch(() => null);
+        const freshUser = profileResponse?.data?.user || profileResponse?.user || (profileResponse?.success ? profileResponse.data : null);
+
         const allJobsResponse = await jobsAPI.getAllJobs({ page: 1, limit: 200 }).catch(() => null)
         const allJobs = extractJobs(allJobsResponse)
 
@@ -225,7 +229,7 @@ const CleanerDashboard = () => {
           const quotePrice = getAcceptedQuotePrice(job, cleanerId);
           const jobLocation = getJobLocation(job);
           const jobDate = getJobDate(job);
-          
+
           return {
             id: getJobIdentifier(job),
             rawId: job._id || job.id || job.jobId,
@@ -290,7 +294,7 @@ const CleanerDashboard = () => {
 
         setStats({
           weeklyEarnings: fallbackWeeklyEarnings,
-          completedJobs: completedJobEntries.length ?? 0,
+          completedJobs: freshUser?.completedJobs ?? user?.completedJobs ?? completedJobEntries.length ?? 0,
         })
       } catch (error) {
         setDashboardError(error.message || 'Failed to load dashboard data.')
@@ -301,6 +305,24 @@ const CleanerDashboard = () => {
 
     fetchDashboardData()
   }, [user])
+
+  const handleJobClick = (job) => {
+    const status = (job.statusRaw || job.status || '').toLowerCase().trim()
+    const jobIdentifier = job.rawId || job.id
+
+    if (!jobIdentifier) {
+      navigate('/cleaner-jobs')
+      return
+    }
+
+    if (status === 'completed') {
+      navigate(`/cleaner-job-completed/${jobIdentifier}`)
+    } else if (['in_progress', 'in progress', 'in-progress'].includes(status)) {
+      navigate(`/in-progress-job/${jobIdentifier}`)
+    } else {
+      navigate(`/job-details/${jobIdentifier}`)
+    }
+  }
 
   const greetingName = useMemo(() => {
     const name = user?.firstName || user?.name || ''
@@ -313,7 +335,7 @@ const CleanerDashboard = () => {
   }, [activeJobs, completedJobs])
 
   return (
-    <>
+    <div className='pb-6'>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Greeting + Availability */}
         <div className="flex flex-row sm:items-center justify-between pt-3 sm:pt-4 gap-3 sm:gap-0">
@@ -367,7 +389,7 @@ const CleanerDashboard = () => {
               <span className="ml-2 text-xs sm:text-sm md:text-xl text-primary-500 font-medium">Live Jobs near you</span>
             </div>
             <button
-              onClick={() => navigate('/cleaner-jobs')}
+              onClick={() => navigate('/cleaner-jobs', { state: { tab: 'live-jobs' } })}
               className="text-xs sm:text-sm md:text-lg text-primary-600 font-medium flex items-center cursor-pointer"
             >
               <span className="w-2 h-2 rounded-full bg-primary-500 mr-2"></span> {liveJobsLabel}</button>
@@ -382,7 +404,7 @@ const CleanerDashboard = () => {
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between sm:justify-end space-x-2">
               <Button
-                onClick={() => navigate('/cleaner-jobs')}
+                onClick={() => navigate('/cleaner-jobs', { state: { tab: 'accepted' } })}
                 size="sm"
                 className="bg-blue-500 hover:bg-blue-600 text-white font-medium text-xs sm:text-sm rounded-full px-2 flex items-center justify-center space-x-1"
                 icon={
@@ -448,7 +470,10 @@ const CleanerDashboard = () => {
             >
               {swiperJobs.map((job, index) => (
                 <SwiperSlide key={`job-${job.id || index}`}>
-                  <div className="bg-white rounded-2xl border border-[#F3F3F3] p-3 sm:p-4 md:p-5 shadow-custom min-h-[180px] sm:min-h-[200px]">
+                  <div
+                    className="bg-white rounded-2xl border border-[#F3F3F3] p-3 sm:p-4 md:p-5 shadow-custom min-h-[180px] sm:min-h-[200px] cursor-pointer hover:border-primary-300 transition-colors"
+                    onClick={() => handleJobClick(job)}
+                  >
                     <div className="flex flex-col justify-between h-full">
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-2">
@@ -485,20 +510,9 @@ const CleanerDashboard = () => {
                         size="sm"
                         fullWidth
                         className="mt-2 py-2 rounded-xl border border-primary-300 text-primary-600 font-medium hover:bg-primary-50 shadow-custom text-xs sm:text-sm"
-                        onClick={() => {
-                          const status = (job.statusRaw || job.status || '').toLowerCase()
-                          const jobIdentifier = job.rawId || job.id
-                          if (status === 'completed') {
-                            if (jobIdentifier) {
-                              navigate(`/cleaner-job-completed/${jobIdentifier}`)
-                            } else {
-                              navigate('/cleaner-jobs?tab=completed')
-                            }
-                          } else if (jobIdentifier) {
-                            navigate(`/cleaner-jobs/${jobIdentifier}`)
-                          } else {
-                            navigate('/cleaner-jobs')
-                          }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJobClick(job);
                         }}
                       >
                         {((job.statusRaw || job.status || '').toLowerCase() === 'completed') ? 'View Summary' : 'Open Job'}
@@ -515,7 +529,7 @@ const CleanerDashboard = () => {
           )}
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

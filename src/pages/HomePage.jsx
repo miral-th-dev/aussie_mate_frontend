@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import logo from '../assets/logo.png';
 import heroVideo from '../assets/onboarding_video.mp4';
 import rectangleImage from '../assets/Rectangle 516.png';
-import LoginPage from './auth/LoginPage';
+const LoginPage = React.lazy(() => import('./auth/LoginPage'));
 
 const HomePage = () => {
 

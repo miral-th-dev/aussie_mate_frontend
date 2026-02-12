@@ -19,10 +19,10 @@ const AdminChatDashboard = () => {
     }
 
     loadChatRooms();
-    
+
     // Refresh rooms every 30 seconds
     const interval = setInterval(loadChatRooms, 30000);
-    
+
     return () => clearInterval(interval);
   }, [user, navigate]);
 
@@ -62,12 +62,12 @@ const AdminChatDashboard = () => {
     // Pending rooms first
     if (!a.adminId && b.adminId) return -1;
     if (a.adminId && !b.adminId) return 1;
-    
+
     // Then by unread count
     if (a.unreadCount !== b.unreadCount) {
       return (b.unreadCount || 0) - (a.unreadCount || 0);
     }
-    
+
     // Then by last message time
     const aTime = a.lastMessage?.createdAt ? new Date(a.lastMessage.createdAt).getTime() : 0;
     const bTime = b.lastMessage?.createdAt ? new Date(b.lastMessage.createdAt).getTime() : 0;

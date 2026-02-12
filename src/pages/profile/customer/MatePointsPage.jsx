@@ -44,7 +44,7 @@ const MatePointsPage = () => {
         icon
       };
     });
-    
+
     // Show only first 2 items if not showing all
     return showAllHistory ? allHistory : allHistory.slice(0, 2);
   }, [history, showAllHistory]);
@@ -137,7 +137,7 @@ const MatePointsPage = () => {
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'unset';
@@ -174,7 +174,7 @@ const MatePointsPage = () => {
             <div className="absolute inset-0">
               <img src={MetaBG} alt="Rewards Background" className="w-full h-full object-cover" />
             </div>
-            
+
             {/* Content Overlay */}
             <div className="relative z-10 h-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
               <div className="flex-1 text-left">
@@ -199,9 +199,9 @@ const MatePointsPage = () => {
         <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 mb-6">
           <div>
             <div className="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden">
-              <div 
+              <div
                 className="h-4 rounded-full transition-all duration-1000 ease-out relative"
-                style={{ 
+                style={{
                   width: `${progressPercentage}%`,
                   background: 'linear-gradient(45deg, #3B82F6 25%, #1D4ED8 25%, #1D4ED8 50%, #3B82F6 50%, #3B82F6 75%, #1D4ED8 75%, #1D4ED8)',
                   backgroundSize: '20px 20px',
@@ -243,9 +243,9 @@ const MatePointsPage = () => {
             {availableRewards.map((reward) => {
               const pointsNeeded = reward.pointsRequired - reward.currentPoints;
               const isEligible = reward.currentPoints >= reward.pointsRequired;
-              
+
               return (
-                <div key={reward.id} className="rounded-xl p-6" style={{ 
+                <div key={reward.id} className="rounded-xl p-6" style={{
                   background: reward.bgColor,
                   border: reward.id === 1 ? '1px solid #D5DEFA' : '1px solid #CEF4C4'
                 }}>
@@ -257,14 +257,13 @@ const MatePointsPage = () => {
                   )}
                   <button
                     onClick={() => handleRedeem(reward)}
-                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors cursor-pointer ${
-                      isEligible
-                        ? 'hover:bg-opacity-90 text-white'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
+                    className={`w-full py-3 px-4 rounded-lg font-medium transition-colors cursor-pointer ${isEligible
+                      ? 'hover:bg-opacity-90 text-white'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
                     style={{
-                      backgroundColor: isEligible 
-                        ? (reward.id === 2 ? '#111827' : '#111827') 
+                      backgroundColor: isEligible
+                        ? (reward.id === 2 ? '#111827' : '#111827')
                         : undefined
                     }}
                     disabled={!isEligible}
@@ -284,25 +283,24 @@ const MatePointsPage = () => {
             {pointsHistory.map((item) => (
               <div key={item.id} className="flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0">
                 <div className="flex items-center">
-                  <img 
-                    src={item.icon} 
-                    alt={item.type} 
-                    className="w-6 h-6 mr-4" 
+                  <img
+                    src={item.icon}
+                    alt={item.type}
+                    className="w-6 h-6 mr-4"
                   />
                   <div>
                     <p className="text-xl font-semibold text-primary-500">{item.title}</p>
                     <p className="text-base text-primary-200 font-medium">{item.date}</p>
                   </div>
                 </div>
-                <span className={`text-base font-semibold ${
-                  item.points > 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <span className={`text-base font-semibold ${item.points > 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
                   {item.points > 0 ? '+' : ''}{item.points}
                 </span>
               </div>
             ))}
           </div>
-          
+
           {/* View More/Less Button */}
           {history.length > 2 && (
             <div className="mt-6 text-center">
@@ -329,10 +327,10 @@ const MatePointsPage = () => {
 
       {/* Redeem Modal */}
       {showRedeemModal && selectedReward && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4"
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-6"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
         >
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-custom">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-custom max-h-[85vh] overflow-y-auto">
             {/* Close Button */}
             <div className="flex justify-end mb-4">
               <button
@@ -345,8 +343,8 @@ const MatePointsPage = () => {
 
             {/* Coin Illustration */}
             <div className="flex justify-center mb-6">
-              <div className="flex space-x-2">
-                <img src={CoinPNG} alt="Coin" className="w-full h-full" />
+              <div className="w-24 h-24 sm:w-32 sm:h-32">
+                <img src={CoinPNG} alt="Coin" className="w-full h-full object-contain" />
               </div>
             </div>
 

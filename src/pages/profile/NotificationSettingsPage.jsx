@@ -126,11 +126,11 @@ const NotificationSettingsPage = () => {
   };
 
   return (
-    <>  
+    <div className='px-3 md:px-4'>  
         <PageHeader
           title="Notification Settings"
           onBack={handleBack}
-          className="mb-6"
+          className="mb-4"
           titleClassName="text-lg sm:text-xl font-semibold text-gray-900 py-4 pl-0!"
         />
         {/* Notification Settings - Show for all users except customers */}
@@ -165,7 +165,7 @@ const NotificationSettingsPage = () => {
           <div>
             {/* General Section */}
             <div className="mb-6">
-              <h2 className="text-sm font-semibold text-primary-200 uppercase tracking-wide mb-2">
+              <h2 className="text-sm font-semibold text-primary-200 uppercase tracking-wide mb-2 ">
                 GENERAL
               </h2>
 
@@ -218,7 +218,7 @@ const NotificationSettingsPage = () => {
           </div>
         )}
        
-    </>
+    </div>
   );
 };
 

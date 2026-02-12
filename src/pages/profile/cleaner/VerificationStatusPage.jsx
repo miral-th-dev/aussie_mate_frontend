@@ -161,11 +161,11 @@ const VerificationStatusPage = () => {
     };
 
     return (
-        <PageLayout>
+        <PageLayout className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <PageHeader
                 title="Verification & Documents"
                 onBack={() => navigate(-1)}
-                className="mb-4"
+                className=" h-16"
                 titleClassName="text-lg sm:text-xl font-semibold text-primary-500"
             />
 
