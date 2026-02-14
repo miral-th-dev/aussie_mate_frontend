@@ -3,14 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-"scripts": {
-  "prebuild": "node -e \"try{require('fs').chmodSync('node_modules/.bin/vite',0o755)}catch(e){}\"",
-  "dev": "vite --host",
-  "build": "vite build",
-  "lint": "eslint .",
-  "preview": "vite preview"
-},
-
+  "scripts": {
+    "prebuild": "node -e \"try{require('fs').chmodSync('node_modules/.bin/vite',0o755)}catch(e){}\"",
+    "dev": "vite --host",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -39,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@rolldown/pluginutils": "^1.0.0-rc.4",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
