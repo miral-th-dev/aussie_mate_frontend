@@ -596,6 +596,26 @@ export const userAPI = {
     }
   },
 
+  // Get wallet data
+  getWallet: async () => {
+    return apiRequest('/wallet');
+  },
+
+  // Refund missed session
+  refundMissedSession: async (occurrenceId) => {
+    return apiRequest('/wallet/refund-missed-session', {
+      method: 'POST',
+      body: JSON.stringify({ occurrenceId }),
+    });
+  },
+
+  // Refund all missed sessions
+  refundAllMissedSessions: async () => {
+    return apiRequest('/wallet/refund-all-missed', {
+      method: 'POST',
+    });
+  },
+
   // Cards API
   getCards: async () => {
     try {

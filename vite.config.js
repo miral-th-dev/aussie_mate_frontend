@@ -22,11 +22,8 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-router-dom')) {
               return 'vendor-react-core';
             }
-            if (id.includes('@mui/material')) {
-              return 'vendor-mui-material';
-            }
             if (id.includes('@mui') || id.includes('@emotion')) {
-              return 'vendor-mui-others';
+              return 'vendor-mui-bundle';
             }
             if (id.includes('leaflet') || id.includes('react-leaflet') || id.includes('@react-google-maps')) {
               return 'vendor-maps';
