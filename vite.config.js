@@ -16,21 +16,30 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            // React ecosystem - highest priority
             if (id.includes('react-dom')) {
               return 'vendor-react-dom';
             }
             if (id.includes('react') || id.includes('react-router-dom')) {
               return 'vendor-react-core';
             }
+            
+            // UI libraries
             if (id.includes('@mui') || id.includes('@emotion')) {
               return 'vendor-mui-bundle';
             }
+            
+            // Maps and location
             if (id.includes('leaflet') || id.includes('react-leaflet') || id.includes('@react-google-maps')) {
               return 'vendor-maps';
             }
+            
+            // Payment
             if (id.includes('@stripe')) {
               return 'vendor-stripe';
             }
+            
+            // Utilities and others
             if (
               id.includes('lucide-react') ||
               id.includes('date-fns') ||
@@ -41,6 +50,8 @@ export default defineConfig({
             ) {
               return 'vendor-utils';
             }
+            
+            // Everything else
             return 'vendor-others';
           }
         }
