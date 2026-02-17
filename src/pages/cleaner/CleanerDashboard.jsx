@@ -204,7 +204,27 @@ const CleanerDashboard = () => {
         const profileResponse = await authAPI.getCurrentUser().catch(() => null);
         const freshUser = profileResponse?.data?.user || profileResponse?.user || (profileResponse?.success ? profileResponse.data : null);
 
-        const allJobsResponse = await jobsAPI.getAllJobs({ page: 1, limit: 200 }).catch(() => null)
+        // Role-based service type mapping
+      const getRoleBasedServiceType = (userRole) => {
+        const roleServiceMap = {
+          'Professional Cleaner': 'cleaning',
+          'Student Cleaner': 'cleaning', 
+          'NDIS Assistant': 'supportServices',
+          'Retail Auditor': 'cleaning',
+          'Pet Sitter': 'petsitting',
+          'Housekeeper': 'housekeeping'
+        };
+        return roleServiceMap[userRole] || 'cleaning';
+      };
+
+      const serviceType = getRoleBasedServiceType(user?.role);
+
+        const allJobsResponse = await jobsAPI.getAllJobs({ 
+          page: 1, 
+          limit: 200,
+          serviceType: serviceType,           // ✅ Dynamic based on role
+          includeBondCleaning: serviceType === 'cleaning', // Only for cleaning roles
+        }).catch(() => null)
         const allJobs = extractJobs(allJobsResponse)
 
         const inProgressJobs = allJobs

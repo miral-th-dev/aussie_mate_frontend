@@ -10,8 +10,8 @@ import StarIcon from '../../assets/rating.svg';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
-const PaymentForm = ({ amount, jobId, paymentId, onClose, onSuccess }) => {
-  console.log('📦 PaymentForm rendered with props:', { amount, jobId, paymentId });
+const PaymentForm = ({ amount, jobId, paymentId, onClose, onSuccess, displayAmount, walletAmountUsed }) => {
+  console.log('📦 PaymentForm rendered with props:', { amount, jobId, paymentId, displayAmount, walletAmountUsed });
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState(null);
@@ -48,6 +48,27 @@ const PaymentForm = ({ amount, jobId, paymentId, onClose, onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 min-h-[300px]">
+      {/* Wallet Deduction Info */}
+      {walletAmountUsed && walletAmountUsed > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-green-800">
+                ${walletAmountUsed} deducted from your wallet
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Pay remaining ${displayAmount} by card to complete booking
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <PaymentElement options={{ layout: 'accordion' }} />
 
       {!paymentId && (
@@ -70,7 +91,7 @@ const PaymentForm = ({ amount, jobId, paymentId, onClose, onSuccess }) => {
         className="w-full py-3"
         size="lg"
       >
-        Pay ${amount}
+        {processing ? 'Processing...' : `Pay $${displayAmount || amount}`}
       </Button>
     </form>
   );
@@ -125,99 +146,155 @@ const ConfirmYourCleanerPage = () => {
   const [clientSecret, setClientSecret] = useState(null);
   const [paymentId, setPaymentId] = useState(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [displayAmount, setDisplayAmount] = useState(finalCleanerData.total);
+  const [walletAmountUsed, setWalletAmountUsed] = useState(0);
+  const [walletBalance, setWalletBalance] = useState(null);
 
+  // Fetch wallet balance on component mount
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/wallet/balance`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data?.availableBalance !== undefined) {
+              setWalletBalance(data.data.availableBalance);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch wallet balance:', error);
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
 
   //Correct commission/GST/cleaner payout calculation
   const payoutAmounts = calculatePayoutAmounts(finalCleanerData.total);
 
-  const handleProceedToPay = async () => {
-    try {
-      setProcessing(true);
-      setError(null);
+const handleProceedToPay = async () => {
+  try {
+    setProcessing(true);
+    setError(null);
 
-      const quoteId = String(quoteData?._id || quoteData?.id || '');
-      const amount = Number(finalCleanerData.total);
-      const serviceProviderId = String(finalCleanerData.id || '');
+    const quoteId = String(quoteData?._id || quoteData?.id || '');
+    const amount = Number(finalCleanerData.total);
+    const serviceProviderId = String(finalCleanerData.id || '');
 
-      const paymentPayload = {
-        jobId: String(jobId),
-        quoteId,
-        amount,
-        serviceProviderId,
-        description: `Payment for job ${jobId}`,
-        currency: 'AUD',
-        metadata: {} // Providing empty object in case backend does metadata.toString()
-      };
+    const paymentPayload = {
+      jobId: String(jobId),
+      quoteId,
+      amount,
+      serviceProviderId,
+      description: `Payment for job ${jobId}`,
+      currency: 'AUD',
+      metadata: {}
+    };
 
-      console.log('📡 Sending payment payload:', paymentPayload);
+    console.log('📡 Sending payment payload:', paymentPayload);
 
-      if (!quoteId || !amount || !serviceProviderId || serviceProviderId === 'Unknown') {
-        throw new Error('Missing required payment information (Quote, Amount, or Cleaner ID)');
-      }
-
-      const response = await paymentService.createPayment(paymentPayload);
-
-      console.log('✅ createPayment response:', response);
-
-      // Handle Stripe Elements (clientSecret)
-      if (response?.success && (response?.clientSecret || response.data?.clientSecret)) {
-        const secret = response.clientSecret || response.data?.clientSecret;
-        const pid = response.payment?._id || response.data?.payment?._id || response.data?._id || response._id;
-
-        console.log('🆔 Captured IDs:', { clientSecret: secret, paymentId: pid });
-
-        if (!pid) {
-          console.error('❌ database paymentId is missing from response!', response);
-          setError('Failed to initialize payment record. Please try again.');
-          return;
-        }
-
-        setClientSecret(secret);
-        setPaymentId(pid);
-        setShowPaymentModal(true);
-        return;
-      }
-
-      // Handle fallback or different structure
-      if (response?.clientSecret || response.data?.clientSecret) {
-        const secret = response.clientSecret || response.data?.clientSecret;
-        const pid = response.payment?._id || response.data?.payment?._id || response.data?._id || response._id;
-
-        console.log('🆔 Captured IDs (fallback):', { clientSecret: secret, paymentId: pid });
-
-        if (!pid) {
-          console.error('❌ database paymentId is missing from response!', response);
-          setError('Failed to initialize payment record. Please try again.');
-          return;
-        }
-
-        setClientSecret(secret);
-        setPaymentId(pid);
-        setShowPaymentModal(true);
-        return;
-      }
-
-      // Handle Stripe Checkout (URL)
-      if (response?.success && response?.data?.url) {
-        const checkoutUrl = response.data.url;
-        console.log('🌐 Redirecting to Stripe Checkout:', checkoutUrl);
-        window.location.href = checkoutUrl;
-        return;
-      }
-
-      console.error('❌ Unexpected payment response:', response);
-      const msg =
-        response?.error ||
-        response?.message ||
-        'Failed to initialize payment. Please try again.';
-      setError(msg);
-    } catch (err) {
-      console.error('❌ Payment error:', err);
-      setError(handlePaymentError(err)); q
-    } finally {
+    if (!quoteId || !amount || !serviceProviderId || serviceProviderId === 'Unknown') {
       setProcessing(false);
+      throw new Error('Missing required payment information');
     }
-  };
+
+    const response = await paymentService.createPayment(paymentPayload);
+    console.log('✅ Full response:', response);
+    console.log('🔍 Breakdown details:', {
+      totalAmount: amount,
+      walletBalance: walletBalance,
+      breakdown: response?.data?.breakdown,
+      fromWallet: response?.data?.breakdown?.fromWallet,
+      fromStripe: response?.data?.breakdown?.fromStripe
+    });
+
+    // ✅ CASE 1: Stripe PaymentIntent (Wallet + Card OR Card Only)
+    if (response?.success && response?.data?.clientSecret) {
+      const secret = response.data.clientSecret;
+      const pid = response.data.payment?._id;
+      const walletUsed = response.data.breakdown?.fromWallet || 0;
+      const cardAmount = response.data.breakdown?.fromStripe || response.data.breakdown?.fromCard || 0;
+
+      console.log('🆔 Payment Details:', { 
+        clientSecret: secret, 
+        paymentId: pid,
+        walletUsed,
+        cardAmount 
+      });
+
+      if (!pid) {
+        console.error('❌ paymentId missing!', response);
+        setProcessing(false);
+        setError('Failed to initialize payment. Please try again.');
+        return;
+      }
+
+      // Update display amounts
+      setWalletAmountUsed(walletUsed);
+      setDisplayAmount(cardAmount);
+
+      // 🔥 Update wallet balance after deduction
+      if (walletBalance !== null && walletUsed > 0) {
+        setWalletBalance(walletBalance - walletUsed);
+      }
+
+      // 🎯 Show wallet deduction info in modal instead of alert
+      if (walletUsed > 0) {
+        // Show wallet deduction info in the UI, no alert needed
+        console.log(`✅ $${walletUsed} deducted from wallet. 💳 Pay $${cardAmount} by card.`);
+      }
+
+      // 🔥 IMPORTANT: Open payment modal for card payment
+      setClientSecret(secret);
+      setPaymentId(pid);
+      setShowPaymentModal(true);
+      setProcessing(false); // ⭐ Stop loading
+      return;
+    }
+
+    // ✅ CASE 2: Wallet-only payment (Full payment from wallet)
+    if (response?.success && response?.data?.requiresStripePayment === false) {
+      console.log('💰 Wallet-only payment:', response.data);
+      
+      setProcessing(false); // ⭐ Stop loading
+      
+      alert(response?.message || '✅ Payment completed using wallet balance!');
+      
+      // Navigate after short delay
+      setTimeout(() => {
+        navigate('/my-jobs', {
+          state: { 
+            paymentSuccess: true,
+            walletUsed: response.data.breakdown?.fromWallet 
+          }
+        });
+      }, 500);
+      
+      return;
+    }
+
+    // ✅ CASE 3: Unexpected response
+    setProcessing(false);
+    console.error('❌ Unexpected response:', response);
+    setError(response?.error || 'Failed to initialize payment.');
+
+  } catch (err) {
+    console.error('❌ Payment error:', err);
+    setProcessing(false); // ⭐ Always stop loading on error
+    setError(handlePaymentError(err));
+  }
+};
+
 
   return (
     <>
@@ -280,6 +357,25 @@ const ConfirmYourCleanerPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Wallet Balance Display */}
+        {walletBalance !== null && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 14a1 1 0 011-2h4a1 1 0 01-2 0-4z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-blue-800 font-semibold text-sm">Your Wallet Balance</h4>
+                <p className="text-blue-600 text-sm">
+                  ${walletBalance} available for payment
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Payment */}
         <div className="bg-white rounded-2xl shadow-custom p-4 sm:p-6 mb-6">
@@ -353,16 +449,43 @@ const ConfirmYourCleanerPage = () => {
           </div>
         )}
 
+        {/* Wallet Deduction Info */}
+        {walletAmountUsed > 0 && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-green-800 font-semibold text-sm">Wallet Payment Applied</h4>
+                <p className="text-green-600 text-sm">
+                  ${walletAmountUsed} deducted from your wallet balance
+                  {walletBalance !== null && (
+                    <span className="text-green-700 font-medium">
+                      <br />Remaining balance: ${walletBalance - walletAmountUsed}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Button */}
         <div className="flex justify-end">
           <Button
             onClick={handleProceedToPay}
             size="md"
-            className="px-4 py-3 mb-6"
+            className="px-6 py-3 mb-6"
             loading={processing}
             disabled={processing}
           >
-            {`Confirm & Pay $${finalCleanerData.total}`}
+            {processing ? 'Processing...' : 
+             walletAmountUsed > 0 ? 
+               `Confirm & Pay $${displayAmount}` : 
+               `Confirm & Pay $${finalCleanerData.total}`}
           </Button>
         </div>
 
@@ -390,6 +513,8 @@ const ConfirmYourCleanerPage = () => {
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <PaymentForm
                 amount={finalCleanerData.total}
+                displayAmount={displayAmount}
+                walletAmountUsed={walletAmountUsed}
                 jobId={jobId}
                 paymentId={paymentId}
                 onClose={() => setShowPaymentModal(false)}

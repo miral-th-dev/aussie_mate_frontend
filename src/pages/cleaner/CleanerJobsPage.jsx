@@ -143,6 +143,22 @@ const CleanerJobsPage = () => {
 
   // --- NEW: helper to fetch jobs list once per (status,page) and cache ---
   const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal, search = '', currentUserId }) => {
+    // Role-based service type mapping
+    const getRoleBasedServiceType = (userRole) => {
+      const roleServiceMap = {
+        'Professional Cleaner': 'cleaning',
+        'Student Cleaner': 'cleaning', 
+        'NDIS Assistant': 'supportServices',
+        'Retail Auditor': 'cleaning',
+        'Pet Sitter': 'petsitting',
+        'Housekeeper': 'housekeeping'
+      };
+      return roleServiceMap[userRole] || 'cleaning';
+    };
+
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const serviceType = getRoleBasedServiceType(currentUser?.role);
+
     // Convert status array to comma-separated string for API
     const statusParam = Array.isArray(status) ? status.join(',') : status;
 
@@ -159,6 +175,8 @@ const CleanerJobsPage = () => {
       page,
       limit,
       search,
+      serviceType: serviceType,                    // ✅ Dynamic based on role
+      includeBondCleaning: serviceType === 'cleaning', // Only for cleaning roles
       cleanerId: statusParam.includes('accepted') || statusParam.includes('completed') ? currentUserId : undefined,
       quotedBy: statusParam.includes('quotedByMe') ? currentUserId : undefined,
       signal

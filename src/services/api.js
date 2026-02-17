@@ -329,10 +329,11 @@ export const jobsAPI = {
   },
 
   // Get all jobs (supports backend pagination/filters)
-  getAllJobs: async ({ status, serviceType, page = 1, limit = 20, location, search, cleanerId, quotedBy } = {}) => {
+  getAllJobs: async ({ status, serviceType, includeBondCleaning, page = 1, limit = 20, location, search, cleanerId, quotedBy } = {}) => {
     const params = new URLSearchParams();
     if (status) params.set('status', status);
     if (serviceType) params.set('serviceType', serviceType);
+    if (includeBondCleaning !== undefined) params.set('includeBondCleaning', includeBondCleaning);
     if (page) params.set('page', String(page));
     if (limit) params.set('limit', String(limit));
     if (location) params.set('location', location);
@@ -602,10 +603,22 @@ export const userAPI = {
   },
 
   // Refund missed session
-  refundMissedSession: async (occurrenceId) => {
+  refundMissedSession: async (occurrenceId, jobId) => {
+    const payload = {};
+    if (occurrenceId) {
+      payload.occurrenceId = occurrenceId;
+    } else if (jobId) {
+      // For one-time jobs, use _id instead of jobId to match ObjectId format
+      // The backend expects ObjectId at path "_id", not string "jobId"
+      payload.jobId = jobId; // Use _id field for ObjectId compatibility
+    } else {
+      throw new Error('Please provide either occurrenceId (for recurring jobs) or jobId (for one-time jobs)');
+    }
+
+    console.log('📡 Refund payload:', payload);
     return apiRequest('/wallet/refund-missed-session', {
       method: 'POST',
-      body: JSON.stringify({ occurrenceId }),
+      body: JSON.stringify(payload),
     });
   },
 

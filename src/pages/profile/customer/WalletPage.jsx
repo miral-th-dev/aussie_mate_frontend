@@ -46,9 +46,16 @@ const WalletPage = () => {
     fetchWallet();
   }, []);
 
-  const refundSingleSession = async (occurrenceId) => {
+  const refundSingleSession = async (session) => {
+    console.log("session =", session);
+    
     try {
-      const response = await userAPI.refundMissedSession(occurrenceId);
+      // For recurring jobs, use occurrenceId
+      // For one-time jobs, use _id (ObjectId) instead of jobId (string)
+      const response = await userAPI.refundMissedSession(
+        session.occurrenceId, 
+        session._id || session.jobId // Use _id (ObjectId) if available, fallback to jobId
+      );
       if (response.success) {
         alert(`$${response.data.refundAmount} added to wallet!`);
         fetchWallet(); // Refresh wallet data
@@ -84,7 +91,8 @@ const WalletPage = () => {
     return history.filter(item =>
       (item.type && item.type.toLowerCase().includes(query)) ||
       (item.description && item.description.toLowerCase().includes(query)) ||
-      (item.jobId && item.jobId.toLowerCase().includes(query))
+      (item.jobId && item.jobId.toLowerCase().includes(query)) ||
+      (item._id && item._id.toLowerCase().includes(query))
     );
   }, [walletData, searchQuery]);
 
@@ -187,7 +195,7 @@ const WalletPage = () => {
                     <span className="text-lg font-bold text-[#111827]">${session.amount}</span>
                   </div>
                   <button
-                    onClick={() => refundSingleSession(session.occurrenceId)}
+                    onClick={() => refundSingleSession(session)}
                     className="w-full bg-orange-50 text-orange-600 font-bold py-2.5 rounded-xl transition-all hover:bg-orange-600 hover:text-white group-hover:shadow-md active:scale-95 text-sm"
                   >
                     Claim Refund
@@ -255,7 +263,7 @@ const WalletPage = () => {
                           {item.description}
                         </h4>
                         <p className="text-[11px] text-[#9CA3AF]">
-                          Job #{item.jobId} • {dayjs(item.date).format('D MMM YYYY, h:mm A')}
+                          Job #{item.jobId || item._id} • {dayjs(item.date).format('D MMM YYYY, h:mm A')}
                         </p>
                       </div>
                     </div>
