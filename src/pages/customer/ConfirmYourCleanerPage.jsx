@@ -149,6 +149,8 @@ const ConfirmYourCleanerPage = () => {
   const [displayAmount, setDisplayAmount] = useState(finalCleanerData.total);
   const [walletAmountUsed, setWalletAmountUsed] = useState(0);
   const [walletBalance, setWalletBalance] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Fetch wallet balance on component mount
   useEffect(() => {
@@ -268,17 +270,20 @@ const handleProceedToPay = async () => {
       
       setProcessing(false); // ⭐ Stop loading
       
-      alert(response?.message || '✅ Payment completed using wallet balance!');
+      // Show success modal instead of alert
+      setSuccessMessage(response?.message || '✅ Payment completed using wallet balance!');
+      setShowSuccessModal(true);
       
       // Navigate after short delay
       setTimeout(() => {
+        setShowSuccessModal(false);
         navigate('/my-jobs', {
           state: { 
             paymentSuccess: true,
             walletUsed: response.data.breakdown?.fromWallet 
           }
         });
-      }, 500);
+      }, 2000);
       
       return;
     }
@@ -520,6 +525,24 @@ const handleProceedToPay = async () => {
                 onClose={() => setShowPaymentModal(false)}
               />
             </Elements>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 relative animate-fade-in shadow-xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
+              <p className="text-gray-600 text-sm mb-4">{successMessage}</p>
+              <div className="w-8 h-1 bg-green-500 rounded-full mx-auto animate-pulse"></div>
+            </div>
           </div>
         </div>
       )}
