@@ -141,7 +141,7 @@ const WalletPage = () => {
           </div>
 
           {/* Quick Action / Refund All Card */}
-          <div className="bg-white rounded-[32px] p-8 border border-[#E5E7EB] shadow-sm flex flex-col justify-between">
+          {/* <div className="bg-white rounded-[32px] p-8 border border-[#E5E7EB] shadow-sm flex flex-col justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#6B7280] mb-2">Pending Refunds</p>
               <h3 className="text-2xl font-bold text-[#111827]">{missedSessions.length} Sessions</h3>
@@ -156,7 +156,7 @@ const WalletPage = () => {
             ) : (
               <p className="text-sm text-[#9CA3AF] mt-6 italic">No missed sessions pending refund.</p>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* Sessions Summary Grid */}
