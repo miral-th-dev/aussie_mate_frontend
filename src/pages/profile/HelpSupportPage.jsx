@@ -19,7 +19,7 @@ const HelpSupportPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-8 py-6">
         <PageHeader
           title="Help & Support"
           onBack={handleBack}

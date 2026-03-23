@@ -15,13 +15,13 @@ const Button = ({
   ...props
 }) => {
   // Base classes
-  const baseClasses = 'font-semibold rounded-full transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none cursor-pointer';
+  const baseClasses = 'font-medium rounded-full transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none cursor-pointer';
 
 
   // Variant classes
   const variantClasses = {
     primary: 'bg-[#1F6FEB] hover:bg-[#1F6FEB] text-white ',
-    secondary: 'bg-white border border-[#9CC0F6] text-primary-600 shadow-custom',
+    secondary: 'bg-white border border-[#9CC0F6] text-primary-600',
     outline: 'bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 ',
     ghost: 'bg-gray-100 hover:bg-gray-200 text-gray-700',
     danger: 'bg-red-500 hover:text-[#B80A34] text-red-500',

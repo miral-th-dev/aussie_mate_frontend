@@ -2,10 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Check, UserRound, X, Phone, MessageSquare, Calendar, MapPin, CalendarDays } from 'lucide-react';
 import { Button, PageHeader, Loader } from '../../components';
-import RatingIcon from '../../assets/rating.svg';
-import Rating2Icon from '../../assets/rating2.svg';
-import PdfIcon from '../../assets/pdf.svg';
-import DownloadIcon from '../../assets/download.svg';
+import RatingIcon from '../../assets/Rating1.svg';
+import Rating2Icon from '../../assets/rating3.svg';
+//import PdfIcon from '../../assets/pdf.svg';
+//import DownloadIcon from '../../assets/download.svg';
 import GoldBadgeIcon from '../../assets/goldBadge.svg';
 import SilverBadgeIcon from '../../assets/silverBadge.svg';
 import BronzeBadgeIcon from '../../assets/bronzeBadge.svg';
@@ -446,10 +446,9 @@ const JobDetailsCompletedPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
         <PageHeader
           title={`#${jobData.jobId} - ${jobData.title}`}
-          className="py-4 px-4"
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
@@ -473,9 +472,9 @@ const JobDetailsCompletedPage = () => {
         </div>
 
         {/* Cleaner Info Card - Redesigned */}
-        <div className="px-4 mt-6">
+        <div className="px-4 mt-4">
           <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative overflow-hidden group hover:border-blue-100 transition-colors">
-            <div className="flex items-start justify-between min-h-[140px]">
+            <div className="flex items-start justify-between ">
               <div className="flex items-start gap-4 flex-1">
                 {/* Avatar */}
                 <div className="relative mt-1">
@@ -495,33 +494,33 @@ const JobDetailsCompletedPage = () => {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <h3 className="text-[22px] font-extrabold text-[#111827] leading-none">{jobData.cleaner.name || "John Doe"}</h3>
+                  <h3 className="text-[22px] font-semibold text-[#111827] leading-none">{jobData.cleaner.name || "John Doe"}</h3>
                   
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1.5 text-gray-400">
-                      <Phone className="w-4 h-4" />
-                      <span className="text-base font-bold text-gray-700">07 3803 6136</span>
-                    </div>
-                    <p className="text-sm text-gray-400 font-bold tracking-tight">
-                      2.4 km away — En route
-                    </p>
-                  </div>
+                    {/* <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <Phone className="w-4 h-4" />
+                        <span className="text-base font-bold text-gray-700">07 3803 6136</span>
+                      </div>
+                      <p className="text-sm text-gray-400 font-bold tracking-tight">
+                        2.4 km away — En route
+                      </p>
+                    </div> */}
                   
                   {/* Tier Badge */}
                   <div className="mt-2 flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-50 border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-1 px-3 py-2 rounded-full bg-[#FFF2DE]">
+                      <img src={RatingIcon} alt="Rating" className="w-3.5 h-3.5" />
+                      <span className="text-sm font-medium">{jobData.cleaner.rating || "4.9"}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[linear-gradient(94.49deg,_#FDFDFD_0%,_#E9E9E9_100%)] border border-gray-100">
                       <img 
                         src={jobData.cleaner.tier === 'gold' ? GoldBadgeIcon : jobData.cleaner.tier === 'silver' ? SilverBadgeIcon : BronzeBadgeIcon} 
                         alt="Badge" 
                         className="w-5 h-5 drop-shadow-sm" 
                       />
-                      <span className="text-sm font-bold text-gray-700 capitalize">
+                      <span className="text-sm font-medium text-gray-900 capitalize">
                         {jobData.cleaner.tier || 'Silver'} Tier
                       </span>
-                    </div>
-                    <div className="flex items-center gap-1 px-3 py-2 rounded-full bg-orange-50/50 border border-orange-100/50">
-                      <img src={RatingIcon} alt="Rating" className="w-3.5 h-3.5" />
-                      <span className="text-sm font-bold text-orange-600">{jobData.cleaner.rating || "4.9"}</span>
                     </div>
                   </div>
                 </div>
@@ -529,24 +528,24 @@ const JobDetailsCompletedPage = () => {
 
               {/* Action Columns (Status Top, Icons Bottom) */}
               <div className="flex flex-col items-end justify-between self-stretch">
-                <span className="px-4 py-2.5 rounded-full bg-[#FFF7ED] text-[#F97316] text-sm font-bold tracking-tight shadow-sm border border-orange-100/50">
+                <span className="px-4 py-2.5 rounded-full bg-[#E4FBED] text-[#1EB154] text-sm font-medium tracking-tight border border-[#DBF9E7]">
                   {jobData.status === 'Completed' || jobData.status?.toLowerCase() === 'completed' ? 'Completed' : 'In Progress'}
                 </span>
 
-                <div className="flex gap-2">
+                {/* <div className="flex gap-2">
                   <button 
-                    onClick={() => {/* handleChat */}}
+                    onClick={() => {}}
                     className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
                   >
                     <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
                   </button>
                   <button 
-                    onClick={() => {/* handleCall */}}
+                    onClick={() => {}}
                     className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
                   >
                     <Phone className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -555,10 +554,10 @@ const JobDetailsCompletedPage = () => {
         {/* Job Content Redesign */}
         <div className="px-6 mt-8 space-y-6">
           <div>
-            <p className="text-sm font-bold text-gray-400 tracking-[0.1em] mb-1">
+            <p className="text-sm font-semibold text-gray-400 tracking-[0.1em] mb-1">
               {jobData.serviceType || "Domestic / General Cleaning"}
             </p>
-            <h2 className="text-[28px] font-extrabold text-gray-900 leading-tight">
+            <h2 className="text-[28px] font-semibold text-gray-900 leading-tight">
               {jobData.serviceDetail || "Townhouse Cleaning"}
             </h2>
           </div>
@@ -575,14 +574,14 @@ const JobDetailsCompletedPage = () => {
                 {/* flex items-center text-gray-700 font-medium */}
               </div>
               <div>
-                <p className="text-[15px] font-semibold text-[#6B7280]">
+                <p className="text-[15px] font-medium text-[#6B7280]">
                   {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                   }) : "Pending Completion"}
                   <span className="mx-2 text-gray-300">•</span>
-                  <span className="text-gray-500 font-semibold lowercase">One-time</span>
+                  <span className="text-gray-500 font-medium lowercase">One-time</span>
                 </p>
               </div>
             </div>
@@ -591,7 +590,7 @@ const JobDetailsCompletedPage = () => {
               <div className="w-10 h-10 rounded-xl text-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <MapPin className="w-5 h-5" strokeWidth={2.5} />
               </div>
-              <p className="text-base font-semibold text-[#6B7280] leading-snug">
+              <p className="text-base font-medium text-[#6B7280] leading-snug">
                 {jobData.location || "12 King Street, Sydney NSW"}
               </p>
             </div>
@@ -600,7 +599,7 @@ const JobDetailsCompletedPage = () => {
           {/* Photos Grid - Redesigned */}
           {overviewPhotos.length > 0 && (
             <div className="">
-              <div className="grid grid-cols-2 gap-2 mb-8 max-w-lg">
+              <div className="grid grid-cols-2 gap-2 mb-6 max-w-lg">
                 {overviewPhotos.slice(0, 4).map((img, idx) => (
                   <div key={idx} className="relative rounded-[24px] overflow-hidden group cursor-pointer border border-gray-100">
                     <img 
@@ -625,10 +624,10 @@ const JobDetailsCompletedPage = () => {
 
         {/* Completion Status Bar or Complete Button */}
         {jobData.status?.toLowerCase() === 'completed' || jobData.status === 'Completed' ? (
-          <div className="px-4 mt-8">
-            <div className="bg-[#E9FBF0] rounded-2xl py-3 px-5 flex items-center gap-3 border border-[#D1F7E1]">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#1EB154] shadow-[0_0_8px_rgba(30,177,84,0.4)] animate-pulse" />
-              <span className="text-[#15803D] font-bold text-sm">
+          <div className="px-4 inline-block">
+            <div className="bg-[#E9FBF0] rounded-2xl py-3 px-5 flex items-center gap-3 border border-[#DBF9E7]">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#1EB154]" />
+              <span className="text-[#1EB154] font-medium text-sm">
                 Completed on {jobData.completedAt ? new Date(jobData.completedAt).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
@@ -698,7 +697,7 @@ const JobDetailsCompletedPage = () => {
               <>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-primary-500">Your Review</h3>
-                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-green-600 border border-green-200">
+                  <span className="text-xs font-medium px-3 py-1 rounded-full bg-green-50 text-[#1EB154] border border-[#DBF9E7]">
                     Submitted
                   </span>
                 </div>
@@ -738,11 +737,11 @@ const JobDetailsCompletedPage = () => {
                 <div className="mb-4">
                   <p className="text-sm text-gray-600 mb-2">Your feedback:</p>
                   {feedback ? (
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 inline-block">
                       <p className="text-sm text-gray-700">{feedback}</p>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">No additional feedback provided</p>
+                    <p className="text-sm text-gray-500">No additional feedback provided</p>
                   )}
                 </div>
 

@@ -126,7 +126,7 @@ const NotificationSettingsPage = () => {
   };
 
   return (
-    <div className='px-3 md:px-4'>  
+    <div className='px-3 md:px-8'>  
         <PageHeader
           title="Notification Settings"
           onBack={handleBack}

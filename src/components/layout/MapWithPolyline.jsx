@@ -274,8 +274,8 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
               <Clock className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-extrabold text-blue-400 leading-none mb-1">Time</p>
-              <p className="text-base font-black text-gray-900 leading-tight">
+              <p className="text-[10px] uppercase tracking-wider font-medium text-blue-400 leading-none mb-1">Time</p>
+              <p className="text-xs font-medium text-gray-900 leading-tight">
                 {liveTime ? `${liveTime} min` : routeInfo?.duration}
               </p>
             </div>
@@ -288,8 +288,8 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
               <MapPin className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 leading-none mb-1">Distance</p>
-              <p className="text-base font-black text-gray-900 leading-tight">
+              <p className="text-[10px] uppercase tracking-wider font-medium text-indigo-400 leading-none mb-1">Distance</p>
+              <p className="text-xs font-medium text-gray-900 leading-tight">
                 {liveDistance ? `${liveDistance} km` : routeInfo?.distance}
               </p>
             </div>

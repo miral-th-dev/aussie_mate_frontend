@@ -4,7 +4,8 @@ import dayjs from 'dayjs';
 import Button from '../form-controls/Button';
 import Calendar from '../form-controls/Calendar';
 import Checkbox from '../form-controls/Checkbox';
-import { X } from 'lucide-react';
+import { DivideCircleIcon, X } from 'lucide-react';
+import { useEffect } from 'react';
 
 const FiltersDrawer = ({
   open,
@@ -18,7 +19,18 @@ const FiltersDrawer = ({
   onDateChange,
   onClear,
   onApply,
-}) => {
+}) => { useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleDateChange = (value) => {
@@ -105,7 +117,7 @@ const FiltersDrawer = ({
             </div>
           </div> */}
 
-          <div className="border-t border-gray-100 pt-4">
+          <div>
             <p className="text-sm font-medium text-gray-900 mb-3">Date</p>
             <div className="rounded-2xl bg-gray-50 p-3">
               <Calendar
@@ -116,7 +128,7 @@ const FiltersDrawer = ({
                   textField: {
                     placeholder: 'Select date',
                     InputProps: {
-                      className: 'rounded-xl bg-white',
+                      className: 'rounded-2xl bg-white',
                     },
                   },
                 }}
@@ -129,20 +141,20 @@ const FiltersDrawer = ({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="lg"
             fullWidth
             onClick={onClear}
-            className="rounded-full bg-gray-100 text-sm font-semibold text-gray-600 py-2 hover:bg-gray-200"
+            className="rounded-xl bg-gray-100 text-sm text-gray-600 py-2 hover:bg-gray-200"
           >
             Clear All
           </Button>
           <Button
             type="button"
             variant="primary"
-            size="sm"
+            size="lg"
             fullWidth
             onClick={onApply}
-            className="rounded-full text-sm font-semibold hover:bg-[#1557c9] hover:shadow-md"
+            className="rounded-xl text-sm hover:bg-[#1557c9] hover:shadow-md"
           >
             Apply
           </Button>
