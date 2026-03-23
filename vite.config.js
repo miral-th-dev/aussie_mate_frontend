@@ -1,54 +1,93 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import svgr from 'vite-plugin-svgr'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import svgr from "vite-plugin-svgr";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     svgr(),
-    react(),
-    tailwindcss(),
+    react({
+      jsxImportSource: undefined,
+      babel: {
+        plugins: []
+      }
+    }),
+    tailwindcss()
   ],
+  server: {
+    host: true,
+    port: 5173,
+    hmr: {
+      overlay: true,
+      port: 5173
+    },
+    watch: {
+      usePolling: false,
+      interval: 100
+    }
+  },
   build: {
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react-dom')) {
-              return 'vendor-react-dom';
+          if (id.includes("node_modules")) {
+            // Handle Emotion/MUI first to prevent cn initialization issues
+            if (id.includes("@emotion") || id.includes("@mui")) {
+              return "vendor-mui";
             }
-            if (id.includes('react') || id.includes('react-router-dom')) {
-              return 'vendor-react-core';
+            
+            // React core
+            if (id.includes("react") && !id.includes("@emotion") && !id.includes("@mui")) {
+              return "vendor-react";
             }
-            if (id.includes('@mui') || id.includes('@emotion')) {
-              return 'vendor-mui-bundle';
+            
+            // React DOM
+            if (id.includes("react-dom")) {
+              return "vendor-react-dom";
             }
-            if (id.includes('leaflet') || id.includes('react-leaflet') || id.includes('@react-google-maps')) {
-              return 'vendor-maps';
+            
+            // React Router
+            if (id.includes("react-router")) {
+              return "vendor-router";
             }
-            if (id.includes('@stripe')) {
-              return 'vendor-stripe';
+            
+            // Maps
+            if (id.includes("leaflet") || id.includes("react-leaflet") || id.includes("@react-google-maps")) {
+              return "vendor-maps";
             }
-            if (
-              id.includes('lucide-react') ||
-              id.includes('date-fns') ||
-              id.includes('dayjs') ||
-              id.includes('socket.io-client') ||
-              id.includes('yup') ||
-              id.includes('swiper')
-            ) {
-              return 'vendor-utils';
+            
+            // Stripe
+            if (id.includes("@stripe")) {
+              return "vendor-stripe";
             }
-            return 'vendor-others';
+            
+            // Other major libraries
+            if (id.includes("socket.io") || id.includes("socket.io-client")) {
+              return "vendor-socket";
+            }
+            
+            if (id.includes("lucide-react")) {
+              return "vendor-icons";
+            }
+            
+            if (id.includes("date-fns") || id.includes("dayjs")) {
+              return "vendor-date";
+            }
+            
+            if (id.includes("yup")) {
+              return "vendor-validation";
+            }
+            
+            if (id.includes("swiper")) {
+              return "vendor-swiper";
+            }
+            
+            // Everything else
+            return "vendor-others";
           }
-        }
-      }
-    }
-  }
-})
-
-
-
-
+        },
+      },
+    },
+  },
+});
