@@ -523,7 +523,7 @@ const PostNewJobPage = () => {
         onBack={() => currentStep === 1 ? navigate('/customer-dashboard') : handleBack()}
         className="mb-8"
         titleClassName="text-2xl sm:text-3xl font-bold text-[#111827]"
-        backButtonClassName="p-2 sm:p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all cursor-pointer shadow-sm"
+        backButtonClassName="cursor-pointer"
       />
 
       {/* Main Content */}
