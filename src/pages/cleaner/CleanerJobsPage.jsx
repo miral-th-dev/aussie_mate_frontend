@@ -404,9 +404,9 @@ const CleanerJobsPage = () => {
 
   const handleApplyFilters = () => {
     setShowSortModal(false);
-    apiCache.current = {}; 
+    apiCache.current = {};
     setRefreshTrigger(prev => prev + 1);
-    setCurrentPage(1); 
+    setCurrentPage(1);
   };
 
   // Jobs are now filtered on backend, no need for client-side filtering
@@ -475,7 +475,7 @@ const CleanerJobsPage = () => {
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeTab === tab.id ? 'bg-[#EBF2FD] text-primary-600 font-semibold border-none' : 'bg-[#F3F3F3] text-gray-600 border border-[#F3F3F3] hover:bg-gray-50'}`}>
-                  {tab.label} 
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -522,8 +522,8 @@ const CleanerJobsPage = () => {
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {filteredJobs.map(job => (
-                  <div 
-                    key={job.id} 
+                  <div
+                    key={job.id}
                     onClick={() => handleJobClick(job.id, job.originalJob?.status)}
                     className="bg-white border border-gray-200 rounded-2xl p-5 cursor-pointer"
                   >
@@ -576,15 +576,15 @@ const CleanerJobsPage = () => {
                         </div>
                       </div>
 
-                   
+
 
                       {/* Assigned By (Simple) */}
                       {activeTab === 'assigned' && job.originalJob?.customerId && (
                         <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
-                          <img 
-                            src={job.originalJob.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.originalJob.customerId.firstName}+${job.originalJob.customerId.lastName}&background=random`} 
-                            alt="Customer" 
-                            className="w-6 h-6 rounded-full object-cover" 
+                          <img
+                            src={job.originalJob.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.originalJob.customerId.firstName}+${job.originalJob.customerId.lastName}&background=random`}
+                            alt="Customer"
+                            className="w-6 h-6 rounded-full object-cover"
                           />
                           <p className="text-xs text-gray-400">
                             Assigned by <span className="font-bold text-gray-700">{job.originalJob.customerId.firstName}</span>
