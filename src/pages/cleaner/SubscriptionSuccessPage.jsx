@@ -108,6 +108,7 @@ const SubscriptionSuccessPage = () => {
                 "
               >
                 Go to Dashboard
+                
               </button>
               <button 
                 onClick={() => navigate('/cleaner-jobs')}
