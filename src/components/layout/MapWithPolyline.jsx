@@ -15,11 +15,13 @@ import Loader from "../common/Loader";
 const GOOGLE_MAPS_LIBRARIES = ["places"];
 const containerStyle = { width: "100%", height: "100%", borderRadius: "1rem" };
 
-const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCleanerLocation, onRouteInfo }) => {
+const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCleanerLocation, onRouteInfo, hasArrived }) => {
   const [cleanerLocation, setCleanerLocation] = useState(null);
   const [directions, setDirections] = useState(null);
   const [routeInfo, setRouteInfo] = useState(null);
   const [polylinePath, setPolylinePath] = useState([]);
+  const [liveDistance, setLiveDistance] = useState(null);
+  const [liveTime, setLiveTime] = useState(null);
   const mapRef = useRef(null);
   const initialCleanerLocationRef = useRef(null);
   const lastApiCallRef = useRef(null);
@@ -31,6 +33,7 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
 
   // Memoize loader options to prevent re-initialization
   const loaderOptions = useMemo(() => ({
+    id: 'google-map-script',
     googleMapsApiKey: apiKey,
     libraries: GOOGLE_MAPS_LIBRARIES,
   }), [apiKey]);
@@ -41,7 +44,7 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
   useEffect(() => {
     if (externalCleanerLocation) {
       setCleanerLocation(externalCleanerLocation);
-      initialCleanerLocationRef.current = externalCleanerLocation; 
+      initialCleanerLocationRef.current = externalCleanerLocation;
       return;
     }
 
@@ -58,13 +61,13 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
           lng: position.coords.longitude,
         };
         setCleanerLocation(newLocation);
-        initialCleanerLocationRef.current = newLocation; 
+        initialCleanerLocationRef.current = newLocation;
       },
       (error) => {
         console.error("❌ Error getting initial location:", error);
         console.error("Error code:", error.code);
         console.error("Error message:", error.message);
-        
+
         // Show user-friendly error
         if (error.code === 1) {
           alert("Location permission denied. Please enable location access in your browser settings.");
@@ -94,7 +97,6 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
     );
 
     // Polling interval for testing with Chrome Sensors
-    // This helps when using Chrome DevTools Sensors
     const pollingInterval = setInterval(() => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -129,8 +131,8 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
     const Δλ = (lng2 - lng1) * Math.PI / 180;
 
     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c; // Distance in meters
@@ -138,39 +140,15 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
 
   // Fetch directions with debouncing and throttling
   const fetchDirections = useCallback(() => {
-    if (!isLoaded || !customerLocation || !cleanerLocation || isCalculatingRouteRef.current) {
+    if (!isLoaded || !customerLocation || !cleanerLocation || isCalculatingRouteRef.current || hasArrived) {
       return;
     }
 
     const now = Date.now();
     const lastCall = lastApiCallRef.current;
-    const lastLocation = lastCleanerLocationRef.current;
 
-    // Check if we should skip this API call
-    if (lastLocation && lastCall) {
-      // Calculate distance moved since last API call
-      const distanceMoved = calculateDistance(
-        lastLocation.lat,
-        lastLocation.lng,
-        cleanerLocation.lat,
-        cleanerLocation.lng
-      );
-
-      // Skip if:
-      // 1. Less than 30 seconds since last call AND moved less than 50 meters
-      // 2. Less than 5 seconds since last call (hard throttle)
-      const timeSinceLastCall = now - lastCall;
-      
-      if (timeSinceLastCall < 5000) {
-        // Hard throttle: minimum 5 seconds between calls
-        return;
-      }
-
-      if (timeSinceLastCall < 30000 && distanceMoved < 50) {
-        // Soft throttle: if moved less than 50m and less than 30s, skip
-        return;
-      }
-    }
+    // Hard throttle: 3 seconds
+    if (lastCall && now - lastCall < 3000) return;
 
     // Mark as calculating to prevent concurrent calls
     isCalculatingRouteRef.current = true;
@@ -180,57 +158,49 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
     const directionsService = new window.google.maps.DirectionsService();
 
     directionsService.route({
-        origin: cleanerLocation,
-        destination: customerLocation,
-        travelMode: window.google.maps.TravelMode.DRIVING,
+      origin: cleanerLocation,
+      destination: customerLocation,
+      travelMode: window.google.maps.TravelMode.DRIVING,
     }, (result, status) => {
-        isCalculatingRouteRef.current = false;
-        
-        if (status === 'OK' && result) {
-            setDirections(result);
+      console.log("📍 Directions Status:", status);
+      console.log("📍 Directions Result:", result);
+      isCalculatingRouteRef.current = false;
 
-            const route = result.routes[0].legs[0];
-            const newRouteInfo = {
-                distance: route.distance.text,
-                duration: route.duration.text,
-                distanceValue: route.distance.value,
-                durationValue: route.duration.value,
-            };
-            setRouteInfo(newRouteInfo);
+      if (status === 'OK' && result) {
+        setDirections(result);
 
-            // Extract polyline path from directions and extend to exact marker positions
-            const path = [];
-            
-            // Start with exact cleaner location
-            path.push({
-                lat: cleanerLocation.lat,
-                lng: cleanerLocation.lng
-            });
-            
-            // Add route points
-            result.routes[0].overview_path.forEach(point => {
-                path.push({
-                    lat: point.lat(),
-                    lng: point.lng()
-                });
-            });
-            
-            // End with exact customer location
-            path.push({
-                lat: customerLocation.lat,
-                lng: customerLocation.lng
-            });
-            
-            setPolylinePath(path);
+        const route = result.routes[0].legs[0];
+        const newRouteInfo = {
+          distance: route.distance.text,
+          duration: route.duration.text,
+          distanceValue: route.distance.value,
+          durationValue: route.duration.value,
+        };
+        setRouteInfo(newRouteInfo);
 
-            // Send route info to parent
-            if (onRouteInfo) {
-                onRouteInfo(newRouteInfo);
-            }
-        } else {
-            console.error('❌ Directions failed:', status);
-            isCalculatingRouteRef.current = false;
+        // Fit bounds to show the entire route
+        if (mapRef.current) {
+          const bounds = new window.google.maps.LatLngBounds();
+          result.routes[0].overview_path.forEach(point => bounds.extend(point));
+          bounds.extend(cleanerLocation);
+          bounds.extend(customerLocation);
+          mapRef.current.fitBounds(bounds, { top: 120, bottom: 50, left: 50, right: 50 });
         }
+
+        // Extract polyline path from directions
+        const path = [];
+        result.routes[0].overview_path.forEach(point => {
+          path.push({ lat: point.lat(), lng: point.lng() });
+        });
+        setPolylinePath(path);
+
+        // Send route info to parent
+        if (onRouteInfo) {
+          onRouteInfo(newRouteInfo);
+        }
+      } else {
+        console.error('❌ Directions failed:', status);
+      }
     });
   }, [cleanerLocation, customerLocation, isLoaded, onRouteInfo]);
 
@@ -243,10 +213,10 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
       clearTimeout(debounceTimerRef.current);
     }
 
-    // Debounce: wait 1 second before calling API
+    // Debounce: wait 0.5s before calling API
     debounceTimerRef.current = setTimeout(() => {
       fetchDirections();
-    }, 1000);
+    }, 500);
 
     // Cleanup
     return () => {
@@ -259,97 +229,142 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
 
   const onMapLoad = useCallback((map) => {
     mapRef.current = map;
-  }, []);
+
+    // Fit initial bounds if locations are available
+    if (cleanerLocation && customerLocation) {
+      const bounds = new window.google.maps.LatLngBounds();
+      bounds.extend(cleanerLocation);
+      bounds.extend(customerLocation);
+      map.fitBounds(bounds, { top: 100, bottom: 50, left: 50, right: 50 });
+    }
+  }, [cleanerLocation, customerLocation]);
+
+  // Real-time local calculation for smooth updates
+  useEffect(() => {
+    if (!cleanerLocation || !customerLocation) return;
+
+    const distanceMeters = calculateDistance(
+      cleanerLocation.lat,
+      cleanerLocation.lng,
+      customerLocation.lat,
+      customerLocation.lng
+    );
+
+    const distanceKm = (distanceMeters / 1000).toFixed(2);
+
+    // Estimate time based on average speed (e.g., 40 km/h)
+    const speed = 40; // km/h
+    const timeMin = Math.round((distanceKm / speed) * 60);
+
+    setLiveDistance(distanceKm);
+    setLiveTime(timeMin);
+  }, [cleanerLocation, customerLocation]);
 
   if (!isLoaded) return <Loader message="Loading Google Maps..." />;
-  if (!customerLocation) return <div>Customer location not available</div>;
-  if (!cleanerLocation) return <div>Fetching your location...</div>;
+  if (!customerLocation) return <div className="h-96 flex items-center justify-center bg-gray-50 text-gray-500 font-medium font-inter shadow-inner rounded-3xl">Customer location not available</div>;
+  if (!cleanerLocation) return <div className="h-96 flex items-center justify-center bg-gray-50 text-gray-500 font-medium italic animate-pulse font-inter shadow-inner rounded-3xl">Fetching your real-time location...</div>;
 
   return (
-    <div className="w-full h-96 rounded-2xl relative">
+    <div className="w-full h-96 rounded-3xl relative overflow-hidden border border-gray-100 shadow-xl transition-all duration-500">
       {/* Route Information Overlay */}
-      {routeInfo && (
-        <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-3 border border-gray-200">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
-                <MapPin className="h-4 w-4 text-blue-600" strokeWidth={2} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Distance</div>
-                <div className="text-sm font-semibold text-gray-900">{routeInfo.distance}</div>
-              </div>
+      {!hasArrived && (liveDistance || routeInfo) && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-6 py-3 border border-blue-50 flex items-center gap-6 transition-all duration-300 transform hover:scale-105">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-inner group transition-colors hover:bg-blue-100">
+              <Clock className="h-5 w-5 text-blue-600" />
             </div>
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-2">
-                <Clock className="h-4 w-4 text-green-600" strokeWidth={2} />
-              </div>
-              <div>
-                <div className="text-xs text-gray-500">Duration</div>
-                <div className="text-sm font-semibold text-gray-900">{routeInfo.duration}</div>
-              </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-extrabold text-blue-400 leading-none mb-1">Time</p>
+              <p className="text-base font-black text-gray-900 leading-tight">
+                {liveTime ? `${liveTime} min` : routeInfo?.duration}
+              </p>
+            </div>
+          </div>
+
+          <div className="w-px h-8 bg-gray-100"></div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shadow-inner group transition-colors hover:bg-indigo-100">
+              <MapPin className="h-5 w-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 leading-none mb-1">Distance</p>
+              <p className="text-base font-black text-gray-900 leading-tight">
+                {liveDistance ? `${liveDistance} km` : routeInfo?.distance}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cleaner Location Info */}
-      <div className="absolute bottom-4 right-4 z-10 bg-white rounded-lg shadow-lg p-3 border border-gray-200 max-w-xs">
-        <div className="flex items-center">
-          <div className="w-3 h-3 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-          <div>
-            <div className="text-xs text-gray-500">Cleaner Location</div>
-            <div className="text-sm font-medium text-gray-900">Live tracking active</div>
-          </div>
+      {/* Live Status Indicator - Much more visible */}
+      <div className="absolute bottom-6 left-6 z-10 bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 border border-green-100 flex items-center gap-4 transition-all hover:bg-white duration-300">
+        <div className="relative">
+          <div className="w-4 h-4 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.5)]"></div>
+          <div className="absolute inset-0 w-4 h-4 bg-green-500 rounded-full animate-ping opacity-75"></div>
+        </div>
+        <div>
+          <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] leading-none mb-1">Cleaner Location</p>
+          <p className="text-sm font-bold text-gray-800">Live tracking active</p>
         </div>
       </div>
 
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={cleanerLocation}
-        zoom={15}
         onLoad={onMapLoad}
         options={{
           zoomControl: true,
           streetViewControl: false,
           mapTypeControl: false,
-          fullscreenControl: true,
+          fullscreenControl: false,
           gestureHandling: "greedy",
+          styles: [
+            {
+              featureType: "poi",
+              elementType: "labels",
+              stylers: [{ visibility: "off" }],
+            },
+          ],
         }}
       >
-        {/* Cleaner Marker */}
+        {/* Directions Renderer for the route */}
+        {!hasArrived && directions && (
+          <DirectionsRenderer
+            directions={directions}
+            options={{
+              suppressMarkers: true,
+              polylineOptions: {
+                strokeColor: "#1D4ED8", // More vibrant blue
+                strokeWeight: 7,
+                strokeOpacity: 0.9,
+              },
+            }}
+          />
+        )}
+
+        {/* Cleaner Marker (Start) */}
         <Marker
           position={cleanerLocation}
           title="You (Cleaner)"
           icon={{
             url: Marker1Icon,
-            scaledSize: new window.google.maps.Size(48, 48),
-            anchor: new window.google.maps.Point(20, 20), 
+            scaledSize: new window.google.maps.Size(44, 44),
+            anchor: new window.google.maps.Point(22, 22),
           }}
+          zIndex={10}
         />
 
-        {/* Customer Marker */}
+        {/* Customer Marker (Destination) */}
         <Marker
           position={customerLocation}
           title="Customer"
           icon={{
             url: Marker2Icon,
-            scaledSize: new window.google.maps.Size(58, 58),
-            anchor: new window.google.maps.Point(20, 20), 
+            scaledSize: new window.google.maps.Size(50, 50),
+            anchor: new window.google.maps.Point(25, 50), // Anchor at the bottom for pin
           }}
+          zIndex={5}
         />
-
-        {/* Custom Polyline */}
-        {polylinePath.length > 0 && (
-          <Polyline
-            path={polylinePath}
-            options={{
-              strokeColor: "#1F6FEB",
-              strokeWeight: 5,
-              strokeOpacity: 0.8,
-            }}
-          />
-        )}
       </GoogleMap>
     </div>
   );

@@ -90,15 +90,21 @@ div, span, p, h1, h2, h3, h4, h5, h6, a, button, input, textarea, select, label 
 }
 
 
-/* Global input and button styling with 36px border radius */
+/* Global input styling with 36px border radius
+   NOTE: Do NOT apply to `button` globally, it breaks screen-specific button rounding (tabs, chips, etc.)
+*/
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="tel"],
 input[type="number"],
 textarea,
-select,
-button {
+select {
+  border-radius: 36px !important;
+}
+
+/* Use this class ONLY on the specific buttons that should be pill/36px rounded */
+.am-rounded-36 {
   border-radius: 36px !important;
 }
 

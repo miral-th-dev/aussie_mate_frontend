@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AlertTriangle, UserRound, X, CalendarDays, Clock3, CheckCircle, Circle } from 'lucide-react';
+import { AlertTriangle, UserRound, X, CalendarDays, Clock3, CheckCircle, Circle, Calendar, Phone, Check } from 'lucide-react';
+
 import { Button, MapWithPolyline, PageHeader } from '../../components';
-import CalendarIcon from '../../assets/Calendar.svg';
-import MapPinIcon from '../../assets/map-pin 1.png';
+
 import MapPinIcon1 from '../../assets/location.svg';
-import PhoneIcon from '../../assets/phone.svg';
-import PhoneIcon1 from '../../assets/phone2.svg';
+
 import ChatIcon from '../../assets/message2.svg';
-import { jobsAPI, userAPI } from '../../services/api';
-import { paymentService } from '../../services/paymentService';
+
+import { jobsAPI, userAPI, jobPhotosAPI } from '../../services/api';
 import { socketService } from '../../services/socketService';
+
 
 // Helper functions for weekly job history
 const getPreferredDaysDisplay = (preferredDays) => {
@@ -73,10 +73,10 @@ const InProgressJobDetailsPage = () => {
     const { jobId } = useParams();
     const navigate = useNavigate();
     const [job, setJob] = useState(null);
-    const [paymentStatus, setPaymentStatus] = useState(null);
     const [loading, setLoading] = useState(true);
     const [customer, setCustomer] = useState(null);
     const [acceptedQuote, setAcceptedQuote] = useState(null);
+
     const [workProgress, setWorkProgress] = useState(null);
     const [occurrences, setOccurrences] = useState([]);
     const [weeklySchedule, setWeeklySchedule] = useState([]);
@@ -89,6 +89,7 @@ const InProgressJobDetailsPage = () => {
     const [isTrackingLocation, setIsTrackingLocation] = useState(false);
     const [locationError, setLocationError] = useState(null);
     const [selectedWorkProgressId, setSelectedWorkProgressId] = useState(null);
+    const [isCompleting, setIsCompleting] = useState(false);
     const cleanerLocationRef = useRef(null);
 
     // Helper function to check if a date is today
@@ -105,13 +106,35 @@ const InProgressJobDetailsPage = () => {
                 setLoading(true);
 
                 // Fetch cleaner progress data which includes job, quote, customer, workProgress, and occurrences
-                const [progressResponse, paymentResponse] = await Promise.all([
-                    jobsAPI.getCleanerProgress(jobId),
-                    paymentService.getPaymentHistory().catch(() => null)
-                ]);
+                let progressData = null;
+                try {
+                    const progressResponse = await jobsAPI.getCleanerProgress(jobId);
+                    if (progressResponse.success && progressResponse.data) {
+                        progressData = progressResponse.data;
+                    }
+                } catch (err) {
+                    console.warn('getCleanerProgress failed, attempting fallback to getJobById', err);
+                }
 
-                if (progressResponse.success && progressResponse.data) {
-                    const { job, quote, customer, workProgress, occurrences } = progressResponse.data;
+                // Fallback to basic job details if progress endpoint fails
+                if (!progressData) {
+                    const jobResponse = await jobsAPI.getJobById(jobId);
+                    if (jobResponse.success && jobResponse.data) {
+                        const job = jobResponse.data;
+                        progressData = {
+                            job,
+                            customer: job.customerId || job.customer,
+                            quote: job.acceptedQuote || (job.quotes || []).find(q => q.status === 'accepted' || q.isAccepted),
+                            workProgress: job.workProgress,
+                            occurrences: job.occurrences || []
+                        };
+                    }
+                }
+
+
+
+                if (progressData && progressData.job) {
+                    const { job, quote, customer, workProgress, occurrences } = progressData;
 
                     if (job.status === 'completed') {
                         navigate(`/cleaner-job-completed/${jobId}`, { replace: true });
@@ -162,8 +185,9 @@ const InProgressJobDetailsPage = () => {
                             lat = coords.lat;
                             lng = coords.lng;
                         } else if (Array.isArray(coords)) {
-                            lat = coords[1];
-                            lng = coords[0];
+                            // Standardize to [lat, lng] from backend
+                            lat = coords[0];
+                            lng = coords[1];
                         }
 
                         if (lat && lng && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
@@ -176,9 +200,7 @@ const InProgressJobDetailsPage = () => {
                     setError('Job not found');
                 }
 
-                if (paymentResponse) {
-                    setPaymentStatus(paymentResponse);
-                }
+
             } catch (err) {
                 setError('Failed to load job details');
                 console.error('Error fetching job:', err);
@@ -226,10 +248,13 @@ const InProgressJobDetailsPage = () => {
         }
     }, [cleanerLocation, customerLocation]);
 
-    // Auto-redirect only if job is completed
+    // Auto-redirect only if job is completed, and auto-show map if on the way
     useEffect(() => {
         if (job?.status === 'completed') {
             navigate(`/cleaner-job-completed/${jobId}`, { replace: true });
+        }
+        if (job?.status === 'on_the_way') {
+            setShowMap(true);
         }
     }, [job?.status, jobId, navigate]);
 
@@ -327,32 +352,38 @@ const InProgressJobDetailsPage = () => {
 
         let lat, lng;
 
-        // Handle different coordinate formats
         if (typeof coordinates === 'string') {
-            // If it's a string like "21.236941, 72.862925"
             const coords = coordinates.split(',').map(coord => parseFloat(coord.trim()));
-            lat = coords[1];
-            lng = coords[0];
+            // Most strings are "lat, lng", but let's check
+            if (coords[0] < 40 && coords[1] > 40) {
+                lat = coords[0];
+                lng = coords[1];
+            } else {
+                lat = coords[1];
+                lng = coords[0];
+            }
         } else if (coordinates.lat && coordinates.lng) {
-            // If it's an object like { lat: 21.236941, lng: 72.862925 }
             lat = coordinates.lat;
             lng = coordinates.lng;
         } else if (Array.isArray(coordinates)) {
-            // If it's an array like [21.236941, 72.862925]
-            lat = coordinates[1];
-            lng = coordinates[0];
+            // GeoJSON is [lng, lat], but some backends send [lat, lng]
+            if (coordinates[0] < 40 && coordinates[1] > 40) {
+                lat = coordinates[0];
+                lng = coordinates[1];
+            } else {
+                lat = coordinates[1];
+                lng = coordinates[0];
+            }
         }
 
-        // Validate coordinates (lat should be between -90 and 90, lng between -180 and 180)
+        // Final check: if they are swapped (lat > lng for India)
+        if (Math.abs(lat) > Math.abs(lng)) {
+            [lat, lng] = [lng, lat];
+        }
+
         if (lat && lng && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
             return { lat, lng };
         }
-
-        // If coordinates seem swapped (lat > 90 or lat < -90), try swapping them
-        if (lat && lng && (lat > 90 || lat < -90)) {
-            return { lat: lng, lng: lat };
-        }
-
         return null;
     };
 
@@ -381,45 +412,114 @@ const InProgressJobDetailsPage = () => {
         }
     };
 
-    const handleOnTheWay = () => {
-        // Handle "On the way" action
+    const handleOnTheWay = async () => {
+        try {
+            const response = await jobsAPI.updateJobStatus(jobId, 'on_the_way');
+            if (response.success) {
+                // Re-fetch job details to reflect status change
+                const progressResponse = await jobsAPI.getCleanerProgress(jobId);
+                if (progressResponse.success) {
+                    setJob(progressResponse.data.job);
+                }
+            } else {
+                alert(response.message || 'Failed to update status');
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('An error occurred. Please try again.');
+        }
     };
 
-    const handleStartJob = () => {
+    const handleStartJob = async () => {
         console.log('Starting job. Frequency:', job?.frequency);
 
+        try {
+            const response = await jobsAPI.updateJobStatus(jobId, 'started');
+            if (response.success) {
+                // Re-fetch job details to reflect status change
+                const progressResponse = await jobsAPI.getCleanerProgress(jobId);
+                if (progressResponse.success) {
+                    setJob(progressResponse.data.job);
+                }
+            } else {
+                alert(response.message || 'Failed to update status');
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            alert('An error occurred. Please try again.');
+        }
+    };
+
+    const handleRequestCompletion = async () => {
+        let occId = null;
         if (job?.frequency === 'Weekly') {
+            occId = selectedWorkProgressId;
             const selectedOccurrence = weeklySchedule.find(item => item.id === selectedWorkProgressId);
 
-            if (selectedOccurrence && selectedOccurrence.status === 'pending') {
-                navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
-            } else if (selectedOccurrence && selectedOccurrence.status === 'completed') {
-                alert('This occurrence is already completed. You cannot start a completed job.');
-            } else {
-                alert('Please select a pending occurrence for today to start the job.');
+            if (!selectedOccurrence) {
+                alert('Please select a pending occurrence for today to request completion.');
+                return;
+            }
+            if (selectedOccurrence.status === 'completed') {
+                alert('This occurrence is already completed.');
+                return;
             }
         } else if (job?.frequency === 'Custom') {
-            // For Custom jobs, use the selected occurrence from occurrences array
+            occId = selectedWorkProgressId;
             const selectedOccurrence = occurrences.find(occ => occ._id === selectedWorkProgressId);
-            
-            if (selectedOccurrence && selectedOccurrence.status === 'pending' && isToday(selectedOccurrence.scheduledDate)) {
-                navigate(`/cleaner/complete-job/${jobId}?occurrenceId=${selectedWorkProgressId}`, { replace: true });
-            } else if (selectedOccurrence && selectedOccurrence.status === 'completed') {
-                alert('This occurrence is already completed. You cannot start a completed job.');
-            } else if (selectedOccurrence && !isToday(selectedOccurrence.scheduledDate)) {
-                alert('You can only start jobs scheduled for today. Please select today\'s pending occurrence.');
-            } else {
-                alert('Please select a pending occurrence for today to start the job.');
+
+            if (!selectedOccurrence) {
+                alert('Please select a pending occurrence for today.');
+                return;
+            }
+            if (selectedOccurrence.status === 'completed') {
+                alert('This occurrence is already completed.');
+                return;
+            }
+            if (!isToday(selectedOccurrence.scheduledDate)) {
+                alert('You can only complete jobs scheduled for today.');
+                return;
             }
         } else {
-            // For One Time jobs, navigate directly without occurrence selection
-            // If there's a specific occurrence ID available (like occurrences[0]._id), we could pass it
-            const occurrenceId = occurrences?.[0]?._id;
-            const url = occurrenceId
-                ? `/cleaner/complete-job/${jobId}?occurrenceId=${occurrenceId}`
-                : `/cleaner/complete-job/${jobId}`;
+            // One-time jobs
+            occId = occurrences?.[0]?._id;
+        }
 
-            navigate(url, { replace: true });
+        try {
+            setIsCompleting(true);
+
+            // 1. Try to capture payment first
+            try {
+                console.log(`🔌 Attempting to capture payment for job ${jobId}...`);
+                const paymentStatusResponse = await paymentService.getPaymentStatus(jobId);
+
+                if (paymentStatusResponse?.success && paymentStatusResponse?.data?.payment?._id) {
+                    const paymentId = paymentStatusResponse.data.payment._id;
+                    const pStatus = paymentStatusResponse.data.payment.status;
+
+                    if (pStatus === 'authorized') {
+                        console.log(`💰 Capturing payment ${paymentId}...`);
+                        await paymentService.capturePayment(paymentId);
+                    }
+                }
+            } catch (paymentError) {
+                console.warn('⚠️ Payment capture failed or not needed:', paymentError);
+            }
+
+            // 2. Update job status
+            const response = await jobPhotosAPI.updateJobStatus(jobId, 'pending_customer_confirmation', occId);
+
+            if (response.success) {
+                // Success - Redirect directly to completed jobs tab
+                navigate('/cleaner-jobs', { state: { tab: 'completed' }, replace: true });
+            } else {
+                alert(response.message || 'Failed to update job status');
+            }
+        } catch (err) {
+            console.error('Error completing job:', err);
+            alert('An error occurred while completing the job. Please try again.');
+        } finally {
+            setIsCompleting(false);
         }
     };
 
@@ -485,65 +585,72 @@ const InProgressJobDetailsPage = () => {
         return `Posted ${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
     };
 
-    // Helper functions for payment display
-    const getPaymentMethod = () => 'Online';
 
-    const getPaymentSummary = () => {
-        const totalAmount = acceptedQuote?.price || job?.estimatedPrice || 0;
 
-        // Find payment for this job from payment history (try different field names)
-        const jobPayment = paymentStatus?.data?.payments?.find(payment =>
-            payment.jobId === jobId ||
-            payment.jobId === job?.jobId ||
-            payment.jobId === job?._id ||
-            payment._id === jobId
-        );
-
-        const paidAmount = jobPayment?.amount ?? totalAmount;
-        const cleanerAmount = jobPayment?.cleanerAmount ?? Math.round(paidAmount * 0.9);
-
-        return `Customer paid $${paidAmount} online to platform. You will receive $${cleanerAmount}.`;
+    const getJobTitle = (job) => {
+        return job?.serviceTypeId?.name || job?.serviceType?.name || job?.serviceTypeDisplay || job?.serviceType || job?.title || 'Job Details';
     };
 
-    const headerTitle = job.title || job.serviceTypeDisplay || job.serviceType || 'Job Details';
+    const getJobCategory = (job) => {
+        return [
+            job?.categoryId?.name,
+            job?.serviceTypeId?.name
+        ].filter(Boolean).join(' / ') || 'General Cleaning';
+    };
+
+    const getJobFrequencyLabel = (job) => {
+        if (!job) return 'One-time';
+        return job.frequency || job.serviceFrequency || job.schedule?.frequency || 'One-time';
+    };
+
+    const headerTitle = getJobTitle(job);
+
 
     return (
         <>
             <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
-                <div className="px-4 py-4">
+                <div className="px-4 py-2 sm:py-4">
                     <PageHeader
                         title={headerTitle}
                         onBack={() => {
                             const savedTab = localStorage.getItem('cleanerActiveTab');
                             navigate('/cleaner-jobs', { state: { tab: savedTab || 'accepted' }, replace: true });
                         }}
+                        titleClassName="text-lg sm:text-xl font-semibold text-primary-500 truncate"
                     />
                 </div>
 
-                <div className="px-4">
-                    {/* Job Details Card */}
-                    <div className="bg-white rounded-2xl p-6 mb-4 shadow-sm">
-                        <h2 className="text-xl font-bold text-primary-500 mb-2">
-                            {job.title || job.serviceTypeDisplay || job.serviceType || 'Job Details'}
-                        </h2>
-                        <p className="text-sm text-gray-500 mb-2">{getTimeAgo(job.createdAt)}</p>
-
-                        {/* Scheduled Time */}
-                        <div className="flex items-center mb-1">
-                            <img src={CalendarIcon} alt="Calendar" className="w-4 h-4 mr-3" />
-                            <span className="text-sm text-primary-200 font-medium">
-                                {job.scheduledDate ? formatDate(job.scheduledDate) : 'Date not specified'}
+                <div className="px-4 pb-6">
+                    {/* Job Details Card (Figma Style) */}
+                    <div className="bg-[#F8FAFF] rounded-3xl p-5 mb-6 border border-[#E9EFFF]">
+                        <div className="mb-4">
+                            <span className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                                {getJobCategory(job)}
                             </span>
+                            <h2 className="text-[20px] font-bold text-primary-500 mt-1 leading-tight">
+                                {headerTitle}
+                            </h2>
                         </div>
 
-                        {/* Location */}
-                        <div className="flex items-center">
-                            <img src={MapPinIcon} alt="Location" className="w-4 h-4 mr-3" />
-                            <span className="text-sm text-primary-200 font-medium">
-                                {job.location?.address || job.location?.fullAddress || 'Location not specified'}
-                            </span>
+                        <div className="space-y-3">
+                            {/* Distance */}
+                            <div className="flex items-center text-[#6B7280]">
+                                <img src={MapPinIcon1} alt="Location" className="w-4 h-4 mr-3 opacity-60" />
+                                <span className="text-sm font-medium">
+                                    Approx. {job.distance || '4.2 km'} away, {job.location?.city || 'VIC'}
+                                </span>
+                            </div>
+
+                            {/* Date & Time */}
+                            <div className="flex items-center text-[#6B7280]">
+                                <Calendar className="w-4 h-4 mr-3 opacity-60" strokeWidth={2.5} />
+                                <span className="text-sm font-medium">
+                                    {job.scheduledDate ? formatDate(job.scheduledDate) : 'Date not specified'}
+                                </span>
+                            </div>
                         </div>
                     </div>
+
 
                     {/* Location Tracking Status */}
                     {isTrackingLocation && (
@@ -573,136 +680,110 @@ const InProgressJobDetailsPage = () => {
 
                     {/* Map Section */}
                     {showMap && (
-                        <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="text-lg font-semibold text-primary-500">Route to Customer</h3>
+                        <div className="bg-white rounded-3xl overflow-hidden mb-6 border border-[#F1F5F9] transition-all duration-300">
+                            {/* <div className="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-lg font-bold text-primary-500">Route to Customer</h3>
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 rounded-full">
+                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">Active Route</span>
+                                    </div>
+                                </div>
                                 <button
                                     onClick={() => setShowMap(false)}
-                                    className="text-gray-400 hover:text-gray-600"
+                                    className="p-1.5 hover:bg-gray-100 rounded-xl text-gray-400 hover:text-gray-600 transition-colors"
                                 >
-                                    <X className="w-5 h-5" strokeWidth={2} />
+                                    <X className="w-5 h-5" strokeWidth={2.5} />
                                 </button>
-                            </div>
+                            </div> */}
 
-                            {(() => {
-                                const originalCoords = job?.location?.coordinates;
-                                const fixedCoords = getCoordinates(originalCoords);
+                            <div className="relative">
+                                {(() => {
+                                    const originalCoords = job?.location?.coordinates;
+                                    const fixedCoords = getCoordinates(originalCoords);
 
-                                if (!fixedCoords) {
+                                    if (!fixedCoords) {
+                                        return (
+                                            <div className="h-64 bg-gray-50 flex items-center justify-center">
+                                                <div className="text-center">
+                                                    <AlertTriangle className="w-8 h-8 text-yellow-500 mx-auto mb-2 opacity-50" />
+                                                    <p className="text-gray-500 font-medium">Customer location not available</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
                                     return (
-                                        <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                                            <p className="text-gray-500">Customer location not available</p>
+                                        <div>
+                                            <MapWithPolyline
+                                                customerLocation={fixedCoords}
+                                                cleanerLocation={cleanerLocation}
+                                                hasArrived={isNearCustomer || job?.isLocationMatched}
+                                                // hasArrived={job?.isLocationMatched}
+                                                onRouteInfo={(info) => setRouteInfo(info)}
+                                            />
                                         </div>
                                     );
-                                }
-
-                                return (
-                                    <MapWithPolyline
-                                        customerLocation={fixedCoords}
-                                        cleanerLocation={cleanerLocation}
-                                        onRouteInfo={(info) => setRouteInfo(info)}
-                                    />
-
-                                );
-                            })()}
+                                })()}
+                            </div>
                         </div>
                     )}
 
-                    {/* Your Customer Section */}
-                    <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-primary-500 mb-3">Your customer</h3>
-                        <div className="bg-white rounded-2xl p-4 shadow-sm">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center">
-                                    <div className="w-12 h-12 rounded-full mr-3 overflow-hidden">
-                                        {customer?.profilePhoto?.url ? (
+                    {/* Assigned By Section */}
+                    <div className="mb-6">
+                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Assigned By</h3>
+                        <div className="bg-white rounded-3xl p-4 border border-[#F1F5F9] shadow-sm">
+                            <div className="flex items-center justify-between mb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
+                                        {customer?.profilePhoto?.url || customer?.profileImage ? (
                                             <img
-                                                src={customer.profilePhoto.url}
+                                                src={customer?.profilePhoto?.url || customer?.profileImage}
                                                 alt="Customer"
                                                 className="w-full h-full object-cover"
                                             />
                                         ) : (
-                                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                                <UserRound className="w-6 h-6 text-gray-400" strokeWidth={2} />
+                                            <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                                                <UserRound className="w-7 h-7 text-gray-400" strokeWidth={1.5} />
                                             </div>
                                         )}
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold text-primary-500">{customer?.firstName && customer?.lastName ? `${customer.firstName} ${customer.lastName}` : customer?.name || job.customer?.name || 'Customer'}</h4>
-                                        <div className="flex items-center text-sm text-gray-500">
-                                            <img src={PhoneIcon} alt="Phone" className="w-3 h-3 mr-1" />
-                                            {customer?.phone || customer?.phoneNumber || customer?.mobile || job.customer?.phone || job.customer?.phoneNumber || job.customer?.mobile || 'Phone not available'}
+                                        <h4 className="text-lg font-bold text-primary-500">
+                                            {customer?.firstName || 'Customer'} {customer?.lastName?.slice(0, 1) || ''}.
+                                        </h4>
+                                        <div className="flex items-center text-sm text-[#4B5563] font-medium mt-0.5">
+                                            <Phone className="w-3.5 h-3.5 mr-1.5 opacity-70" />
+                                            {customer?.phone || customer?.phoneNumber || 'No phone'}
                                         </div>
                                     </div>
                                 </div>
-                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#D1FAE5] border border-[#D1FAE5] text-[#059669]">
-                                    Booked
-                                </span>
-                            </div>
-
-                            {/* Distance indicator */}
-                            {routeInfo && (
-                                <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <div className="text-xs text-gray-500">Distance to Customer</div>
-                                            <div className="text-sm font-semibold text-gray-900">{routeInfo.distance}</div>
-                                        </div>
-                                        <div>
-                                            <div className="text-xs text-gray-500">Estimated Time</div>
-                                            <div className="text-sm font-semibold text-gray-900">{routeInfo.duration}</div>
-                                        </div>
-                                        {isNearCustomer && (
-                                            <div className="bg-green-100 text-green-700 text-xs font-semibold px-3 py-1 rounded-full">
-                                                ✓ Near Customer
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="flex items-center justify-between">
-                                <button
-                                    onClick={handleGetDirections}
-                                    className="flex items-center text-primary-600 text-sm font-medium cursor-pointer"
-                                >
-                                    <img src={MapPinIcon1} alt="Directions" className="w-4 h-4 mr-1" />
-                                    {showMap ? 'Hide Map' : 'Show Route'}
-                                </button>
-
-                                <div className="flex items-center gap-2">
+                                <div className="flex gap-2">
                                     <button
                                         onClick={handleChatWithCustomer}
-                                        className="w-8 h-8 shadow-custom rounded-lg! flex items-center justify-center transition-colors cursor-pointer border border-[#9CC0F6]"
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#E2E8F0] hover:bg-gray-50 transition-colors cursor-pointer"
                                     >
-                                        <img src={ChatIcon} alt="Chat" className="w-4 h-4" />
+                                        <img src={ChatIcon} alt="Chat" className="w-5 h-5 opacity-70" />
                                     </button>
                                     <button
                                         onClick={handleCallCustomer}
-                                        className="w-8 h-8 shadow-custom rounded-lg! flex items-center justify-center  transition-colors cursor-pointer border border-[#9CC0F6]"
+                                        className="w-10 h-10 rounded-xl flex items-center justify-center border border-[#E2E8F0] hover:bg-gray-50 transition-colors cursor-pointer"
                                     >
-                                        <img src={PhoneIcon1} alt="Call" className="w-4 h-4" />
+                                        <Phone className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
                                     </button>
                                 </div>
                             </div>
+
+                            <button
+                                onClick={handleGetDirections}
+                                className="flex items-center gap-2 text-[#1F6FEB] text-sm font-bold pl-1 hover:underline cursor-pointer"
+                            >
+                                <img src={MapPinIcon1} alt="Directions" className="w-4 h-4" />
+                                {showMap ? 'Hide Map' : 'Get Directions'}
+                            </button>
                         </div>
                     </div>
 
-                    {/* Your Quote Section */}
-                    {acceptedQuote && (
-                        <div className="mb-4">
-                            <h3 className="text-lg font-semibold text-primary-500 mb-3">Your Quote</h3>
-                            <div className="bg-white rounded-2xl p-4 shadow-sm">
-                                <div className="mb-2">
-                                    <span className="text-sm text-gray-600">Amount: </span>
-                                    <span className="text-lg font-semibold text-primary-600">${acceptedQuote.price}</span>
-                                </div>
-                                {acceptedQuote.description && (
-                                    <p className="text-sm text-gray-600">{acceptedQuote.description}</p>
-                                )}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Custom Job Dates Section */}
                     {job?.frequency === 'Custom' && occurrences && occurrences.length > 0 && (
@@ -715,8 +796,8 @@ const InProgressJobDetailsPage = () => {
                                             key={occurrence._id || index}
                                             onClick={() => setSelectedWorkProgressId(occurrence._id)}
                                             className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all cursor-pointer ${isToday(occurrence.scheduledDate)
-                                                    ? 'bg-blue-50 border-blue-300 shadow-md'
-                                                    : 'bg-gray-50 border-gray-200'
+                                                ? 'bg-blue-50 border-blue-300 shadow-md'
+                                                : 'bg-gray-50 border-gray-200'
                                                 } ${selectedWorkProgressId === occurrence._id
                                                     ? 'ring-2 ring-blue-500 ring-offset-2'
                                                     : ''
@@ -773,8 +854,8 @@ const InProgressJobDetailsPage = () => {
                                                 )}
                                                 {occurrence.status === 'pending' && (
                                                     <span className={`text-xs font-semibold px-2 py-1 rounded-full ${isToday(occurrence.scheduledDate)
-                                                            ? 'bg-blue-100 text-blue-700 font-bold'
-                                                            : 'bg-gray-100 text-gray-600'
+                                                        ? 'bg-blue-100 text-blue-700 font-bold'
+                                                        : 'bg-gray-100 text-gray-600'
                                                         }`}>
                                                         Pending
                                                     </span>
@@ -915,43 +996,49 @@ const InProgressJobDetailsPage = () => {
                         </div>
                     )}
 
-                    {/* Payment Summary Section */}
-                    <div className="mb-4">
-                        <h3 className="text-lg font-semibold text-primary-500 mb-3">Payment Summary</h3>
-                        <div className="bg-white rounded-2xl p-4 shadow-sm">
-                            <div className="mb-2">
-                                <span className="text-sm text-primary-200 font-medium">Quoted Price: </span>
-                                <span className="text-lg font-semibold text-primary-600">${acceptedQuote?.price || job.estimatedPrice || '0'}</span>
-                            </div>
-
-                            <div className="mb-2">
-                                <span className="text-sm text-primary-200 font-medium">Payment Method: </span>
-                                <span className="text-sm font-medium">{getPaymentMethod()}</span>
-                            </div>
-
-                            <div className="mb-3">
-                                <p className="text-sm text-primary-200 font-medium">
-                                    {getPaymentSummary()}
-                                </p>
-                            </div>
-
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-500 border border-yellow-500 text-yellow-500 font-medium">
-                                Pending Release
-                            </span>
-                        </div>
-                        {/* Bottom Action Button */}
-                        <div className=" p-4 flex justify-end">
-                            {isNearCustomer ? (
-                                <Button onClick={handleStartJob} variant="primary">
+                    {/* Sticky Footer Action Button */}
+                    <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-10 flex justify-center">
+                        <div className="flex justify-center">
+                            {job.status === 'started' || job.status === 'in_progress' ? (
+                                <Button
+                                    onClick={handleRequestCompletion}
+                                    variant="primary"
+                                    className="w-full sm:w-auto"
+                                    loading={isCompleting}
+                                    disabled={isCompleting}
+                                >
+                                    Request For Complete Job
+                                </Button>
+                            ) : job.status === 'on_the_way' ? (
+                                <Button
+                                    onClick={handleStartJob}
+                                    variant="primary"
+                                    disabled={!isNearCustomer}
+                                    className={`w-full sm:w-auto ${!isNearCustomer ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
                                     Start Job
                                 </Button>
+                            ) : job.status === 'pending_customer_confirmation' || job.status === 'completed' ? (
+                                <div className="bg-green-50 px-6 py-3 rounded-xl border border-green-100 flex items-center justify-center gap-2">
+                                    <Check className="w-5 h-5 text-green-500" />
+                                    <span className="text-green-600 font-semibold">
+                                        {job.status === 'completed' ? 'Job Completed' : 'Awaiting Customer Confirmation'}
+                                    </span>
+                                </div>
                             ) : (
-                                <Button onClick={handleOnTheWay} variant="primary">
+                                <Button
+                                    onClick={handleOnTheWay}
+                                    variant="primary"
+                                    className="w-full sm:w-auto"
+                                >
                                     I'm On The Way
                                 </Button>
                             )}
                         </div>
                     </div>
+
+                    <div className="h-24"></div>
+
                 </div>
             </div>
         </>

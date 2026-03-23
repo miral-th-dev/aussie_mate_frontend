@@ -90,16 +90,13 @@ const SignupPage = () => {
         return cleaned; // Return just the 9 digits
       };
 
-      // Map role to userType for backend compatibility
+      // Map role to userType/role for backend compatibility
       const roleMapping = {
-        'Customer': 'customer',
-        'Student Cleaner': 'cleaner',
-        'Professional Cleaner': 'cleaner',
-        'NDIS Assistant': 'cleaner',
-        'Retail Auditor': 'cleaner',
-        'Pet Sitter': 'cleaner',
-        'Housekeeper': 'cleaner'
+        'Customer': { userType: 'customer', role: 'Customer' },
+        'Service Provider': { userType: 'cleaner', role: 'Cleaner' }
       };
+
+      const selectedMapping = roleMapping[userData.role] || { userType: userData.role.toLowerCase(), role: userData.role };
 
       // Create clean API data with only required fields
       const apiData = {
@@ -109,8 +106,8 @@ const SignupPage = () => {
         phone: formatPhoneNumber(userData.phone.trim()),
         password: userData.password,
         confirmPassword: userData.confirmPassword,
-        userType: roleMapping[userData.role] || userData.role.toLowerCase(),
-        role: userData.role,
+        userType: selectedMapping.userType,
+        role: selectedMapping.role,
       };
 
       await register(apiData);
@@ -348,7 +345,7 @@ const SignupPage = () => {
                 ? 'Continue For NDIS Verification'
                 : formData.role === 'Customer'
                   ? 'Continue & Set My Location'
-                  : 'Continue For Verification'
+                  : 'Continue For Profile Setup'
               }
             </Button>
           </form>

@@ -3,59 +3,35 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Button,
   PageHeader,
-  CleaningJobDetailsForm,
-  PetSittingJobDetailsForm,
-  CommercialCleaningJobDetailsForm,
-  HandymanJobDetailsForm,
-  NDISSupportJobDetailsForm,
-  HousekeepingJobDetailsForm
+  CleaningJobDetailsForm
 } from '../../components';
-import CardBG2 from '../../assets/CardBG2.png';
-import CardBG3 from '../../assets/CardBG3.png';
-import CardBG4 from '../../assets/CardBG4.png';
-import CleaningImage from '../../assets/Cleaning.png';
-import HandymanImage from '../../assets/Handyman.png';
-import HousekeepingImage from '../../assets/Housekeeping.png';
-import PetSittingImage from '../../assets/Pet Sitting.png';
-import NDISSupportImage from '../../assets/NDIS Support.png';
-import CommercialCleaningImage from '../../assets/commercialCleaning.svg';
 import MapPinIcon from '../../assets/map-pin 1.png';
 import { jobsAPI, userAPI } from '../../services/api';
 import { format } from 'date-fns';
 import Calendar from '../../components/form-controls/Calendar';
+import CalendarIcon from '../../assets/Calendar.svg';
+import JobLiveAnimation from '../../assets/joblive.gif';
 
 const PostNewJobPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Step management
+  // Step management (Step 1: Job Details, Step 2: Final Details, Step 3: Success)
   const [currentStep, setCurrentStep] = useState(1);
+  const [createdJobId, setCreatedJobId] = useState(null);
 
-  // Service selection
-  const [selectedService, setSelectedService] = useState(null);
+  // Service selection (Defaults to cleaning)
+  const [selectedService, setSelectedService] = useState('cleaning');
 
   // Job details form data
   const [formData, setFormData] = useState({
-    serviceType: '',
+    serviceType: 'cleaning',
     serviceDetail: '',
     propertyType: '',
-    bedrooms: 1,
-    bathrooms: 1,
     instructions: '',
-    petType: '',
-    petBreed: '',
-    numberOfPets: '',
-    service: '',
-    housekeepingServiceType: [],
-    handymanServiceType: '',
-    handymanSelectedRepairs: [],
-    handymanCustomRequests: [],
-    ndisNumber: '',
-    supportType: '',
     frequency: 'One-time',
-    preferredDays: {},
-    customDates: [],
-    repeatWeeks: ''
+    categoryId: '',
+    serviceTypeId: '',
   });
 
   // File upload states
@@ -87,45 +63,6 @@ const PostNewJobPage = () => {
     { value: 'house', label: 'House' },
     { value: 'apartment', label: 'Apartment' },
     { value: 'office', label: 'Office' }
-  ];
-
-  const serviceCategories = [
-    {
-      id: 'cleaning',
-      name: 'Cleaning',
-      image: CleaningImage,
-      description: 'Professional cleaning services'
-    },
-    {
-      id: 'housekeeping',
-      name: 'Housekeeping',
-      image: HousekeepingImage,
-      description: 'Complete housekeeping solutions'
-    },
-    {
-      id: 'supportServices',
-      name: 'Support Services',
-      image: NDISSupportImage,
-      description: 'NDIS support services'
-    },
-    {
-      id: 'commercialCleaning',
-      name: 'Commercial Cleaning',
-      image: CommercialCleaningImage,
-      description: 'Retail auditing services'
-    },
-    {
-      id: 'petsitting',
-      name: 'Pet Sitting',
-      image: PetSittingImage,
-      description: 'Pet care and sitting'
-    },
-    {
-      id: 'handyman',
-      name: 'Handyman',
-      image: HandymanImage,
-      description: 'Repair and maintenance'
-    }
   ];
 
   // Close dropdown when clicking outside
@@ -244,12 +181,7 @@ const PostNewJobPage = () => {
     };
   }, []);
 
-  // Service selection handler
-  const handleServiceClick = (serviceId) => {
-    setSelectedService(serviceId);
-    setFormData(prev => ({ ...prev, serviceType: serviceId }));
-    setCurrentStep(2);
-  };
+
 
   // Form handlers
   const handleInputChange = (field, value) => {
@@ -423,7 +355,7 @@ const PostNewJobPage = () => {
   };
 
   const handleContinue = () => {
-    if (currentStep < 3) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -435,20 +367,12 @@ const PostNewJobPage = () => {
     setAddressError('');
 
     // Frontend validation
-    if (!formData.serviceType) {
-      setError('Please select a service type');
-      setIsLoading(false);
-      return;
-    }
+    // Unified flow defaults to cleaning
+    const currentServiceType = formData.serviceType || 'cleaning';
 
-    const propertyRequiredServices = ['cleaning', 'commercialCleaning'];
-    if (propertyRequiredServices.includes(formData.serviceType)) {
-      if (!formData.propertyType || formData.propertyType.trim() === '') {
-        setError('Please select a property type');
-        setIsLoading(false);
-        return;
-      }
-    }
+    const propertyRequiredServices = ['cleaning'];
+    // Removed strict propertyType validation here as it defaults to 'house'
+
 
     if (!selectedDate) {
       setError('Please select a date for the service');
@@ -456,66 +380,18 @@ const PostNewJobPage = () => {
       return;
     }
 
-    const serviceDetailRequiredServices = ['cleaning', 'commercialCleaning'];
-    if (serviceDetailRequiredServices.includes(formData.serviceType)) {
-      if (!formData.serviceDetail || formData.serviceDetail.trim() === '') {
-        setError('Please specify the type of service you need');
-        setIsLoading(false);
-        return;
-      }
+    if (!formData.categoryId) {
+      setError('Please select a cleaning category');
+      setIsLoading(false);
+      return;
     }
 
-    switch (formData.serviceType) {
-      case 'petsitting': {
-        if (!formData.petType?.trim()) {
-          setError('Please enter your pet type');
-          setIsLoading(false);
-          return;
-        }
-        if (!formData.numberOfPets || Number(formData.numberOfPets) <= 0) {
-          setError('Please enter the number of pets');
-          setIsLoading(false);
-          return;
-        }
-        if (!formData.service) {
-          setError('Please select a pet sitting service');
-          setIsLoading(false);
-          return;
-        }
-        break;
-      }
-      case 'housekeeping': {
-        if (!Array.isArray(formData.housekeepingServiceType) || formData.housekeepingServiceType.length === 0) {
-          setError('Please select at least one housekeeping service');
-          setIsLoading(false);
-          return;
-        }
-        break;
-      }
-      case 'handyman': {
-        if (!formData.handymanServiceType) {
-          setError('Please select a handyman service type');
-          setIsLoading(false);
-          return;
-        }
-        break;
-      }
-      case 'supportServices': {
-        if (!formData.ndisNumber || !/^\d{9}$/.test(formData.ndisNumber)) {
-          setError('NDIS number must be exactly 9 digits');
-          setIsLoading(false);
-          return;
-        }
-        if (!formData.supportType) {
-          setError('Please select an NDIS support type');
-          setIsLoading(false);
-          return;
-        }
-        break;
-      }
-      default:
-        break;
+    if (!formData.serviceTypeId) {
+      setError('Please specify the type of service you need');
+      setIsLoading(false);
+      return;
     }
+
 
     let effectiveLocation = selectedLocation;
     try {
@@ -569,91 +445,22 @@ const PostNewJobPage = () => {
       const user = userStr ? JSON.parse(userStr) : null;
       const customerId = user?.id || user?._id;
 
-      const resolvedServiceDetail = (() => {
-        const trimmed = formData.serviceDetail?.trim();
-        if (trimmed) return trimmed;
-
-        if (formData.serviceType === 'handyman') {
-          const repairs = Array.isArray(formData.handymanSelectedRepairs) ? formData.handymanSelectedRepairs : [];
-          const custom = Array.isArray(formData.handymanCustomRequests) ? formData.handymanCustomRequests : [];
-          const parts = [formData.handymanServiceType, ...repairs, ...custom].filter(Boolean);
-          return parts.join(', ');
-        }
-
-        if (formData.serviceType === 'petsitting') {
-          return formData.service || '';
-        }
-
-        if (formData.serviceType === 'housekeeping' && Array.isArray(formData.housekeepingServiceType)) {
-          const detail = formData.housekeepingServiceType.join(', ');
-          return detail || formData.service || 'Housekeeping';
-        }
-
-        return formData.service || formData.serviceType || '';
-      })();
-
-      const propertyRequiredServices = ['cleaning', 'commercialCleaning'];
-      const propertyTypeForPayload = propertyRequiredServices.includes(formData.serviceType)
-        ? formData.propertyType
-        : (formData.propertyType || 'house');
-
-      const isCleaning = formData.serviceType === 'cleaning';
-      const isHousekeeping = formData.serviceType === 'housekeeping';
-      const isHandyman = formData.serviceType === 'handyman';
-      const isPetSitting = formData.serviceType === 'petsitting';
-      const isNdis = formData.serviceType === 'supportServices';
+      const resolvedServiceDetail = formData.serviceDetail || 'cleaning';
 
       const jobData = {
-        serviceType: formData.serviceType,
-        serviceDetail: resolvedServiceDetail,
-        propertyType: propertyTypeForPayload,
-
-        frequency: formData.frequency || 'One-time',
-        preferredDays: formData.preferredDays || {},
-        customDates: formData.customDates || [],
-        repeatWeeks: formData.repeatWeeks || '',
-        scheduledDate,
+        categoryId: formData.categoryId,
+        serviceTypeId: formData.serviceTypeId,
         instructions: finalInstructions || formData.instructions,
+        scheduledDate,
         isUrgent,
+        bondCleaning: isBondCleaning,
         location: {
           address: effectiveLocation.address,
           city: effectiveLocation.city,
-          coordinates: effectiveLocation.coordinates,
+          coordinates: effectiveLocation.coordinates || [0, 0], // Default if not found
         },
         customerId,
       };
-
-      if (isCleaning) {
-        jobData.bondCleaning = isBondCleaning;
-      }
-
-      if (isPetSitting) {
-        jobData.petType = formData.petType || '';
-        jobData.petBreed = formData.petBreed || '';
-        jobData.numberOfPets = formData.numberOfPets ? Number(formData.numberOfPets) : null;
-        jobData.petService = formData.service || '';
-      }
-
-      if (isHousekeeping) {
-        jobData.housekeepingServiceType = Array.isArray(formData.housekeepingServiceType)
-          ? formData.housekeepingServiceType
-          : [];
-      }
-
-      if (isHandyman) {
-        jobData.handymanServiceType = formData.handymanServiceType || '';
-        jobData.handymanRepairs = Array.isArray(formData.handymanSelectedRepairs)
-          ? formData.handymanSelectedRepairs
-          : [];
-        jobData.handymanCustomRequests = Array.isArray(formData.handymanCustomRequests)
-          ? formData.handymanCustomRequests
-          : [];
-      }
-
-      if (isNdis) {
-        jobData.ndisNumber = formData.ndisNumber || '';
-        jobData.supportType = formData.supportType || '';
-      }
 
       const files = {
         photos: selectedFiles,
@@ -665,7 +472,8 @@ const PostNewJobPage = () => {
       if (response.success) {
         localStorage.removeItem('postJobFormState');
         
-        navigate('/job-success', { state: { jobId: response.data._id } });
+        setCreatedJobId(response.data._id);
+        setCurrentStep(3);
       } else {  
         setError(response.message || 'Failed to post job');
       }
@@ -696,81 +504,135 @@ const PostNewJobPage = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
-        return renderServiceSelection();
-      case 2:
         return renderJobDetails();
-      case 3:
+      case 2:
         return renderFinalDetails();
+      case 3:
+        return renderSuccessScreen();
       default:
-        return renderServiceSelection();
+        return renderJobDetails();
     }
   };
 
-  const renderServiceSelection = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+
+  const renderJobDetails = () => (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 lg:py-12">
       <PageHeader
         title="Post New Job"
-        onBack={() => navigate('/customer-dashboard')}
-        className="mb-6"
-        titleClassName="text-xl sm:text-2xl font-semibold text-primary-500"
+        onBack={() => currentStep === 1 ? navigate('/customer-dashboard') : handleBack()}
+        className="mb-8"
+        titleClassName="text-2xl sm:text-3xl font-bold text-[#111827]"
+        backButtonClassName="p-2 sm:p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all cursor-pointer shadow-sm"
       />
 
       {/* Main Content */}
-      <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-custom">
-        {/* Title and Description */}
-        <div className="text-center mb-8">
-          <h2 className="text-2xl sm:text-3xl font-semibold text-primary-500 mb-3">
-            What do you need help with today?
-          </h2>
-          <p className="text-primary-200 font-medium text-sm sm:text-base">
-            Pick a service to get started with hassle-free cleaning today.
-          </p>
-        </div>
+      <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-custom">
+        <form onSubmit={(e) => { e.preventDefault(); handleContinue(); }}>
+          {/* Using CleaningJobDetailsForm as the unified form */}
+          <CleaningJobDetailsForm 
+            formData={formData}
+            onInputChange={handleInputChange}
+            onPropertyTypeSelect={handlePropertyTypeSelect}
+            selectedPropertyTypeLabel={getSelectedPropertyType()}
+            selectedFiles={selectedFiles}
+            onDrag={handleDrag}
+            onDrop={handleDrop}
+            dragActive={dragActive}
+            uploadError={uploadError}
+            onFileInputChange={handleFileInputChange}
+            onRemoveFile={removeFile}
+            isDropdownOpen={isDropdownOpen}
+            propertyTypes={propertyTypes}
+            dropdownRef={dropdownRef}
+            isBondCleaning={isBondCleaning}
+            onBondCleaningToggle={handleBondCleaningToggle}
+          />
 
-        {/* Service Categories Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-8">
-          {serviceCategories.map((service) => (
-            <div
-              key={service.id}
-              onClick={() => handleServiceClick(service.id)}
-              className="relative bg-white border border-gray-200 rounded-3xl p-3 sm:p-6 text-center hover:shadow-custom-5 transition-shadow cursor-pointer overflow-hidden shadow-custom"
+          {/* Continue Button */}
+          <div className="mt-8 sm:mt-12">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full py-4 rounded-2xl sm:rounded-full text-base sm:text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
             >
-              {/* Top-left background image */}
-              <div className="absolute top-0 left-0 w-20 h-24 overflow-hidden rounded-tl-2xl">
-                <img src={CardBG3} alt="Card Background" className="w-full h-full object-cover" />
-              </div>
+              Continue
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 
-              {/* Top-right background image */}
-              <div className="absolute top-0 right-0 w-20 h-24 overflow-hidden rounded-tr-2xl">
-                <img src={CardBG2} alt="Card Background" className="w-full h-full object-cover" />
-              </div>
-              
-              {/* Bottom-left background image */}
-              <div className="absolute bottom-0 left-0 w-20 h-24 overflow-hidden rounded-bl-2xl">
-                <img src={CardBG4} alt="Card Background" className="w-full h-full object-cover" />
-              </div>
+  const renderFinalDetails = () => (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 lg:py-12">
+      <PageHeader
+        title="Post New Job"
+        onBack={handleBack}
+        className="mb-8"
+        titleClassName="text-2xl sm:text-3xl font-bold text-[#111827]"
+        backButtonClassName="p-2 sm:p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all cursor-pointer shadow-sm"
+      />
 
-              {/* Service Image */}
-              <div className="relative z-10 mb-2 flex justify-center">
-                <img
-                  src={service.image}
-                  alt={service.name}
-                  className="w-12 h-12 sm:w-20 sm:h-20 object-contain"
-                />
-              </div>
+      <div className="space-y-4 bg-white rounded-2xl p-6 sm:p-8 shadow-custom">
+        {/* Error Messaging */}
+        {error && <div className="text-red-500 font-medium px-4 py-3 bg-red-50 rounded-xl">{error}</div>}
+        {addressError && (
+          <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl flex items-center justify-between">
+            <span>{addressError}</span>
+            <Button onClick={handleGoToProfile} variant="warning" size="sm">Set Address</Button>
+          </div>
+        )}
 
-              {/* Service Name */}
-              <div className="relative z-10 text-xs sm:text-lg font-medium text-primary-500">{service.name}</div>
-            </div>
-          ))}
+        {/* When do you need the service? */}
+        <div className="space-y-4">
+          <h2 className="text-[20px] font-semibold text-[#111827]">When do you need the service?</h2>
+          <div className="bg-[#F9FAFB] rounded-4xl p-1 relative">
+            <Calendar
+              value={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
+              onChange={handleDateChange}
+              minDate={new Date()}
+              disablePast
+              format="MMM DD, YYYY"
+              textFieldProps={{
+                fullWidth: true,
+                sx: { 
+                  '& .MuiInputBase-root': { 
+                    borderRadius: '24px', 
+                    border: 'none', 
+                    backgroundColor: '#F9FAFB',
+                    paddingRight: '16px'
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                }
+              }}
+              slots={{
+                openPickerIcon: () => <img src={CalendarIcon} alt="Calendar" className="w-6 h-6" />
+              }}
+            />
+          </div>
         </div>
+
+        {/* Urgency Toggle */}
+        <div className="flex items-center justify-between py-2">
+          <span className="text-base font-medium text-[#111827]">This is urgent</span>
+          <button
+            onClick={handleUrgencyToggle}
+            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${isUrgent ? 'bg-primary-500' : 'bg-gray-200'}`}
+            type="button"
+          >
+            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${isUrgent ? 'translate-x-6' : 'translate-x-1'}`} />
+          </button>
+        </div>
+
+        <hr className="border-gray-100" />
 
         {/* Select location */}
-        <div className="mb-6">
-          <h3 className="text-primary-500 text-lg font-medium mb-2">
+        <div className="space-y-4">
+          {/* <h3 className="text-primary-500 text-lg font-medium mb-1">
             Select location you want to clean
-          </h3>
-          <p className="text-gray-400 text-sm font-medium mb-3">Your default location</p>
+          </h3> */}
+          <p className="text-gray-400 text-sm font-medium">Your default location</p>
 
           {/* Location Warning */}
           {(!selectedLocation.address || selectedLocation.address === 'Location not set') && (
@@ -795,14 +657,14 @@ const PostNewJobPage = () => {
                 className="w-6 h-6"
               />
             </div>
-            <div className="flex-1">
-              <div className={`font-medium text-sm ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
+            <div className="flex-1 min-w-0">
+              <div className={`font-medium text-sm truncate ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
                   ? 'text-yellow-800'
                   : 'text-gray-900'
                 }`}>
                 {selectedLocation.fullAddress || selectedLocation.address}
               </div>
-              <div className={`text-xs ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
+              <div className={`text-xs truncate ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
                   ? 'text-yellow-600'
                   : 'text-gray-600'
                 }`}>
@@ -813,261 +675,59 @@ const PostNewJobPage = () => {
               onClick={handleChangeLocation}
               variant={(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'warning' : 'outline'}
               size="sm"
-              className="rounded-[8px]"
+              className="rounded-[8px] border-gray-200 text-[#111827] font-bold"
             >
               {(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'Set Address' : 'Change'}
             </Button>
           </div>
         </div>
-      </div>
-    </div>
-  );
 
-  const renderJobDetails = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-      <PageHeader
-        title="Post New Job"
-        onBack={handleBack}
-        className="mb-6"
-        titleClassName="text-xl sm:text-2xl font-semibold text-primary-500"
-      />
-
-      {/* Main Content */}
-      <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-custom">
-        <form onSubmit={(e) => { e.preventDefault(); handleContinue(); }}>
-          {/* Use CleaningJobDetailsForm for cleaning-related services */}
-          {selectedService === 'cleaning' && (
-            <CleaningJobDetailsForm 
-              formData={formData}
-              onInputChange={handleInputChange}
-              onPropertyTypeSelect={handlePropertyTypeSelect}
-              selectedPropertyTypeLabel={getSelectedPropertyType()}
-              selectedFiles={selectedFiles}
-              onDrag={handleDrag}
-              onDrop={handleDrop}
-              dragActive={dragActive}
-              uploadError={uploadError}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-              isDropdownOpen={isDropdownOpen}
-              propertyTypes={propertyTypes}
-              dropdownRef={dropdownRef}
-              isBondCleaning={isBondCleaning}
-              onBondCleaningToggle={handleBondCleaningToggle}
-            />
-          )}
-
-          {/* Use PetSittingJobDetailsForm for pet sitting services */}
-          {selectedService === 'petsitting' && (
-            <PetSittingJobDetailsForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              selectedFiles={selectedFiles}
-              dragActive={dragActive}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-            />
-          )}
-
-          {/* Use CommercialCleaningJobDetailsForm for retail/commercial cleaning services */}
-          {selectedService === 'commercialCleaning' && (
-            <CommercialCleaningJobDetailsForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              selectedFiles={selectedFiles}
-              dragActive={dragActive}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-            />
-          )}
-
-          {/* Use HandymanJobDetailsForm for handyman services */}
-          {selectedService === 'handyman' && (
-            <HandymanJobDetailsForm 
-              formData={formData}
-              onInputChange={handleInputChange}
-              selectedFiles={selectedFiles}
-              uploadError={uploadError}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-            />
-          )}
-
-          {/* Use NDISSupportJobDetailsForm for NDIS support services */}
-          {selectedService === 'supportServices' && (
-            <NDISSupportJobDetailsForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              selectedFiles={selectedFiles}
-              dragActive={dragActive}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-            />
-          )}
-
-          {/* Use HousekeepingJobDetailsForm for housekeeping services */}
-          {selectedService === 'housekeeping' && (
-            <HousekeepingJobDetailsForm
-              formData={formData}
-              onInputChange={handleInputChange}
-              selectedFiles={selectedFiles}
-              onFileInputChange={handleFileInputChange}
-              onRemoveFile={removeFile}
-            />
-          )}
-
-          {/* Continue Button */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              size="md"
-              className="px-6"
-            >
-              Continue
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-
-  const renderFinalDetails = () => (
-    <div className="max-w-6xl mx-auto px-4 py-6 sm:px-2">
-      <PageHeader
-        title="Post New Job"
-        onBack={handleBack}
-        className="mb-6"
-        titleClassName="text-xl font-semibold text-primary-500"
-      />
-
-      {/* Main Content */}
-      <div className="space-y-6 bg-white rounded-2xl p-6 sm:p-8 shadow-custom">
-        {/* Error Message */}
-        {error && (
-          <div className="text-red-500 font-medium px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-
-        {/* Address Error Message */}
-        {addressError && (
-          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
-            <div className="flex items-center justify-between">
-              <span>{addressError}</span>
-              <Button
-                onClick={handleGoToProfile}
-                variant="warning"
-                size="sm"
-                className="ml-4"
-              >
-                Set Address
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Selected Files Display */}
-        {selectedFiles.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-primary-500 text-lg font-medium mb-3">
-              Selected Files ({selectedFiles.length})
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="relative">
-                  {file.type.startsWith('image/') ? (
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`Preview ${index + 1}`}
-                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
-                    />
-                  ) : (
-                    <video
-                      src={URL.createObjectURL(file)}
-                      className="w-full h-20 object-cover rounded-lg border border-gray-200"
-                      muted
-                    />
-                  )}
-                  <p className="text-xs text-gray-500 mt-1 truncate" title={file.name}>
-                    {file.name}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* When do you need the service? */}
-        <div>
-          <Calendar
-            label="When do you need the service?"
-            value={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
-            onChange={handleDateChange}
-            minDate={new Date()}
-            disablePast
-            format="DD/MM/YYYY"
-            textFieldProps={{
-              required: true,
-              sx: {
-                '& .MuiInputBase-root': {
-                  borderRadius: '16px',
-                },
-              },
-            }}
-          />
-          {selectedDate && (
-            <p className="mt-2 text-sm text-primary-200 font-medium">
-              Selected Date:{' '}
-              {format(new Date(`${selectedDate}T00:00:00`), 'dd/MM/yyyy')}
-            </p>
-          )}
-        </div>
-
-        {/* Anything specific we should know? */}
-        <div className="mb-6">
-          <label className="block text-primary-500 text-sm font-medium mb-3">
-            Anything specific we should know?
-          </label>
-          <textarea
-            value={finalInstructions}
-            onChange={handleFinalInstructionsChange}
-            placeholder="Write your instructions here in any..."
-            className="w-full bg-white rounded-[8px]! px-4 py-3 text-gray-900 placeholder-primary-200 focus:outline-none border border-gray-300 resize-none"
-            rows={4}
-          />
-        </div>
-
-        {/* Urgency Toggle */}
-        <div className="flex items-center justify-between pb-6 mb-6">
-          <span className="text-primary-500 text-sm font-medium">
-            This is urgent (Extra Fee may apply)
-          </span>
-          <button
-            onClick={handleUrgencyToggle}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${isUrgent ? 'bg-primary-500' : 'bg-gray-300'
-              }`}
-            type="button"
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isUrgent ? 'translate-x-6' : 'translate-x-1'
-                }`}
-            />
-          </button>
-        </div>
-
-        {/* Post Job Button */}
-        <div className="flex justify-end">
+        {/* Post Job Action */}
+        <div className="pt-8">
           <Button
             onClick={handlePostJob}
-            disabled={isLoading || (!selectedLocation.address || selectedLocation.address === 'Location not set')}
+            disabled={isLoading || !formData.categoryId || !formData.serviceTypeId || (!selectedLocation.address || selectedLocation.address === 'Location not set')}
             loading={isLoading}
-            size="md"
-            className="px-6"
+            size="lg"
+            className="w-full py-4 rounded-full text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
           >
-            {(!selectedLocation.address || selectedLocation.address === 'Location not set')
-                ? 'Set Address First' : 'Post Job'}
+            Post Job
           </Button>
         </div>
+      </div>
+    </div>
+  );
+
+  const renderSuccessScreen = () => (
+    <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center animate-in fade-in duration-500">
+      <div className="relative mb-8">
+        <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center overflow-hidden">
+          <img src={JobLiveAnimation} alt="Job Live" className="w-full h-full object-cover" />
+        </div>
+      </div>
+      
+      <h1 className="text-3xl font-bold text-[#111827] mb-4">Your job request is live!</h1>
+      <p className="text-gray-500 text-lg mb-12 max-w-sm">
+        Nearby cleaners will start sending quotes shortly. You'll be notified.
+      </p>
+
+      <div className="w-full max-w-sm space-y-4">
+        <Button
+          onClick={() => navigate(`/customer-job-details/${createdJobId}`)}
+          size="lg"
+          className="w-full py-4 rounded-full text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
+        >
+          View My Job
+        </Button>
+        <button
+          onClick={() => navigate('/customer-dashboard')}
+          className="w-full py-4 text-lg font-bold text-[#111827] flex items-center justify-center gap-2 hover:opacity-70 transition-opacity"
+        >
+          <svg className="w-5 h-5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+          Return Home
+        </button>
       </div>
     </div>
   );

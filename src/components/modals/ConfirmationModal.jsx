@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 const ConfirmationModal = ({ 
   isOpen, 
@@ -9,9 +9,18 @@ const ConfirmationModal = ({
   confirmText = "Confirm", 
   cancelText = "Cancel",
   confirmButtonColor = "bg-[#EF4444] hover:bg-red-600",
-  isLoading = false
+  isLoading = false,
+  errorMessage,
+  autoCloseAfter = 0
 }) => {
   if (!isOpen) return null;
+
+  useEffect(() => {
+    if (isOpen && errorMessage && autoCloseAfter > 0) {
+      const t = setTimeout(onClose, autoCloseAfter);
+      return () => clearTimeout(t);
+    }
+  }, [isOpen, errorMessage, autoCloseAfter, onClose]);
 
   return (
     <div 
@@ -29,9 +38,14 @@ const ConfirmationModal = ({
         </h3>
         
         {/* Message */}
-        <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6 text-center leading-relaxed">
+        <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 text-center leading-relaxed">
           {message}
         </p>
+        {errorMessage && (
+          <div className="mb-4 sm:mb-6 text-center">
+            <span className="text-sm text-red-600 font-medium">{errorMessage}</span>
+          </div>
+        )}
         
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">

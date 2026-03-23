@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Check, UserRound, X, CalendarDays, Clock3, Home as HomeIcon, Wallet, Ruler, AlertTriangle, CheckCircle, Circle } from 'lucide-react';
+import { Check, UserRound, X, CalendarDays, Clock3, Home as HomeIcon, Wallet, Ruler, AlertTriangle, CheckCircle, Circle, Calendar, MapPinIcon } from 'lucide-react';
+
 import { Button, MapWithPolyline, PageHeader, Loader, JobOverviewCard } from '../../components';
-import MapPinIcon from '../../assets/location.svg';
+
 import PhoneIcon from '../../assets/phone2.svg?react';
 import PhoneIcon2 from '../../assets/phone.svg';
 import ChatIcon from '../../assets/message2.svg';
@@ -10,10 +11,10 @@ import StarIcon from '../../assets/rating.svg';
 import SilverBadgeIcon from '../../assets/silverBadge.svg';
 import GoldBadgeIcon from '../../assets/goldBadge.svg';
 import BronzeBadgeIcon from '../../assets/bronzeBadge.svg';
-import { jobsAPI, userAPI } from '../../services/api';
-import { paymentService } from '../../services/paymentService';
+import { jobsAPI } from '../../services/api';
+
 import { socketService } from '../../services/socketService';
-import { calculatePayoutAmounts } from '../../utils/paymentCalculations';
+
 
 // Helper functions for weekly job history
 const generateWeeklySchedule = (job, workProgress, occurrences) => {
@@ -66,10 +67,12 @@ const CustomerInProgressJobDetailsPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
+  console.log("jobs 1 =", job);
+
   const [cleaner, setCleaner] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
   const [showMap, setShowMap] = useState(false);
   const [showArrivalStatus, setShowArrivalStatus] = useState(false);
   const [arrivalTime, setArrivalTime] = useState(8);
@@ -92,16 +95,21 @@ const CustomerInProgressJobDetailsPage = () => {
         setError('');
 
         // Fetch customer progress data which includes job, cleaner, workProgress, and occurrences
-        const [progressResponse, paymentResponse] = await Promise.all([
-          jobsAPI.getCustomerProgress(jobId),
-          paymentService.getPaymentHistory().catch(() => null)
-        ]);
+        const progressResponse = await jobsAPI.getCustomerProgress(jobId);
+
 
         if (progressResponse.success && progressResponse.data) {
           const { job, cleaner, workProgress, occurrences, paymentSummary } = progressResponse.data;
 
-          setJob(job);
+          setJob({
+            ...job,
+            categoryName: job.categoryName || job.categoryId?.name || job.category || 'General Cleaning',
+            displayLocation: job.location?.address ? `${job.location.address}${job.location.city ? `, ${job.location.city}` : ''}` : (job.address || 'Location not specified')
+          });
           setCleaner(cleaner);
+          console.log("cleaner data =", cleaner);
+
+
           setWorkProgress(workProgress);
           setOccurrences(occurrences);
 
@@ -143,9 +151,6 @@ const CustomerInProgressJobDetailsPage = () => {
           setError('Job not found');
         }
 
-        if (paymentResponse) {
-          setPaymentStatus(paymentResponse);
-        }
       } catch (err) {
         setError('Failed to load job details');
         console.error('Error fetching job:', err);
@@ -330,26 +335,8 @@ const CustomerInProgressJobDetailsPage = () => {
   };
 
 
-  const getPaymentSummary = () => {
-    const acceptedQuote = job?.quotes?.find(quote => quote.status === 'accepted');
-    const totalAmount = acceptedQuote?.price || job?.estimatedPrice || 0;
-
-    const jobPayment = paymentStatus?.data?.payments?.find(payment =>
-      payment.jobId === jobId ||
-      payment.jobId === job?.jobId ||
-      payment.jobId === job?._id ||
-      payment._id === jobId
-    );
-
-    const paidAmount = jobPayment?.amount || totalAmount;
-
-    // Use payment calculations utility with 10% commission rate
-    const payout = calculatePayoutAmounts(paidAmount, 10, 10);
-
-    return `Cleaner receives $${payout.cleanerAmount}, platform fee $${payout.adminCommission} (10%)`;
-  };
-
   const getCleanerTier = () => {
+
     return cleaner?.tier || 'none';
   };
 
@@ -641,10 +628,12 @@ const CustomerInProgressJobDetailsPage = () => {
   const acceptedQuote = job.quotes?.find(quote => quote.status === 'accepted');
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+    <div className="bg-gray-50 min-h-screen pb-10">
+      <div className="max-w-2xl mx-auto">
         <PageHeader
-          title={`#${job.jobId || job._id?.slice(-6)} - ${getJobTitle(job)}`}
+          title={job.jobId ? ` ${job.categoryName}` : getJobTitle(job)}
+
+
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
@@ -654,198 +643,150 @@ const CustomerInProgressJobDetailsPage = () => {
         />
 
         <div className="px-4">
-          {/* Job Overview Card */}
-          <div className="mb-4">
-            <JobOverviewCard
-              jobId={job.jobId || job.referenceId || job._id?.slice(-6)}
-              title={getJobTitle(job)}
-              serviceType={job.serviceType || job.category || job.service}
-              serviceDetail={serviceDetail}
-              instructions={
-                job.specialInstructions ||
-                job.instructions ||
-                job.additionalNotes ||
-                ''
-              }
-              scheduledDate={scheduledDateLabel}
-              frequency={jobFrequencyLabel}
-              location={job.location?.address || job.address || job.locationDescription || 'Location not specified'}
-              photos={jobPhotos}
-              viewerRole="customer"
-              metaInfo={jobOverviewMeta}
-            />
-          </div>
-
-          {/* Map Section */}
-          {showMap && (
-            <div className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-semibold text-primary-500">Track Cleaner</h3>
-                <button
-                  type="button"
-                  onClick={handleGetDirections}
-                  className="text-gray-400 hover:text-gray-600 cursor-pointer "
-                >
-                  <X className="w-5 h-5" strokeWidth={2} />
-                </button>
-              </div>
-
-              <MapWithPolyline
-                customerLocation={customerLocation}
-                cleanerLocation={cleanerLocation}
-                onRouteInfo={(info) => {
-                  setRouteInfo(info);
-                  // Update arrival time based on real route info
-                  if (info && info.durationValue) {
-                    const mins = Math.round(info.durationValue / 60);
-                    setArrivalTime(mins);
-                  }
-                  // Show arrival status now that we have real route data
-                  if (info) {
-                    setShowArrivalStatus(true);
-                  }
-                }}
-              />
-            </div>
-          )}
-
-          {/* Arrival Status Card */}
-          {showArrivalStatus && (
-            <div className="mb-4">
-              <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3] ">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                      <Check className="w-4 h-4 text-white" strokeWidth={2} />
-                    </div>
-                    <div>
-                      <div className="text-green-600 font-semibold text-sm">ARRIVING</div>
-                      <div className="text-lg font-bold text-gray-900">
-                        Arriving in {routeInfo ? routeInfo.duration : `${arrivalTime} ${arrivalTime === 1 ? 'min' : 'mins'}`}
-                      </div>
-                      <div className="text-sm text-primary-200 font-medium">
-                        {cleaner?.firstName} is {routeInfo ? `${routeInfo.distance} away` : 'reaching your doorstep shortly'}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="bg-primary-500 text-white rounded-xl w-12 h-16   flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="text-lg font-bold">
-                        {routeInfo ? Math.round(routeInfo.durationValue / 60) : arrivalTime}
-                      </div>
-                      <div className="text-xs">mins</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Your Cleaner Section */}
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-primary-500 mb-3">Your cleaner</h3>
+          {/* Cleaner Info Card (Top) */}
+          <div className="mb-6">
             {cleaner ? (
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 rounded-full mr-3 overflow-hidden">
-                      {cleaner.profilePhoto?.url ? (
-                        <img
-                          src={cleaner.profilePhoto.url}
-                          alt="Cleaner"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <UserRound className="w-6 h-6 text-gray-400" strokeWidth={2} />
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-primary-500">{cleaner.firstName} {cleaner.lastName}</h4>
-                      <div className="flex items-center text-sm text-primary-200 font-medium">
-                        <img src={PhoneIcon2} alt="Phone" className="w-4 h-4 mr-1" />
-                        {cleaner.phone || cleaner.phoneNumber || cleaner.mobile || 'Phone not available'}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex items-center bg-[#FFF2DE] text-primary-500 font-medium px-2 py-1 rounded-full text-xs">
-                          <img src={StarIcon} alt="Rating" className="w-4 h-4 mr-1" />
-                          {getCleanerRating()}
-                        </div>
-                        {getCleanerTier() && getCleanerTier() !== 'none' && (
-                          <div className={`flex items-center text-primary-500 font-medium px-2 py-1 rounded-full text-xs border-[0.6px] ${getCleanerTier() === 'gold'
-                            ? 'bg-gradient-to-r from-[#FFDBAE] to-[#FFE7C4] border-[#FFDBAE]'
-                            : getCleanerTier() === 'silver'
-                              ? 'bg-gradient-to-r from-[#FDFDFD] to-[#E9E9E9] border-[#E9E9E9]'
-                              : getCleanerTier() === 'bronze'
-                                ? 'bg-gradient-to-r from-[#D4A574] to-[#E6C7A3] border-[#CD7F32]'
-                                : 'bg-gray-100 border-gray-300'
-                            }`}>
-                            <img
-                              src={
-                                getCleanerTier() === 'gold'
-                                  ? GoldBadgeIcon
-                                  : getCleanerTier() === 'silver'
-                                    ? SilverBadgeIcon
-                                    : BronzeBadgeIcon
-                              }
-                              alt="Badge"
-                              className="w-4 h-4 mr-1"
-                            />
-                            <span className="capitalize">{getCleanerTier()} Tier</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#FFEBCA] border border-yellow-500 text-yellow-500">
+              <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3] relative">
+                {/* Status Chip (Top Right) */}
+                <div className="absolute top-4 right-4">
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FFEBCA] text-[#FF8800] border border-[#FFEBCA]">
                     In Progress
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={handleGetDirections}
-                    className="flex items-center text-primary-600 text-sm font-medium cursor-pointer"
-                  >
-                    <img src={MapPinIcon} alt="Directions" className="w-4 h-4 mr-1" />
-                    {showMap ? 'Hide Tracking' : 'Track Cleaner'}
-                  </button>
+                <div className="flex items-start">
+                  <div className="w-14 h-14 rounded-full mr-4 overflow-hidden flex-shrink-0 border border-gray-100">
+                    {cleaner.profilePhoto?.url ? (
+                      <img
+                        src={cleaner.profilePhoto.url}
+                        alt="Cleaner"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                        <UserRound className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="pr-16 space-y-1">
+                    <h4 className="font-bold text-gray-900 text-lg leading-tight">{cleaner.firstName} {cleaner.lastName}</h4>
+                    <div className="flex items-center text-sm text-gray-500 text-[13px]">
+                      <img src={PhoneIcon2} alt="Phone" className="w-3.5 h-3.5 mr-1.5 opacity-60" />
+                      {cleaner.phone || cleaner.phoneNumber || cleaner.mobile || 'Phone not available'}
+                    </div>
+                    <div className="text-[12px] text-gray-400 font-medium !mt-1.5">
+                      {routeInfo ? `${routeInfo.distance} away — En route` : '2.4 km away — En route'}
+                    </div>
 
+                    {/* Tier Badge inside the info section */}
+                    {getCleanerTier() && getCleanerTier().toLowerCase() !== 'none' && (
+                      <div className={`inline-flex items-center font-semibold px-2 py-1 mt-1 rounded-lg text-[11px] border-[0.6px] ${getCleanerTier().toLowerCase() === 'gold'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : getCleanerTier().toLowerCase() === 'silver'
+                          ? 'bg-gray-100 text-gray-700 border-gray-300'
+                          : 'bg-orange-50 text-orange-700 border-orange-200'
+                        }`}>
+
+                        <img
+                          src={
+                            getCleanerTier() === 'gold'
+                              ? GoldBadgeIcon
+                              : getCleanerTier() === 'silver'
+                                ? SilverBadgeIcon
+                                : BronzeBadgeIcon
+                          }
+                          alt="Badge"
+                          className="w-3.5 h-3.5 mr-1.5"
+                        />
+                        <span className="capitalize">{getCleanerTier()} Tier</span>
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                <div className="flex items-center justify-end">
+                  {/* Actions (Bottom Right) */}
                   <div className="flex items-center gap-2">
+
                     <button
                       type="button"
                       onClick={handleChatWithCleaner}
-                      className="w-8 h-8 shadow-custom rounded-lg! flex items-center justify-center transition-colors cursor-pointer border border-[#9CC0F6]"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                     >
-                      <img src={ChatIcon} alt="Chat" className="w-4 h-4" />
+                      <img src={ChatIcon} alt="Chat" className="w-5 h-5" />
                     </button>
                     <button
                       type="button"
                       onClick={handleCallCleaner}
-                      className="w-8 h-8 shadow-custom rounded-lg! flex items-center justify-center transition-colors cursor-pointer border border-[#9CC0F6]"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
                     >
-                      <PhoneIcon className="w-4 h-4" />
+                      <PhoneIcon className="w-5 h-5 text-[#2563EB]" />
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
-                <Loader message="Loading cleaner information..." />
+              <div className="bg-white rounded-2xl p-6 shadow-sm flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
             )}
           </div>
 
-          {/* Work Progress Section for Weekly Jobs */}
+          {/* Job Details Section */}
+          <div className="mb-6 space-y-4">
+            <div>
+              <div className="text-[11px] font-semibold text-[#6B7280] tracking-widest mb-1">
+                {job.categoryName || 'Domestic / General Cleaning'}
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+                {job.title || job.serviceTypeDisplay || 'Service Name'}
+              </h1>
+            </div>
+
+            <p className="text-sm text-gray-500 leading-relaxed font-medium">
+              {job.specialInstructions || job.instructions || job.additionalNotes || 'Make sure you come prepared with all the equipment you’ll need so we can get everything done smoothly.'}
+            </p>
+
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center text-sm font-semibold text-[#6B7280]">
+                <Calendar className="w-4 h-4 mr-3 opacity-60" />
+                {scheduledDateLabel} • {jobFrequencyLabel}
+              </div>
+              <div className="flex items-start text-sm font-semibold text-[#6B7280]">
+                <MapPinIcon className="w-4 h-4 mr-3 opacity-60" />
+                <span>{job.displayLocation}</span>
+              </div>
+
+
+            </div>
+
+            {/* Photo Grid */}
+            {jobPhotos.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 pt-4 max-w-sm">
+                {jobPhotos.slice(0, 4).map((photo, index) => (
+                  <div key={index} className="relative aspect-square rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                    <img src={photo} alt={`Job ${index}`} className="w-full h-full object-cover transition-transform hover:scale-105" />
+                    {index === 3 && jobPhotos.length > 4 && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl backdrop-blur-[2px]">
+                        +{jobPhotos.length - 3}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
+          {/* Work Progress Section (Keep for Weekly) */}
           {weeklySchedule.length > 0 && (
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-primary-500 mb-3">Work Progress</h3>
-              <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3">Work Progress</h3>
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-50">
                 <div className="space-y-3">
                   {weeklySchedule.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
                       <div className="flex items-center gap-3">
                         <div className="flex-shrink-0">
                           {item.status === 'completed' ? (
@@ -857,11 +798,11 @@ const CustomerInProgressJobDetailsPage = () => {
                           )}
                         </div>
                         <div>
-                          <div className="font-medium text-primary-500">
+                          <div className="font-semibold text-gray-800 text-sm">
                             {item.day} - Week {item.week}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {item.date.toLocaleDateString('en-US', {
+                          <div className="text-xs text-gray-500">
+                            {item.date.toLocaleDateString('en-AU', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric'
@@ -869,37 +810,32 @@ const CustomerInProgressJobDetailsPage = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-primary-600">
+                      <div className="flex items-center gap-3">
+                        <div className="text-right mr-1">
+                          <div className="text-sm font-bold text-gray-900">
                             ${item.amount}
                           </div>
-                          {item.photos > 0 && (
-                            <div className="text-xs text-gray-500">
-                              {item.photos} photo{item.photos > 1 ? 's' : ''}
-                            </div>
-                          )}
                         </div>
                         {item.status === 'completed' && (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">
                             Completed
                           </span>
                         )}
                         {item.status === 'pending_customer_confirmation' && (
                           <button
                             onClick={() => handleMarkSessionComplete(item.id)}
-                            className="text-xs font-semibold px-3 py-1 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors cursor-pointer"
+                            className="text-[10px] font-bold px-3 py-1 rounded-full bg-orange-500 text-white hover:bg-orange-600 transition-colors cursor-pointer"
                           >
-                            Confirm & Pay
+                            Confirm
                           </button>
                         )}
                         {item.status === 'in-progress' && (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
                             In Progress
                           </span>
                         )}
                         {item.status === 'pending' && (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">
                             Pending
                           </span>
                         )}
@@ -907,53 +843,77 @@ const CustomerInProgressJobDetailsPage = () => {
                     </div>
                   ))}
                 </div>
-
-                {/* Progress Summary */}
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-gray-600">
-                      <span className="font-medium text-green-600">
-                        {weeklySchedule.filter(item => item.status === 'completed').length}
-                      </span> completed •
-                      <span className="font-medium text-orange-600 ml-1">
-                        {weeklySchedule.filter(item => item.status === 'pending_customer_confirmation').length}
-                      </span> pending confirmation •
-                      <span className="font-medium text-blue-600 ml-1">
-                        {weeklySchedule.filter(item => item.status === 'in-progress').length}
-                      </span> in progress •
-                      <span className="font-medium text-gray-600 ml-1">
-                        {weeklySchedule.filter(item => item.status === 'pending').length}
-                      </span> pending
-                    </div>
-                    <div className="text-sm font-medium text-primary-600">
-                      Total: ${weeklySchedule.reduce((sum, item) => sum + item.amount, 0)}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
 
-          {/* Payment Summary Section */}
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-primary-500 mb-3">Payment Summary</h3>
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <div className="mb-2">
-                <span className="text-sm text-primary-200 font-medium">Quoted Price: </span>
-                <span className="text-lg font-semibold text-primary-600">${acceptedQuote?.price || job.estimatedPrice || '0'}</span>
+          {/* Tracking Section (Bottom) */}
+          <div className="space-y-4 mb-8">
+            {/* Arrival Status Card */}
+            {showArrivalStatus && (
+              <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center overflow-hidden">
+                    <div className="min-w-[24px] h-6 bg-green-500 rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                    </div>
+                    <div className="truncate">
+                      <div className="text-green-600 font-bold text-[11px] tracking-wider">ARRIVING</div>
+                      <div className="text-lg font-bold text-gray-900 truncate">
+                        Arriving in {routeInfo ? routeInfo.duration : `${arrivalTime} mins`}
+                      </div>
+                      <div className="text-sm text-gray-400 font-medium truncate">
+                        {cleaner?.firstName} is {routeInfo ? `${routeInfo.distance} away` : 'reaching your doorstep shortly'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-[#22C55E] text-white rounded-xl min-w-[56px] h-16 flex items-center justify-center flex-shrink-0">
+                    <div className="text-center">
+                      <div className="text-xl font-bold leading-none mb-0.5">
+                        {routeInfo ? Math.round(routeInfo.durationValue / 60) : arrivalTime}
+                      </div>
+                      <div className="text-[10px] font-bold">mins</div>
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="mb-3">
-                <p className="text-sm text-primary-200 font-medium">
-                  {getPaymentSummary()}
-                </p>
+            {/* Map Section */}
+            <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">Track Cleaner</h3>
+                <div className="text-[12px] text-gray-400 font-medium">
+                  {cleaner?.firstName} is {routeInfo ? `${routeInfo.distance} away, arriving in ${routeInfo.duration}` : `arriving in ${arrivalTime} mins`}
+                </div>
               </div>
-
-              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-500 border border-yellow-500 text-yellow-500 font-medium">
-                Pending Release
-              </span>
+              <div className="rounded-xl overflow-hidden h-[240px] border border-gray-100 mb-2">
+                <MapWithPolyline
+                  customerLocation={customerLocation}
+                  cleanerLocation={cleanerLocation}
+                  onRouteInfo={(info) => {
+                    setRouteInfo(info);
+                    if (info && info.durationValue) {
+                      const mins = Math.round(info.durationValue / 60);
+                      setArrivalTime(mins);
+                    }
+                    if (info) {
+                      setShowArrivalStatus(true);
+                    }
+                  }}
+                />
+              </div>
+              {!showArrivalStatus && (
+                <div className="bg-[#F8FAFC] rounded-xl p-4 mt-4">
+                  <h4 className="font-bold text-gray-900">Arrived at your location</h4>
+                  <p className="text-sm text-gray-500 font-medium">{cleaner?.firstName} is reaching your doorstep shortly</p>
+                </div>
+              )}
             </div>
           </div>
+
+
+
         </div>
       </div>
 

@@ -33,9 +33,9 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (credentials) => {
+  const login = async (credentials, userType = 'customer') => {
     try {
-      const response = await authAPI.login(credentials.email, credentials.password, 'customer');
+      const response = await authAPI.login(credentials.email, credentials.password, userType);
       
       const userData = response.data?.user || response.user;
       const token = response.data?.token || response.token;

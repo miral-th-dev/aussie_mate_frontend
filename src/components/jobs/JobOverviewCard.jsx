@@ -18,6 +18,9 @@ import {
 const JobOverviewCard = ({
   jobId,
   title,
+  propertyType,
+  quoteCount = 0,
+  showQuotePill = true,
   serviceType,
   serviceDetail,
   instructions,
@@ -124,55 +127,42 @@ const JobOverviewCard = ({
 
   return (
     <div className="bg-white rounded-2xl shadow-custom p-3 sm:p-4 md:p-6">
-      <div className="space-y-6">
+      <div className="space-y-5">
+        {/* Top Section: Pill and Property Type */}
         <div className="space-y-2">
-          {jobId && (
-            <div className="text-xs sm:text-sm text-primary-200 font-medium">
-              {jobId}
+          {showQuotePill && Number.isFinite(quoteCount) && quoteCount >= 0 && (
+            <div className="inline-flex items-center gap-2 bg-[#E0F2FE] text-[#0088FF] px-4 py-1.5 rounded-full text-sm font-medium">
+              <span className="w-2 h-2 bg-[#0088FF] rounded-full"></span>
+              {quoteCount} {quoteCount === 1 ? 'Quote' : 'Quotes'} Received
             </div>
           )}
+
+          {propertyType && (
+            <p className="text-sm sm:text-base font-semibold text-[#6B7280]">
+              {propertyType}
+            </p>
+          )}
+
           {title && (
-
-            <>
-
-              <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-primary-500 leading-tight">
-                {title === "Petsitting " ? "Pet Sitting" : title}
-              </h2>
-            </>
-
-          )}
-
-
-          {serviceDetail && (
-            <div className="text-xl text-primary-500 font-medium flex items-center gap-2">
-              {serviceTypeIcon}
-              <span>{serviceDetail}</span>
-            </div>
+            <h2 className="text-[20px]  font-semibold text-[#111827] leading-tight">
+              {title === "Petsitting " ? "Pet Sitting" : title}
+            </h2>
           )}
 
           {instructions && (
-            <p className="text-sm text-primary-300 font-medium leading-relaxed">
+            <p className="text-sm text-[#6B7280] font-medium leading-relaxed">
               {instructions}
             </p>
           )}
         </div>
 
+        {/* Schedule and Location */}
         <div className="space-y-1">
           {scheduledDate && (
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-primary-500 flex-shrink-0" strokeWidth={2.2} />
-              <div>
-                <div className="flex items-center gap-2">
-                  <div className="text-base text-primary-200 font-medium">
-                    {scheduledDate}
-                  </div>
-                  <span className="bg-gray-500 font-medium w-1 h-1 rounded-full"></span>
-                  {frequency && (
-                    <div className="text-base text-primary-200 font-medium">
-                      {frequency}
-                    </div>
-                  )}
-                </div>
+              <div className="text-base text-primary-200 font-medium">
+                {scheduledDate}
               </div>
             </div>
           )}
@@ -180,43 +170,12 @@ const JobOverviewCard = ({
           {location && (
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-primary-500 flex-shrink-0" strokeWidth={2.2} />
-              <div>
-                <div className="text-base text-primary-200 font-medium leading-snug">
-                  {location}
-                </div>
+              <div className="text-base text-primary-200 font-medium leading-snug">
+                {location}
               </div>
             </div>
           )}
         </div>
-
-        {metaInfo.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs sm:text-sm text-primary-300 font-semibold uppercase tracking-wide">
-              Service Highlights
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {metaInfo.map((item, index) => {
-                if (!item || !item.value) return null;
-                return (
-                  <div
-                    key={`${item.label || 'meta'}-${index}`}
-                    className={`text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1 border ${serviceTheme.sectionBg} ${serviceTheme.sectionBorder} ${serviceTheme.badgeText}`}
-                  >
-                    {item.icon && (
-                      <span className="text-primary-400">
-                        {item.icon}
-                      </span>
-                    )}
-                    <span>
-                      {item.label ? `${item.label}: ` : ''}
-                      {item.value}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {roleItems.length > 0 && (
           <div className="space-y-2">
@@ -248,6 +207,7 @@ const JobOverviewCard = ({
           </div>
         )}
 
+        {/* Photos Grid */}
         {photos && photos.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-xs sm:text-sm text-primary-500 font-semibold uppercase tracking-wide">
@@ -331,14 +291,14 @@ const JobOverviewCard = ({
               </button>
             </div>
             {photos.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto">
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
                 {photos.map((photo, idx) => (
                   <button
                     key={`${photo}-thumb-${idx}`}
                     type="button"
                     onClick={() => setActivePhotoIndex(idx)}
-                    className={`h-16 w-16 sm:h-20 sm:w-20 rounded-xl! overflow-hidden border-2 ${idx === activePhotoIndex ? 'border-primary-500' : 'border-transparent'
-                      } cursor-pointer`}
+                    className={`h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden border-2 shrink-0 ${idx === activePhotoIndex ? 'border-primary-500' : 'border-transparent'
+                      } cursor-pointer shadow-sm`}
                   >
                     <img
                       src={photo}
@@ -359,6 +319,9 @@ const JobOverviewCard = ({
 JobOverviewCard.propTypes = {
   jobId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
+  propertyType: PropTypes.string,
+  quoteCount: PropTypes.number,
+  showQuotePill: PropTypes.bool,
   serviceType: PropTypes.string,
   serviceDetail: PropTypes.string,
   instructions: PropTypes.string,
@@ -399,6 +362,9 @@ JobOverviewCard.propTypes = {
 JobOverviewCard.defaultProps = {
   jobId: '',
   title: '',
+  propertyType: '',
+  quoteCount: 0,
+  showQuotePill: true,
   serviceType: '',
   serviceDetail: '',
   instructions: '',

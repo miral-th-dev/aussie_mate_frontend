@@ -55,17 +55,16 @@ const FileUploadArea = ({
         onClick={handleClick}
       >
         <div className="flex flex-col items-center">
-          <div className="rounded-full p-2 sm:p-4 bg-primary-200">
-            <img src={UploadCloudIcon} alt="Upload" className="w-8 h-8 " />
+          <div className="rounded-full p-4 sm:p-5 bg-[#EBF5FF] mb-4">
+            <img src={UploadCloudIcon} alt="Upload" className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
-          <p className="text-sm font-medium text-primary-500 mb-1 mt-2">Click Here</p>
-          <p className="text-xs text-primary-200 font-medium">{placeholder}</p>
+          <p className="text-sm sm:text-base font-medium text-[#111827] mb-4">Select photos/videos to upload</p>
           <button
             type="button"
-            className="mt-3 inline-flex items-center gap-2 bg-primary-500 text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-lg! cursor-pointer"
+            className="inline-flex items-center gap-2 bg-[#1A73E8] text-white text-sm sm:text-base font-semibold px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl shadow-sm hover:bg-[#1557B0] transition-colors cursor-pointer"
           >
             Upload Here
-            <img src={uploadIcon} alt="upload" className="w-4 h-4" />
+            <img src={uploadIcon} alt="upload" className="w-4 h-4 sm:w-5 sm:h-5 invert brightness-0" />
           </button>
         </div>
         <input

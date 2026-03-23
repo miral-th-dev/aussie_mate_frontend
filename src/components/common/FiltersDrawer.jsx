@@ -1,4 +1,4 @@
-
+import React from 'react';
 import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
 import Button from '../form-controls/Button';
@@ -86,7 +86,7 @@ const FiltersDrawer = ({
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4">
+          {/* <div className="border-t border-gray-100 pt-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-900">Bond Cleaning</p>
               <button
@@ -103,7 +103,7 @@ const FiltersDrawer = ({
                 />
               </button>
             </div>
-          </div>
+          </div> */}
 
           <div className="border-t border-gray-100 pt-4">
             <p className="text-sm font-medium text-gray-900 mb-3">Date</p>

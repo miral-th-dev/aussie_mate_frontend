@@ -2,12 +2,7 @@ import React from 'react'
 import PlatformPolicyPage from './pages/legal/PlatformPolicyPage'
 
 export const CLEANER_ROLES = [
-  'Professional Cleaner',
-  'Student Cleaner',
-  'NDIS Assistant',
-  'Retail Auditor',
-  'Pet Sitter',
-  'Housekeeper',
+  'Cleaner',
 ]
 
 // Auth pages
@@ -27,12 +22,10 @@ const MyJobsPage = React.lazy(() => import('./pages/customer/MyJobsPage'))
 const CustomerJobDetailsPage = React.lazy(() => import('./pages/customer/CustomerJobDetailsPage'))
 const JobDetailsCompletedPage = React.lazy(() => import('./pages/customer/JobDetailsCompletedPage'))
 const CustomerChatPage = React.lazy(() => import('./pages/customer/CustomerChatPage'))
-const ConfirmYourCleanerPage = React.lazy(() => import('./pages/customer/ConfirmYourCleanerPage'))
 const JobBookedSuccessfullyPage = React.lazy(() => import('./pages/customer/JobBookedSuccessfullyPage'))
 const CustomerInProgressJobDetailsPage = React.lazy(() => import('./pages/customer/CustomerInProgressJobDetailsPage'))
 const JobDetailsPage = React.lazy(() => import('./pages/cleaner/JobDetailsPage'))
 const LocationPage = React.lazy(() => import('./pages/customer/LocationPage'))
-const PaymentSuccessCallbackPage = React.lazy(() => import('./pages/customer/PaymentSuccessCallbackPage'))
 
 // Profile pages
 const ProfilePage = React.lazy(() => import('./pages/profile/ProfilePage'))
@@ -60,6 +53,10 @@ const CompleteJobPage = React.lazy(() => import('./pages/cleaner/CompleteJobPage
 const ProviderComplianceQuizPage = React.lazy(() => import('./pages/cleaner/ProviderComplianceQuizPage'))
 const CleanerChatPage = React.lazy(() => import('./pages/cleaner/CleanerChatPage'))
 const EarningsPage = React.lazy(() => import('./pages/cleaner/EarningsPage'))
+const MySubscriptionPage = React.lazy(() => import('./pages/cleaner/MySubscriptionPage'))
+const SubscriptionSuccessPage = React.lazy(() => import('./pages/cleaner/SubscriptionSuccessPage'))
+const BuyCreditsPage = React.lazy(() => import('./pages/cleaner/BuyCreditsPage'))
+const CreditsSuccessPage = React.lazy(() => import('./pages/cleaner/CreditsSuccessPage'))
 
 // Shared pages
 const StripeSuccessPage = React.lazy(() => import('./pages/StripeSuccessPage'))
@@ -92,10 +89,8 @@ export const customerRoutes = [
   { path: '/customer-job-details/:jobId', component: CustomerJobDetailsPage },
   { path: '/job-completed/:jobId', component: JobDetailsCompletedPage },
   { path: '/customer-chat/:jobId', component: CustomerChatPage },
-  { path: '/confirm-cleaner/:jobId', component: ConfirmYourCleanerPage },
   { path: '/booking-confirmation/:jobId', component: JobBookedSuccessfullyPage },
   { path: '/customer-in-progress-job/:jobId', component: CustomerInProgressJobDetailsPage },
-  { path: '/payment/success', component: PaymentSuccessCallbackPage },
   { path: '/platform-policy', component: PlatformPolicyPage },
 ]
 
@@ -115,6 +110,10 @@ export const cleanerRoutes = [
   { path: '/cleaner/compliance-quiz', component: ProviderComplianceQuizPage },
   { path: '/chat/:jobId', component: CleanerChatPage },
   { path: '/earnings', component: EarningsPage },
+  { path: '/my-subscription', component: MySubscriptionPage },
+  { path: '/buy-credits', component: BuyCreditsPage },
+  { path: '/subscription/success', component: SubscriptionSuccessPage },
+  { path: '/credits/success', component: CreditsSuccessPage },
   { path: '/cleaner/stripe/success', component: StripeSuccessPage },
   { path: '/platform-policy', component: PlatformPolicyPage },
   { path: '/location', component: LocationPage, allowedRoles: ['Customer', ...CLEANER_ROLES], showHeader: false },
