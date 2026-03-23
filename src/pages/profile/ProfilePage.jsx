@@ -173,7 +173,7 @@ const ProfilePage = () => {
     const statisticsData = [
         { icon: Star, value: jobStats.jobs, label: 'Total Jobs' },
         { icon: BriefcaseBusiness, value: jobStats.completed, label: 'Jobs Completed' },
-        { icon: Wallet, value: matePoints, label: 'MatePoints' }
+        //{ icon: Wallet, value: matePoints, label: 'MatePoints' }
     ];
 
     const profileMenuItems = [
@@ -181,9 +181,9 @@ const ProfilePage = () => {
         
         // Customer-only menu items
         ...(user?.role === 'Customer' ? [{ icon: BriefcaseBusiness, label: 'My Jobs', path: '/my-jobs' }] : []),
-        ...(user?.role === 'Customer' ? [{ icon: Wallet, label: 'Wallet & Payments', path: '/wallet' }] : []),
-        ...(user?.role === 'Customer' ? [{ icon: Star, label: 'MatePoints & Rewards', path: '/rewards' }] : []),
-        ...(user?.role === 'Customer' ? [{ icon: FileText, label: 'Invoices & History', path: '/invoices' }] : []),
+        // ...(user?.role === 'Customer' ? [{ icon: Wallet, label: 'Wallet & Payments', path: '/wallet' }] : []),
+        // ...(user?.role === 'Customer' ? [{ icon: Star, label: 'MatePoints & Rewards', path: '/rewards' }] : []),
+        // ...(user?.role === 'Customer' ? [{ icon: FileText, label: 'Invoices & History', path: '/invoices' }] : []),
         
         // Cleaner-only menu items
         ...(user?.role !== 'Customer' ? [{ icon: Briefcase, label: 'My Subscription', path: '/my-subscription' }] : []),
@@ -296,7 +296,7 @@ const ProfilePage = () => {
                     {/* Statistics Card - Only for Customers */}
                     {user?.role === 'Customer' && (
                         <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8 flex-1">
-                            <div className="grid grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                                 {statisticsData.map((stat, index) => {
                                     const IconComponent = stat.icon;
                                     const isLast = index === statisticsData.length - 1;

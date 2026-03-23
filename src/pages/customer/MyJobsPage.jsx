@@ -518,7 +518,7 @@ const MyJobsPage = () => {
                 })()}
               </div>
 
-              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 leading-tight">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 leading-tight">
                 {job.title}
               </h3>
 

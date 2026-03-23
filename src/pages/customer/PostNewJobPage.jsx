@@ -522,8 +522,8 @@ const PostNewJobPage = () => {
         title="Post New Job"
         onBack={() => currentStep === 1 ? navigate('/customer-dashboard') : handleBack()}
         className="mb-8"
-        titleClassName="text-2xl sm:text-3xl font-bold text-[#111827]"
-        backButtonClassName="p-2 sm:p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all cursor-pointer shadow-sm"
+        titleClassName="text-2xl sm:text-3xl font-semibold text-[#111827]"
+        backButtonClassName="cursor-pointer"
       />
 
       {/* Main Content */}
@@ -550,11 +550,10 @@ const PostNewJobPage = () => {
           />
 
           {/* Continue Button */}
-          <div className="mt-8 sm:mt-12">
+          <div className="mt-8 sm:mt-12 flex justify-end">
             <Button
               type="submit"
-              size="lg"
-              className="w-full py-4 rounded-2xl sm:rounded-full text-base sm:text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
+              className="rounded-full sm:rounded-full text-base sm:text-lg bg-[#1A73E8]"
             >
               Continue
             </Button>
@@ -570,8 +569,8 @@ const PostNewJobPage = () => {
         title="Post New Job"
         onBack={handleBack}
         className="mb-8"
-        titleClassName="text-2xl sm:text-3xl font-bold text-[#111827]"
-        backButtonClassName="p-2 sm:p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition-all cursor-pointer shadow-sm"
+        titleClassName="text-2xl sm:text-3xl font-semibold text-[#111827]"
+        backButtonClassName="cursor-pointer"
       />
 
       <div className="space-y-4 bg-white rounded-2xl p-6 sm:p-8 shadow-custom">
@@ -683,13 +682,12 @@ const PostNewJobPage = () => {
         </div>
 
         {/* Post Job Action */}
-        <div className="pt-8">
+        <div className="pt-8 flex justify-end">
           <Button
             onClick={handlePostJob}
             disabled={isLoading || !formData.categoryId || !formData.serviceTypeId || (!selectedLocation.address || selectedLocation.address === 'Location not set')}
             loading={isLoading}
-            size="lg"
-            className="w-full py-4 rounded-full text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
+            className="rounded-full text-lg font-medium bg-[#1A73E8]"
           >
             Post Job
           </Button>

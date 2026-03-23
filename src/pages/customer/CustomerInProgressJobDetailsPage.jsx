@@ -629,27 +629,24 @@ const CustomerInProgressJobDetailsPage = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen pb-10">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4">
         <PageHeader
           title={job.jobId ? ` ${job.categoryName}` : getJobTitle(job)}
-
-
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
           }}
-          className="py-4 px-4"
           titleClassName="text-lg font-semibold text-primary-500 truncate"
         />
 
-        <div className="px-4">
+        <div>
           {/* Cleaner Info Card (Top) */}
-          <div className="mb-6">
+          <div className="mb-6 mt-4">
             {cleaner ? (
               <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3] relative">
                 {/* Status Chip (Top Right) */}
                 <div className="absolute top-4 right-4">
-                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FFEBCA] text-[#FF8800] border border-[#FFEBCA]">
+                  <span className="text-[10px] font-semibold px-2 py-1.5 rounded-full bg-[#FFEBCA] text-[#FF8800] border border-[#FFEBCA]">
                     In Progress
                   </span>
                 </div>
@@ -669,7 +666,7 @@ const CustomerInProgressJobDetailsPage = () => {
                     )}
                   </div>
                   <div className="pr-16 space-y-1">
-                    <h4 className="font-bold text-gray-900 text-lg leading-tight">{cleaner.firstName} {cleaner.lastName}</h4>
+                    <h4 className="font-semibold text-gray-900 text-lg leading-tight">{cleaner.firstName} {cleaner.lastName}</h4>
                     <div className="flex items-center text-sm text-gray-500 text-[13px]">
                       <img src={PhoneIcon2} alt="Phone" className="w-3.5 h-3.5 mr-1.5 opacity-60" />
                       {cleaner.phone || cleaner.phoneNumber || cleaner.mobile || 'Phone not available'}
@@ -739,7 +736,7 @@ const CustomerInProgressJobDetailsPage = () => {
               <div className="text-[11px] font-semibold text-[#6B7280] tracking-widest mb-1">
                 {job.categoryName || 'Domestic / General Cleaning'}
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl font-semibold text-gray-900 leading-tight">
                 {job.title || job.serviceTypeDisplay || 'Service Name'}
               </h1>
             </div>
@@ -882,7 +879,7 @@ const CustomerInProgressJobDetailsPage = () => {
             {/* Map Section */}
             <div className="bg-white rounded-2xl p-4 shadow-custom border border-[#F3F3F3]">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-gray-900">Track Cleaner</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Track Cleaner</h3>
                 <div className="text-[12px] text-gray-400 font-medium">
                   {cleaner?.firstName} is {routeInfo ? `${routeInfo.distance} away, arriving in ${routeInfo.duration}` : `arriving in ${arrivalTime} mins`}
                 </div>
@@ -905,8 +902,8 @@ const CustomerInProgressJobDetailsPage = () => {
               </div>
               {!showArrivalStatus && (
                 <div className="bg-[#F8FAFC] rounded-xl p-4 mt-4">
-                  <h4 className="font-bold text-gray-900">Arrived at your location</h4>
-                  <p className="text-sm text-gray-500 font-medium">{cleaner?.firstName} is reaching your doorstep shortly</p>
+                  <h4 className="font-medium text-gray-900">Arrived at your location</h4>
+                  <p className="text-sm text-gray-500 font-normal">{cleaner?.firstName} is reaching your doorstep shortly</p>
                 </div>
               )}
             </div>

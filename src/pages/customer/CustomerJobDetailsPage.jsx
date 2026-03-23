@@ -623,7 +623,7 @@ const CustomerJobDetailsPage = () => {
 
   return (
     <>
-      <div className="max-w-6xl mx-auto py-3 sm:py-4 px-3 sm:px-4 md:px-4">
+      <div className="max-w-7xl mx-auto py-3 sm:py-8 px-3 sm:px-8">
         <PageHeader
           title={serviceDetail || `Job Details - ${job.serviceType || 'Cleaning'}`}
           onBack={() => {
@@ -631,7 +631,7 @@ const CustomerJobDetailsPage = () => {
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
           }}
           titleClassName="text-sm sm:text-base md:text-lg font-semibold text-primary-500 truncate"
-          backButtonClassName="p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+          backButtonClassName="cursor-pointer"
           rightSlot={
             <div className="relative" ref={dropdownRef}>
               <Button
@@ -643,14 +643,14 @@ const CustomerJobDetailsPage = () => {
               />
 
               {showDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50">
-                  <div className="py-2">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-10">
+                  <div className="py-1">
                     <Button
                       onClick={handleCancelJob}
                       variant=""
                       size="sm"
                       icon={CloseIcon}
-                      className="w-full justify-start px-4 py-3 text-gray-700"
+                      className="w-full justify-start "
                     >
                       Cancel Job
                     </Button>
@@ -662,8 +662,8 @@ const CustomerJobDetailsPage = () => {
         />
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        <div>
           {/* Status Badge */}
           <div className="mb-4">
             <div className="inline-flex items-center gap-1.5 bg-[#DDEFFF] px-3 py-1.5 rounded-full">
@@ -676,24 +676,24 @@ const CustomerJobDetailsPage = () => {
 
           {/* Job Header */}
           <div className="mb-6">
-            <p className="text-xl font-medium text-gray-500 mb-1 leading-tight">
+            <p className="text-md font-semibold text-gray-500 mb-1 leading-tight">
               {job.categoryId?.name || 'Cleaning'}
             </p>
-            <h1 className="text-1xl sm:text-2xl font-extrabold text-[#111827] mb-2 leading-tight">
+            <h1 className="text-lg sm:text-xl font-medium text-[#111827] mb-2 leading-tight">
               {serviceDetail || job.title}
             </h1>
-            <p className="text-sm sm:text-base text-gray-500 leading-relaxed mb-6">
+            <p className="text-sm sm:text-base font-medium text-gray-500 leading-relaxed mb-3">
               {job.instructions || 'No description provided.'}
             </p>
 
             {/* Meta Info */}
             <div className="flex flex-col gap-3 mb-6">
-              <div className="flex items-center text-gray-700 font-medium">
-                <CalendarDays className="w-5 h-5 mr-3 text-gray-400" strokeWidth={1.5} />
+              <div className="flex items-center text-[#6B7280] font-medium">
+                <CalendarDays className="w-5 h-5 mr-3 text-[#111827]" strokeWidth={1.5} />
                 <span className="text-sm sm:text-base">{scheduledDateLabel}</span>
               </div>
-              <div className="flex items-start text-gray-700 font-medium">
-                <MapPin className="w-5 h-5 mr-3 mt-0.5 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+              <div className="flex items-start text-[#6B7280] font-medium">
+                <MapPin className="w-5 h-5 mr-3 mt-0.5 text-[#111827] flex-shrink-0" strokeWidth={1.5} />
                 <span className="text-sm sm:text-base leading-snug">{job.location?.address || job.address || 'Location not specified'}</span>
               </div>
 
@@ -725,10 +725,10 @@ const CustomerJobDetailsPage = () => {
 
 
         {/* Service Provider Quotes Section */}
-        <div className="mt-8 border-t border-gray-100 pt-8">
+        <div className="py-8">
           <div className="mb-6">
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-              Cleaner Quotes ({cleanerQuotes.length})
+            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
+              Cleaner Quotes <span className="font-semibold">({cleanerQuotes.length})</span>
             </h3>
             <p className="text-sm text-gray-500 font-medium leading-relaxed">
               Cleaners nearby have sent their offers. Review and chat before choosing.
@@ -755,17 +755,17 @@ const CustomerJobDetailsPage = () => {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-xl font-bold text-gray-900 mb-1">
+                          <h4 className="text-xl font-semibold text-gray-900 mb-1">
                             {cleaner.name}
                           </h4>
 
                           <div className="flex flex-col gap-1">
-                            <div className="flex items-center text-gray-600">
-                              <Phone className="w-3.5 h-3.5 mr-2 text-gray-400" strokeWidth={2} />
-                              <span className="text-sm font-semibold">{cleaner.phone || '07 3803 6136'}</span>
+                            <div className="flex items-center">
+                              <Phone className="w-3.5 h-3.5 mr-2" strokeWidth={2} />
+                              <span className="text-sm font-medium text-gray-500">{cleaner.phone || '07 3803 6136'}</span>
                             </div>
-                            <p className="text-xs text-gray-500 font-medium ml-5.5">
-                              {cleaner.distance} — En route
+                            <p className="text-xs text-gray-500 font-medium">
+                              {cleaner.distance} — En root
                             </p>
                           </div>
                         </div>
@@ -793,14 +793,15 @@ const CustomerJobDetailsPage = () => {
                     </div>
 
                     {/* Message Bubble */}
-                    <div className="bg-[#EBF2FD] rounded-[24px] p-5 mb-6">
-                      <p className="text-gray-900 text-sm font-semibold leading-relaxed">
+                    <div className="bg-[#EBF2FD] rounded-[24px] p-5 mb-4 inline-block">
+                      <p className="text-gray-900 text-sm font-medium leading-relaxed">
                         Hello,<br />
                         {cleaner.message}
                       </p>
                     </div>
 
                     {/* Footer Action Button */}
+                    <div className="flex justify-end border-t border-gray-100 pt-4"> 
                     <Button
                       onClick={() => {
                         if (cleaner.isConnected) {
@@ -810,11 +811,11 @@ const CustomerJobDetailsPage = () => {
                         }
                       }}
                       variant=""
-                      fullWidth
-                      className="py-3 text-base font-bold rounded-full border border-[#DCE4FF] bg-white text-[#1F6FEB] hover:bg-[#1F6FEB] hover:text-white transition-all cursor-pointer"
+                      className="py-3 text-base font-semibold rounded-full border border-[#DCE4FF] bg-white text-[#1F6FEB] hover:bg-[#1F6FEB] hover:text-white transition-all cursor-pointer"
                     >
                       {cleaner.isConnected ? 'Message' : 'Connect & Message'}
                     </Button>
+                    </div>
                   </div>
                 );
               })}

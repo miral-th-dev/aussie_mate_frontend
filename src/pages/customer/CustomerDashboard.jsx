@@ -1,32 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import { BriefcaseBusiness, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button, Loader } from '../../components';
-import { jobsAPI, userAPI } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
-import { getStatusChip } from '../../utils/statusUtils';
-import RewardImage from '../../assets/Reward.jpg';
-import CoinImage from '../../assets/coin.png';
-import CalendarIcon from '../../assets/Calendar.svg';
-import PersonIcon from '../../assets/user-check.svg';
-import SearchIcon from '../../assets/search.svg';
-import PlusIcon from '../../assets/plus.svg';
-import CleaningImage from '../../assets/Cleaning.png';
-import HandymanImage from '../../assets/Handyman.png';
-import HousekeepingImage from '../../assets/Housekeeping.png';
-import PetSittingImage from '../../assets/Pet Sitting.png';
-import NDISSupportImage from '../../assets/NDIS Support.png';
-import CommercialCleaningImage from '../../assets/commercialCleaning.svg';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import { BriefcaseBusiness, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button, Loader } from "../../components";
+import { jobsAPI, userAPI } from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { getStatusChip } from "../../utils/statusUtils";
+import RewardImage from "../../assets/Reward.jpg";
+import CoinImage from "../../assets/coin.png";
+import CalendarIcon from "../../assets/Calendar.svg";
+import PersonIcon from "../../assets/user-check.svg";
+import SearchIcon from "../../assets/search.svg";
+import PlusIcon from "../../assets/plus.svg";
+import CleaningImage from "../../assets/Cleaning.png";
+import HandymanImage from "../../assets/Handyman.png";
+import HousekeepingImage from "../../assets/Housekeeping.png";
+import PetSittingImage from "../../assets/Pet Sitting.png";
+import NDISSupportImage from "../../assets/NDIS Support.png";
+import CommercialCleaningImage from "../../assets/commercialCleaning.svg";
 
 const CustomerDashboard = () => {
   const [ongoingJobs, setOngoingJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [currentUserId, setCurrentUserId] = useState(null);
   const swiperRef = useRef(null);
   const navigate = useNavigate();
@@ -46,27 +46,30 @@ const CustomerDashboard = () => {
 
   // Helper functions
   const formatDate = (iso) => {
-    if (!iso) return '';
+    if (!iso) return "";
     const d = new Date(iso);
-    const opts = { day: '2-digit', month: 'short' };
-    const date = d.toLocaleDateString('en-AU', opts);
-    const time = d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+    const opts = { day: "2-digit", month: "short" };
+    const date = d.toLocaleDateString("en-AU", opts);
+    const time = d.toLocaleTimeString("en-AU", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
     return `${date}, ${time}`;
   };
 
-
   const getActionText = (status) => {
-    const s = (status || '').toString().toLowerCase();
-    if (['in_progress', 'in progress', 'started'].includes(s)) return 'Track Job';
-    if (s === 'completed') return 'Rate & Review';
-    return 'View Quotes';
+    const s = (status || "").toString().toLowerCase();
+    if (["in_progress", "in progress", "started"].includes(s))
+      return "Track Job";
+    if (s === "completed") return "Rate & Review";
+    return "View Quotes";
   };
 
   const handleViewJobs = () => {
-    navigate('/my-jobs', { state: { tab: 'all' } });
+    navigate("/my-jobs", { state: { tab: "all" } });
   };
   const handleViewRewards = () => {
-    navigate('/rewards');
+    navigate("/rewards");
   };
 
   // Get current user ID
@@ -79,12 +82,13 @@ const CustomerDashboard = () => {
           setCurrentUserId(user._id);
         } else {
           const userProfile = await userAPI.getProfile();
-          const userData = userProfile.data?.user || userProfile.data || userProfile;
+          const userData =
+            userProfile.data?.user || userProfile.data || userProfile;
           setCurrentUserId(userData?._id || userData?.id);
         }
       } catch (error) {
-        console.error('Error fetching user ID:', error);
-        setError('Failed to load user information');
+        console.error("Error fetching user ID:", error);
+        setError("Failed to load user information");
       }
     };
 
@@ -97,31 +101,43 @@ const CustomerDashboard = () => {
 
       try {
         setLoading(true);
-        const res = await jobsAPI.getMyJobs({ 
-          page: 1, 
+        const res = await jobsAPI.getMyJobs({
+          page: 1,
           limit: 10,
-          tab: 'all'
+          tab: "all",
         });
         const list = res?.data || res || [];
 
         const normalized = list.map((j) => {
-          const status = (j.status || '').toString();
-          
+          const status = (j.status || "").toString();
+
           // Improved name extraction
-          const cleaner = j.assignedCleanerId || j.completedBy || j.assignedCleaner || j.cleaner;
+          const cleaner =
+            j.assignedCleanerId ||
+            j.completedBy ||
+            j.assignedCleaner ||
+            j.cleaner;
           let assignedTo = null;
           if (cleaner) {
             if (cleaner.firstName) {
-              assignedTo = `${cleaner.firstName} ${cleaner.lastName || ''}`.trim();
+              assignedTo =
+                `${cleaner.firstName} ${cleaner.lastName || ""}`.trim();
             } else {
-              assignedTo = cleaner.name || cleaner.fullName || j.assignedTo || null;
+              assignedTo =
+                cleaner.name || cleaner.fullName || j.assignedTo || null;
             }
           }
 
           const dateLabel = formatDate(j.createdAt);
 
-          const title = j.title || j.serviceTypeDisplay || `${(j.serviceType || '').toString().replace(/\b\w/g, c => c.toUpperCase())}`.trim();
-          const categoryName = j.categoryName || (j.serviceTypeDisplay && j.serviceTypeDisplay.split(' ')[0]) || 'Other Categories';
+          const title =
+            j.title ||
+            j.serviceTypeDisplay ||
+            `${(j.serviceType || "").toString().replace(/\b\w/g, (c) => c.toUpperCase())}`.trim();
+          const categoryName =
+            j.categoryName ||
+            (j.serviceTypeDisplay && j.serviceTypeDisplay.split(" ")[0]) ||
+            "Other Categories";
           const statusChip = getStatusChip(status);
 
           return {
@@ -133,15 +149,14 @@ const CustomerDashboard = () => {
             rawStatus: status.toLowerCase(),
             date: dateLabel,
             action: getActionText(status),
-            assignedTo
+            assignedTo,
           };
-
         });
 
         setOngoingJobs(normalized);
       } catch (e) {
-        setError('Failed to load jobs');
-        console.error('Error fetching jobs:', e);
+        setError("Failed to load jobs");
+        console.error("Error fetching jobs:", e);
       } finally {
         setLoading(false);
       }
@@ -152,43 +167,42 @@ const CustomerDashboard = () => {
 
   const serviceCategories = [
     {
-      id: 'cleaning',
-      name: 'Cleaning',
+      id: "cleaning",
+      name: "Cleaning",
       image: CleaningImage,
-      description: 'Professional cleaning services'
+      description: "Professional cleaning services",
     },
     {
-      id: 'housekeeping',
-      name: 'Housekeeping',
+      id: "housekeeping",
+      name: "Housekeeping",
       image: HousekeepingImage,
-      description: 'Complete housekeeping solutions'
+      description: "Complete housekeeping solutions",
     },
     {
-      id: 'supportServices',
-      name: 'Support Services',
+      id: "supportServices",
+      name: "Support Services",
       image: NDISSupportImage,
-      description: 'Support services'
+      description: "Support services",
     },
     {
-      id: 'commercialCleaning',
-      name: 'Commercial Cleaning',
+      id: "commercialCleaning",
+      name: "Commercial Cleaning",
       image: CommercialCleaningImage,
-      description: 'Retail auditing services'
+      description: "Retail auditing services",
     },
     {
-      id: 'petsitting',
-      name: 'Pet Sitting',
+      id: "petsitting",
+      name: "Pet Sitting",
       image: PetSittingImage,
-      description: 'Pet care and sitting'
+      description: "Pet care and sitting",
     },
     {
-      id: 'handyman',
-      name: 'Handyman',
+      id: "handyman",
+      name: "Handyman",
       image: HandymanImage,
-      description: 'Repair and maintenance'
-    }
+      description: "Repair and maintenance",
+    },
   ];
-
 
   return (
     <>
@@ -199,7 +213,11 @@ const CustomerDashboard = () => {
           {/* Search Bar */}
           <div className="relative w-full">
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
-              <img src={SearchIcon} alt="Search" className="w-4 h-4 sm:w-5 sm:h-5" />
+              <img
+                src={SearchIcon}
+                alt="Search"
+                className="w-4 h-4 sm:w-5 sm:h-5"
+              />
             </div>
             <input
               type="text"
@@ -214,37 +232,49 @@ const CustomerDashboard = () => {
           {/* Post Job Layout Section */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
-              <h2 className="text-sm sm:text-xl font-bold text-[#111827] mb-1">Book a cleaner in minutes</h2>
+              <h2 className="text-sm sm:text-xl font-semibold text-[#111827] mb-1">
+                Book a cleaner in minutes
+              </h2>
               <p className="text-sm sm:text-base text-gray-400 font-medium">
                 Post job &rarr; Receive quotes &rarr; Choose &amp; pay securely
               </p>
             </div>
             <Button
-              onClick={() => navigate('/post-new-job')}
+              onClick={() => navigate("/post-new-job")}
+              variant="primary"
               size="lg"
-              icon={PlusIcon}
-              className="w-full sm:w-auto px-7 sm:px-10 py-2 sm:py-3 rounded-full shadow-lg shadow-blue-500/20"
+              className="w-full sm:w-auto rounded-full"
             >
-              Post New Job
+              <span className="w-5 h-5 flex items-center justify-center rounded-full bg-white text-primary-600">
+                +
+              </span>
+              Post Job
             </Button>
           </div>
         </div>
-
-
 
         {/* MatePoints Section */}
         <div className="my-4 sm:my-6 rounded-2xl shadow-custom">
           <div className="relative rounded-xl p-3 sm:p-4 md:p-6 overflow-hidden">
             {/* Background Image */}
             <div className="absolute inset-0">
-              <img src={RewardImage} alt="Reward Background" className="w-full h-full object-cover" />
+              <img
+                src={RewardImage}
+                alt="Reward Background"
+                className="w-full h-full object-cover"
+              />
             </div>
 
             {/* Content Overlay */}
             <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 text-center sm:text-left">
-                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1">Earn MatePoints with Every Booking</h3>
-                <p className="text-xs sm:text-sm md:text-base text-[#374151] mb-2 sm:mb-3">Collect points on each job completed and redeem them for discounts & perks.</p>
+                <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1">
+                  Earn MatePoints with Every Booking
+                </h3>
+                <p className="text-xs sm:text-sm md:text-base text-[#374151] mb-2 sm:mb-3">
+                  Collect points on each job completed and redeem them for
+                  discounts & perks.
+                </p>
                 <Button
                   onClick={handleViewRewards}
                   size="sm"
@@ -257,7 +287,11 @@ const CustomerDashboard = () => {
 
             {/* Coin in right bottom corner */}
             <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10">
-              <img src={CoinImage} alt="Coin" className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24" />
+              <img
+                src={CoinImage}
+                alt="Coin"
+                className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24"
+              />
             </div>
           </div>
         </div>
@@ -265,7 +299,9 @@ const CustomerDashboard = () => {
         {/* Ongoing Jobs Section */}
         <div className="bg-white px-4 sm:px-7 py-4 sm:py-6 rounded-2xl shadow-custom">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500">Ongoing Jobs</h3>
+            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500">
+              Ongoing Jobs
+            </h3>
 
             {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
@@ -285,7 +321,10 @@ const CustomerDashboard = () => {
                   size="sm"
                   className="rounded-full p-1.5 sm:p-2 "
                 >
-                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" strokeWidth={2} />
+                  <ChevronLeft
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
+                    strokeWidth={2}
+                  />
                 </Button>
 
                 <Button
@@ -294,7 +333,10 @@ const CustomerDashboard = () => {
                   size="sm"
                   className="rounded-full p-1.5 sm:p-2"
                 >
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" strokeWidth={2} />
+                  <ChevronRight
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
+                    strokeWidth={2}
+                  />
                 </Button>
               </div>
             </div>
@@ -345,64 +387,80 @@ const CustomerDashboard = () => {
             >
               {ongoingJobs.map((job) => (
                 <SwiperSlide key={job.id}>
-                    <div
-                      onClick={() => {
-                        if (job.rawStatus === 'completed' || job.rawStatus === 'pending_customer_confirmation') {
-                          navigate(`/job-completed/${job.rawId}`);
-                        } else if (job.rawStatus === 'in_progress') {
-                          navigate(`/customer-in-progress-job/${job.rawId}`);
-                        } else {
-                          navigate(`/customer-job-details/${job.rawId}`);
-                        }
-                      }}
+                  <div
+                    onClick={() => {
+                      if (
+                        job.rawStatus === "completed" ||
+                        job.rawStatus === "pending_customer_confirmation"
+                      ) {
+                        navigate(`/job-completed/${job.rawId}`);
+                      } else if (job.rawStatus === "in_progress") {
+                        navigate(`/customer-in-progress-job/${job.rawId}`);
+                      } else {
+                        navigate(`/customer-job-details/${job.rawId}`);
+                      }
+                    }}
                     className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 shadow-custom h-44 sm:h-48 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                    >
-                      <div className="flex flex-col justify-between h-full">
-                        <div>
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="text-[10px] sm:text-xs text-gray-400 font-medium ">
-                              {job.categoryName}
-                            </div>
-                            {job.status && (
-                              <span className={`inline-block font-semibold text-[10px] px-2 py-0.5 rounded-full ${job.rawStatus === 'quoted' || job.rawStatus === 'posted'
-                                ? 'bg-[#E5F3FF] text-[#0088FF] border border-[#DDEFFF]'
-                                : job.rawStatus === 'in_progress' || job.rawStatus === 'started'
-                                  ? 'bg-[#FFEBCA] text-[#FF8800] border-[#FFEBCA]'
-                                  : job.rawStatus === 'completed'
-                                    ? 'bg-[#DBF9E7] text-green-500 border-green-500'
-                                    : 'bg-[#E5F3FF] text-[#0088FF] border-[#E5F3FF]'
-                                }`}>
-                                {job.status}
-                              </span>
-
-                            )}
+                  >
+                    <div className="flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="text-[10px] sm:text-xs text-gray-400 font-medium ">
+                            {job.categoryName}
                           </div>
-                          <h4 className="font-semibold text-[#111827] mb-2 line-clamp-1 text-sm sm:text-lg capitalize">{job.title}</h4>
-                          <div className="space-y-1.5">
-                            <div className="flex items-center text-xs font-medium text-gray-500">
-                              <img src={CalendarIcon} alt="Calendar" className="w-3.5 h-3.5 mr-2 opacity-60" />
-                              {job.date} 
-                            </div>
-                            {job.assignedTo && (
-                              <div className="flex items-center text-xs font-medium text-gray-500">
-                                <img src={PersonIcon} alt="Person" className="w-3.5 h-3.5 mr-2 opacity-60" />
-                                <span className="truncate">Assigned to: {job.assignedTo}</span>
-                              </div>
-                            )}
-                          </div>
+                          {job.status && (
+                            <span
+                              className={`inline-block font-semibold text-[10px] px-2 py-0.5 rounded-full ${
+                                job.rawStatus === "quoted" ||
+                                job.rawStatus === "posted"
+                                  ? "bg-[#E5F3FF] text-[#0088FF] border border-[#DDEFFF]"
+                                  : job.rawStatus === "in_progress" ||
+                                      job.rawStatus === "started"
+                                    ? "bg-[#FFEBCA] text-[#FF8800] border-[#FFEBCA]"
+                                    : job.rawStatus === "completed"
+                                      ? "bg-[#DBF9E7] text-green-500 border-green-500"
+                                      : "bg-[#E5F3FF] text-[#0088FF] border-[#E5F3FF]"
+                              }`}
+                            >
+                              {job.status}
+                            </span>
+                          )}
                         </div>
-                        <Button
-                          variant="secondary"
-
-
-                          size="sm"
-                          className="w-full mt-3 text-xs sm:text-sm font-semibold py-2"
-                        >
-                          {job.action}
-                        </Button>
+                        <h4 className="font-semibold text-[#111827] mb-2 line-clamp-1 text-sm sm:text-lg capitalize">
+                          {job.title}
+                        </h4>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center text-xs font-medium text-gray-500">
+                            <img
+                              src={CalendarIcon}
+                              alt="Calendar"
+                              className="w-3.5 h-3.5 mr-2 opacity-60"
+                            />
+                            {job.date}
+                          </div>
+                          {job.assignedTo && (
+                            <div className="flex items-center text-xs font-medium text-gray-500">
+                              <img
+                                src={PersonIcon}
+                                alt="Person"
+                                className="w-3.5 h-3.5 mr-2 opacity-60"
+                              />
+                              <span className="truncate">
+                                Assigned to: {job.assignedTo}
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full mt-3 text-xs sm:text-sm font-semibold py-2"
+                      >
+                        {job.action}
+                      </Button>
                     </div>
-
+                  </div>
                 </SwiperSlide>
               ))}
             </Swiper>
