@@ -392,7 +392,10 @@ const EditProfilePage = () => {
   };
 
   const handleChangeLocation = () => {
-    navigate('/location', { 
+    const userType = user?.userType || user?.role || '';
+    const isCleaner = ['Cleaner', 'cleaner'].includes(userType);
+    
+    navigate(isCleaner ? '/set-cleaner-location' : '/location', { 
       state: { 
         fromPage: 'edit-profile',
         step: 'edit-profile'

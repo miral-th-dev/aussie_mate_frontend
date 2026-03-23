@@ -17,11 +17,11 @@ const normalizeStatus = (status) => {
 export const getStatusColors = (status) => {
   const s = normalizeStatus(status);
   
-  if (s === 'in_progress' || s === 'in progress' || s === 'in-progress') {
+  if (s === 'in_progress' || s === 'in progress' || s === 'in-progress' || s === 'started') {
     return {
       bg: 'bg-[#FFEBCA]',
-      text: 'text-yellow-500',
-      border: 'border-yellow-500',
+      text: 'text-[#FF8800]',
+      border: 'border-[#FFEBCA]',
     };
   }
   if (s === 'completed') {
@@ -75,10 +75,10 @@ export const getStatusColors = (status) => {
 export const getStatusChip = (statusRaw) => {
   const s = normalizeStatus(statusRaw);
   
-  if (s === 'in_progress' || s === 'in progress' || s === 'in-progress') {
+  if (s === 'in_progress' || s === 'in progress' || s === 'in-progress' || s === 'started') {
     return { 
-      label: 'In Process', 
-      className: 'bg-[#FFEBCA] text-yellow-500 border border-yellow-500' 
+      label: 'In Progress', 
+      className: 'bg-[#FFEBCA] text-[#FF8800] border border-[#FFEBCA]' 
     };
   }
   if (s === 'completed') {
@@ -107,13 +107,13 @@ export const getStatusChip = (statusRaw) => {
   }
   if (['posted', 'pending', 'pending_quotes', 'pending quotes'].includes(s)) {
     return { 
-      label: 'Pending Quotes', 
+      label: 'Awaiting Quotes', 
       className: 'bg-[#DDEFFF] text-[#0088FF] border border-[#DDEFFF]' 
     };
   }
   // Default
   return { 
-    label: 'Pending Quotes', 
+    label: 'Awaiting Quotes', 
     className: 'bg-[#DDEFFF] text-[#0088FF] border border-[#DDEFFF]' 
   };
 };

@@ -67,9 +67,13 @@ export const chatAPI = {
       }
       
       // Find the chat room for this job and cleaner
-      const chatRoom = roomsData.data.find(room => 
-        room.jobId?._id === jobId || room.jobId?.id === jobId
-      );
+      const chatRoom = roomsData.data.find(room => {
+        const roomJobId = room.jobId?._id || room.jobId?.id || room.jobId;
+        const roomCleanerId = room.cleanerId?._id || room.cleanerId?.id || room.cleanerId;
+        
+        return (roomJobId === jobId || String(roomJobId) === String(jobId)) && 
+               (roomCleanerId === cleanerId || String(roomCleanerId) === String(cleanerId));
+      });
       
       if (!chatRoom) {
         return { success: true, data: { messages: [] } };

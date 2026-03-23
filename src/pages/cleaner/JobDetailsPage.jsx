@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { PageHeader, JobOverviewCard } from '../../components';
+import { PageHeader, JobOverviewCard, ConfirmationModal } from '../../components';
 import ChatIcon from '../../assets/message2.svg';
 import { jobsAPI } from '../../services/api';
-import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays } from 'lucide-react';
+import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays, Trash2 } from 'lucide-react';
 
 const JobDetailsPage = () => {
   const navigate = useNavigate();
@@ -12,6 +12,11 @@ const JobDetailsPage = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isContacted, setIsContacted] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [modalError, setModalError] = useState('');
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -26,6 +31,18 @@ const JobDetailsPage = () => {
         if (response.success && response.data) {
           const jobData = response.data;
           setJob(jobData);
+
+          // Check if current cleaner has already contacted or is connected
+          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+          const currentUserId = currentUser.id || currentUser._id;
+          
+          const contacted = (jobData.contactedCleaners || []).some(c => 
+            (c.cleanerId?._id || c.cleanerId) === currentUserId
+          );
+          setIsContacted(contacted);
+
+          const isAssignedStatus = ['assigned', 'accepted', 'on_the_way', 'started', 'in_progress'].includes(jobData.status);
+          setIsConnected(contacted || isAssignedStatus);
         } else {
           setError('Job not found');
         }
@@ -73,21 +90,18 @@ const JobDetailsPage = () => {
   };
 
   const getJobTitle = (job) => {
-    if (!job) return 'Job Details';
-    const serviceType = job.serviceType?.charAt(0).toUpperCase() + job.serviceType?.slice(1) || 'Service';
-    return `${serviceType} `;
+    // Figma expects the service type name as the title
+    return job?.serviceTypeId?.name || job?.serviceType?.name || job?.serviceType || job?.title || 'Job Details';
   };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Date not specified';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('en-AU', {
+      day: '2-digit',
       month: 'short',
-      day: 'numeric',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    }) + ', ' + date.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
   };
 
   const getPreferredDaysDisplay = (preferredDays) => {
@@ -117,6 +131,49 @@ const JobDetailsPage = () => {
   const serviceDetail = getServiceDetail(job);
   const scheduledDateLabel = job?.scheduledDate ? formatDate(job.scheduledDate) : 'Date not set';
   const jobFrequencyLabel = getJobFrequency(job);
+  const fromTab = location.state?.fromTab;
+
+  const currentUserId = useMemo(() => {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    return currentUser.id || currentUser._id || null;
+  }, []);
+
+  const myQuote = useMemo(() => {
+    if (!job || !currentUserId) return null;
+    
+    // Check in quotes array
+    const quotes = Array.isArray(job.quotes) ? job.quotes : [];
+    const fromQuotes = quotes.find((q) => {
+      const qCleanerId = q?.cleanerId?._id || q?.cleanerId || q?.cleaner?._id || q?.cleaner;
+      return qCleanerId?.toString() === currentUserId?.toString();
+    });
+
+    if (fromQuotes) return fromQuotes;
+
+    // Fallback: Check in contactedCleaners array (requests)
+    const contacted = Array.isArray(job.contactedCleaners) ? job.contactedCleaners : [];
+    const fromContacted = contacted.find((c) => {
+      const cCleanerId = c?.cleanerId?._id || c?.cleanerId || c?.cleaner?._id || c?.cleaner;
+      return cCleanerId?.toString() === currentUserId?.toString();
+    });
+
+    return fromContacted || null;
+  }, [job, currentUserId]);
+
+
+  const canWithdrawBid = useMemo(() => {
+    if (!myQuote || !job) return false;
+    
+    // If the job is already assigned to SOMEONE (including me) or in progress, usually can't withdraw bid
+    const isJobAssigned = ['on_the_way', 'started', 'in_progress', 'completed'].includes(job.status?.toLowerCase());
+    if (isJobAssigned) return false;
+
+    const quoteStatus = (myQuote.status || '').toLowerCase();
+    // allow withdraw if still pending / waiting / connected / accepted (as long as job is still 'posted' or 'quoting')
+    return !['withdrawn', 'rejected'].includes(quoteStatus);
+  }, [myQuote, job]);
+
+
 
   const jobOverviewMeta = useMemo(() => {
     if (!job) return [];
@@ -187,9 +244,28 @@ const JobDetailsPage = () => {
       });
     }
 
+    // Show customer contact info ONLY if connected
+    if (isConnected && job.customerId) {
+      if (job.customerId.phone) {
+        meta.push({
+          label: 'Customer Phone',
+          value: job.customerId.phone,
+          icon: <span className="text-primary-400">📞</span>,
+        });
+      }
+      if (job.customerId.email) {
+        meta.push({
+          label: 'Customer Email',
+          value: job.customerId.email,
+          icon: <span className="text-primary-400">📧</span>,
+        });
+      }
+    }
+
     return meta;
   }, [job]);
 
+  // Figma/Web: Chat should open directly (no intro popup)
   const handleChatWithCustomer = () => {
     navigate(`/chat/${jobId}`);
   };
@@ -237,9 +313,15 @@ const JobDetailsPage = () => {
           <div className="mb-4">
             <JobOverviewCard
               jobId={job?.jobId || job?.referenceId || job?._id?.slice(-6)}
-              title={getJobTitle(job)}
-              serviceType={job?.serviceType || job?.category || job?.service}
-              serviceDetail={serviceDetail}
+              // Figma: show Category / ServiceType on top line, and ServiceType as title
+              propertyType={[
+                job?.categoryId?.name,
+                job?.serviceTypeId?.name
+              ].filter(Boolean).join(' / ')}
+              title={job?.serviceTypeId?.name || getJobTitle(job)}
+              showQuotePill={false}
+              serviceType={job?.categoryId?.name || job?.category || ''}
+              serviceDetail={job?.serviceTypeId?.name || serviceDetail}
               instructions={
                 job?.specialInstructions ||
                 job?.instructions ||
@@ -255,18 +337,125 @@ const JobDetailsPage = () => {
             />
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end">
-            <button
-              onClick={handleChatWithCustomer}
-              className="bg-primary-500  text-white  cursor-pointer shadow-custom border border-[#EBF2FD] font-medium py-2 px-3 sm:py-3 sm:px-4 rounded-xl transition-colors duration-200 flex items-center gap-2 "
-            >
-              <img src={ChatIcon} alt="Chat" className="w-5 h-5 brightness-0 invert" />
-              Chat with Customer
-            </button>
+          {/* Posted By Section (from mockup) */}
+          {job.customerId && (
+            <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={job.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.customerId.firstName}+${job.customerId.lastName}&background=random`} 
+                  alt="Customer" 
+                  className="w-12 h-12 rounded-full border border-gray-200 object-cover" 
+                />
+                <div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Posted by</p>
+                  <p className="text-lg font-bold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <button
+                  onClick={handleChatWithCustomer}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
+                >
+                  <img src={ChatIcon} alt="Chat" className="w-4 h-4" />
+                   Chat
+                </button>
+                {/* Call button - only if phone is available (usually hidden until booking) */}
+                {isConnected && job.customerId.phone && (
+                   <button
+                    onClick={() => window.open(`tel:${job.customerId.phone}`)}
+                    className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
+                  >
+                    <span className="text-primary-600">📞</span>
+                    Call
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3">
+            {/* Show "I'm on the way" button only if assigned to me */}
+            {(() => {
+              const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+              const currentUserId = currentUser.id || currentUser._id;
+              const isAssigned = ['assigned', 'accepted', 'on_the_way', 'started', 'in_progress'].includes(job.status);
+              const isAssignedToMe = job.assignedCleanerId === currentUserId || 
+                                    job.assignedCleanerId?._id === currentUserId ||
+                                    job.cleanerId === currentUserId ||
+                                    job.cleanerId?._id === currentUserId;
+              
+              if (isAssigned && isAssignedToMe) {
+                return (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await jobsAPI.updateJobStatus(jobId, 'on_the_way');
+                        if (response.success) {
+                          navigate(`/in-progress-job/${jobId}`);
+                        } else {
+                          alert(response.message || 'Failed to update status');
+                        }
+                      } catch (err) {
+                        console.error('Error updating status:', err);
+                        alert('Failed to update status. Please try again.');
+                      }
+                    }}
+                    className="bg-green-600 text-white cursor-pointer shadow-custom border border-green-100 font-medium py-2 px-4 sm:py-3 sm:px-6 rounded-xl transition-colors duration-200 flex items-center gap-2 hover:bg-green-700"
+                  >
+                    I'm On The Way
+                  </button>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       </div>
+
+      {/* Sticky bottom action (Figma) */}
+      {canWithdrawBid && (
+  <div className="w-full flex justify-center items-center py-10">
+    <button
+      type="button"
+      onClick={() => { setModalError(''); setShowWithdrawModal(true); }}
+       className="flex items-center gap-3 px-10 py-4 rounded-full bg-[#FFE4E4B2] text-[#EF4444] font-semibold text-lg hover:bg-red-200 transition-all cursor-pointer"
+    >
+       <Trash2 className="w-7 h-7" strokeWidth={2.2} />
+      Withdraw Bid
+    </button>
+  </div>
+)}
+
+      <ConfirmationModal
+        isOpen={showWithdrawModal}
+        onClose={() => { if (isWithdrawing) return null; setShowWithdrawModal(false); setModalError(''); }}
+        title="Withdraw Request?"
+        message="Are you sure you want to withdraw your request? You will need to contact the customer again if you change your mind."
+        confirmText="Withdraw"
+        cancelText="Cancel"
+
+        confirmButtonColor="bg-[#EF4444] hover:bg-red-600"
+        errorMessage={modalError}
+        autoCloseAfter={3000}
+        isLoading={isWithdrawing}
+        onConfirm={async () => {
+          try {
+            setIsWithdrawing(true);
+            const res = await jobsAPI.withdrawBid(jobId);
+            if (!res?.success) {
+              setModalError(res?.message || 'Failed to withdraw bid');
+              return;
+            }
+            setShowWithdrawModal(false);
+            navigate('/cleaner-jobs', { state: { tab: 'my-bids' }, replace: true });
+          } catch (e) {
+            setModalError(e?.message || 'Failed to withdraw bid');
+          } finally {
+            setIsWithdrawing(false);
+          }
+        }}
+      />
     </>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { FloatingLabelInput, ConfirmationModal, PhoneValidationAlert, PageHeader, Loader } from '../../components';
+import { FloatingLabelInput, ConfirmationModal, PhoneValidationAlert, PageHeader, Loader, Button } from '../../components';
 import InfoIcon from '../../assets/info.svg';
 import SendIcon from '../../assets/sendChat.svg';
 import MessageIcon from '../../assets/message2.svg';
@@ -120,19 +120,45 @@ const CleanerChatPage = () => {
             }
             
             setMessages(prev => {
-                // Check if message already exists in state
-                const messageExists = prev.some(msg => {
-                    const existingId = msg._id || msg.id || `${msg.content || msg.message}-${msg.senderId?._id}-${msg.createdAt}`;
-                    return existingId === messageId;
-                });
+                const incomingContent = message.content || message.message || '';
+                const incomingId = message._id || message.id;
                 
-                if (messageExists) {
+                console.log('📨 [SOCKET] Received message:', { id: incomingId, content: incomingContent });
+
+                // 1. Check if message with this real _id already exists
+                const existsById = prev.some(msg => 
+                    !msg.isOptimistic && (
+                        (msg._id && msg._id === incomingId) || 
+                        (msg.id && msg.id === incomingId)
+                    )
+                );
+                
+                if (existsById) {
+                    console.log('🚫 [SOCKET] Message already exists by ID, skipping.');
                     return prev;
                 }
-                
-                lastMessageRef.current = messageId;
+
+                // 2. Check for optimistic match to replace
+                // We look for any optimistic message with matching content
+                const optimisticIndex = prev.findIndex(msg => 
+                    msg.isOptimistic && (
+                        (msg.content && msg.content.trim() === incomingContent.trim()) || 
+                        (msg.message && msg.message.trim() === incomingContent.trim())
+                    )
+                );
+
+                if (optimisticIndex !== -1) {
+                    console.log('🔄 [SOCKET] Found optimistic match, replacing at index:', optimisticIndex);
+                    const updated = [...prev];
+                    updated[optimisticIndex] = { ...message, isOptimistic: false };
+                    return updated;
+                }
+
+                console.log('➕ [SOCKET] Adding new message to list.');
                 return [...prev, message];
             });
+            
+            lastMessageRef.current = messageId;
             scrollToBottom();
         });
         socketService.on('error', (error) => {
@@ -141,24 +167,26 @@ const CleanerChatPage = () => {
                 setPhoneValidationError(error.message);
                 setShowPhoneAlert(true);
                 // No auto-hide - user must manually close
-            } else if (error.message === 'Failed to join chat') {
-                // Silently handle chat room join failure
-                setMessages([
-                    {
-                        _id: 'demo_welcome',
-                        id: 1,
-                        senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
-                        content: "Hi! I'm ready to discuss this cleaning job with you.",
-                        message: "Hi! I'm ready to discuss this cleaning job with you.",
-                        messageType: 'text',
-                        createdAt: new Date(Date.now() - 60000).toISOString(),
-                        time: new Date(Date.now() - 60000).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }).toLowerCase()
-                    }
-                ]);
+            } else if (error.message === 'Failed to join chat' || error.message === 'Chat room not found') {
+                // Silently handle chat room join failure - room might not exist yet for first contact
+                if (messages.length === 0) {
+                    setMessages([
+                        {
+                            _id: 'demo_welcome',
+                            id: 1,
+                            senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
+                            content: "Hi! I'm ready to discuss this cleaning job with you.",
+                            message: "Hi! I'm ready to discuss this cleaning job with you.",
+                            messageType: 'text',
+                            createdAt: new Date(Date.now() - 60000).toISOString(),
+                            time: new Date(Date.now() - 60000).toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                hour12: true
+                            }).toLowerCase()
+                        }
+                    ]);
+                }
             } else if (error.message === 'You must submit a quote for this job first. Once the customer accepts your quote, you can start chatting.') {
                 // Silently handle quote requirement message
             } else if (error.message === 'Access denied. Please check your login status or contact support.') {
@@ -305,84 +333,19 @@ const CleanerChatPage = () => {
         };
     }, [jobId, effectiveCleanerId]);
 
-    // Join Chat Room - Only after quote is submitted and accepted
+    // Join Chat Room - Direct access now
     useEffect(() => {
         if (jobId && effectiveCleanerId && isConnected) {
-            // Only join chat if quote is submitted and accepted
-            if (hasSubmittedQuote && quoteStatus === 'accepted') {
+            // Find my info in contactedCleaners to get chatRoomId
+            const myInfo = job?.contactedCleaners?.find(c => 
+                (c.cleanerId?._id || c.cleanerId) === effectiveCleanerId
+            );
+
+            if (myInfo?.chatRoomId) {
+                setCurrentChatRoom({ chatRoomId: myInfo.chatRoomId });
+                socketService.joinRoom(myInfo.chatRoomId);
+            } else {
                 socketService.joinChat(jobId, effectiveCleanerId);
-            } else if (!hasSubmittedQuote) {
-                // Show message that quote needs to be submitted first
-                if (messages.length === 0) {
-                    setMessages([
-                        {
-                            _id: 'quote_required',
-                            id: 1,
-                            senderId: { _id: 'system' },
-                            content: "Please submit your quote for this job first. The customer needs to accept your quote before you can start chatting.",
-                            message: "Please submit your quote for this job first. The customer needs to accept your quote before you can start chatting.",
-                            messageType: 'system',
-                            createdAt: new Date().toISOString(),
-                            time: new Date().toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                            }).toLowerCase()
-                        }
-                    ]);
-                }
-            } else if (hasSubmittedQuote && quoteStatus === 'pending') {
-                // Show message that quote is pending - always add this message
-                const systemMessage = {
-                    _id: 'quote_pending_system',
-                    id: 'quote_pending_system',
-                    senderId: { _id: 'system' },
-                    content: "Quote submitted successfully! Customer will review your quote. You can chat after they accept it.",
-                    message: "Quote submitted successfully! Customer will review your quote. You can chat after they accept it.",
-                    messageType: 'system',
-                    createdAt: new Date().toISOString(),
-                    time: new Date().toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    }).toLowerCase()
-                };
-                
-                // Check if system message already exists
-                const hasSystemMessage = messages.some(msg => 
-                    msg.messageType === 'system' && 
-                    msg.content.includes('Quote submitted successfully')
-                );
-                
-                if (!hasSystemMessage) {
-                    setMessages(prev => [...prev, systemMessage]);
-                }
-            } else if (hasSubmittedQuote && quoteStatus === 'rejected') {
-                // Show message that quote was rejected
-                const rejectedMessage = {
-                    _id: 'quote_rejected_system',
-                    id: 'quote_rejected_system',
-                    senderId: { _id: 'system' },
-                    content: " Your quote has been rejected by the customer. You can submit a new quote if the job is still available.",
-                    message: "Your quote has been rejected by the customer. You can submit a new quote if the job is still available.",
-                    messageType: 'system',
-                    createdAt: new Date().toISOString(),
-                    time: new Date().toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    }).toLowerCase()
-                };
-                
-                // Check if rejected message already exists
-                const hasRejectedMessage = messages.some(msg => 
-                    msg.messageType === 'system' && 
-                    msg.content.includes('quote has been rejected')
-                );
-                
-                if (!hasRejectedMessage) {
-                    setMessages(prev => [...prev, rejectedMessage]);
-                }
             }
         } else if (!effectiveCleanerId) {
             // If no effectiveCleanerId, initialize demo mode immediately
@@ -405,15 +368,12 @@ const CleanerChatPage = () => {
                 ]);
             }
         }
-    }, [jobId, effectiveCleanerId, isConnected, hasSubmittedQuote, quoteStatus]);
+    }, [jobId, effectiveCleanerId, isConnected]);
 
-    // Show budget modal automatically when cleaner first enters (no quote submitted) - only once
+    // Automatically fetch job details but remove quote modal logic
     useEffect(() => {
-        if (!hasSubmittedQuote && effectiveCleanerId && !loading && job && !hasShownModalOnce) {
-            setShowBudgetModal(true);
-            setHasShownModalOnce(true);
-        }
-    }, [hasSubmittedQuote, effectiveCleanerId, loading, job, hasShownModalOnce]);
+        // Modal is now removed
+    }, []);
 
     // Mark messages as read when chat is viewed
     useEffect(() => {
@@ -430,30 +390,54 @@ const CleanerChatPage = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (newMessage.trim()) {
+            const messageContent = newMessage.trim();
+            const tempMessage = {
+                _id: `temp-${Date.now()}`,
+                id: `temp-${Date.now()}`,
+                senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner' },
+                content: messageContent,
+                message: messageContent,
+                messageType: 'text',
+                createdAt: new Date().toISOString(),
+                time: new Date().toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                }).toLowerCase(),
+                isOptimistic: true
+            };
+
             if (currentChatRoom?.chatRoomId && isConnected) {
-                socketService.sendMessage(currentChatRoom.chatRoomId, newMessage.trim());
+                // Optimistically add to state
+                setMessages(prev => [...prev, tempMessage]);
+                socketService.sendMessage(currentChatRoom.chatRoomId, messageContent);
                 setNewMessage('');
             } else {
-                // Fallback: add message locally for demo
-                const message = {
-                    _id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
-                    content: newMessage.trim(),
-                    message: newMessage.trim(),
-                    messageType: 'text',
-                    createdAt: new Date().toISOString(),
-                    time: new Date().toLocaleTimeString('en-US', {
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    }).toLowerCase()
-                };
-                setMessages(prev => [...prev, message]);
-                setNewMessage('');
+                // Room doesn't exist? Try to initiate contact via API
+                try {
+                    // Show message optimistically
+                    setMessages(prev => [...prev, { ...tempMessage, isOptimistic: false }]);
+                    setNewMessage('');
+                    
+                    const response = await jobsAPI.contactJob(jobId, { message: messageContent });
+                    if (response.success) {
+                        // After contact, refresh to get room info if possible, or wait for socket
+                        const updatedJob = await jobsAPI.getJobById(jobId);
+                        if (updatedJob.success && updatedJob.data) {
+                            setJob(updatedJob.data);
+                        }
+                    } else {
+                        setError(response.message || 'Failed to send message');
+                    }
+                } catch (err) {
+                    console.error('Error initiating contact:', err);
+                    // Fallback to local only for demo if offline
+                    setError('Failed to connect to chat server. Message shown locally.');
+                }
             }
+            scrollToBottom();
         }
     };
 
@@ -655,16 +639,6 @@ const CleanerChatPage = () => {
                 {error && (
                     <div className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mb-4">
                         {error}
-                        {error.includes('submit your quote') && (
-                            <div className="mt-3">
-                                <button
-                                    onClick={() => navigate(`/cleaner-jobs/${jobId}`)}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors"
-                                >
-                                    Go to Job Details to Submit Quote
-                                </button>
-                            </div>
-                        )}
                     </div>
                 )}
 
@@ -699,23 +673,13 @@ const CleanerChatPage = () => {
                             // Create unique key combining multiple identifiers
                             const uniqueKey = message._id || message.id || `msg-${index}-${message.content?.slice(0, 10) || 'empty'}`;
                             
-                            // System messages (centered) - Show based on quote status
+                            // System messages (centered)
                             if (message.messageType === 'system') {
-                                // Show pending messages only when quote is pending
-                                if (message.content.includes('Quote submitted successfully') && quoteStatus !== 'pending') {
-                                    return null;
-                                }
-                                
-                                // Show rejected messages only when quote is rejected
-                                if (message.content.includes('quote has been rejected') && quoteStatus !== 'rejected') {
-                                    return null;
-                                }
-                                
                                 // Determine message styling based on content
-                                const isRejectedMessage = message.content.includes('quote has been rejected');
+                                const isRejectedMessage = message.content?.includes('rejected');
                                 const bgColor = isRejectedMessage ? 'bg-red-500' : 'bg-green-500';
                                 const borderColor = isRejectedMessage ? 'border-red-500' : 'border-green-500';
-                                const textColor = isRejectedMessage ? 'text-red-500' : 'text-green-500';
+                                const textColor = 'text-white';
                                 
                                 return (
                                     <div key={uniqueKey} className="flex justify-center my-4">
@@ -818,186 +782,45 @@ const CleanerChatPage = () => {
 
                 {/* Message Input */}
                 <div className="bg-white px-4 py-3 sm:px-6">
-                    {!hasSubmittedQuote && !showBudgetModal ? (
-                        <div className="flex items-center justify-center">
-                            <button
-                                onClick={() => setShowBudgetModal(true)}
-                                className="bg-primary-500 text-white px-6 py-3 rounded-full font-medium hover:bg-primary-600 transition-colors cursor-pointer flex items-center space-x-2"
-                            >
-                                <img src={MessageIcon} alt="Message" className="w-5 h-5 brightness-0 invert" />
-                                <span>Chat with Customer</span>
-                            </button>
-                        </div>
-                    ) : hasSubmittedQuote ? (
-                        // Show normal message input when quote is submitted
-                        <div className="flex items-center space-x-3">
-                            <input
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder={quoteStatus === 'accepted' ? "Message..." : "Submit quote first to start chatting..."}
-                                disabled={quoteStatus !== 'accepted'}
-                                className={`flex-1 px-4 py-3 rounded-full text-sm focus:outline-none border shadow-custom ${
-                                    quoteStatus === 'accepted'
-                                        ? 'bg-[#F9FAFB] border-primary-200' 
-                                        : 'bg-gray-100 border-gray-300 cursor-not-allowed'
-                                }`}
-                            />
-                            <button
-                                onClick={handleSendMessage}
-                                disabled={!newMessage.trim() || quoteStatus !== 'accepted'}
-                                className={`cursor-pointer ${(!newMessage.trim() || quoteStatus !== 'accepted') ? 'opacity-50' : ''}`}
-                            >
-                                <img src={SendIcon} alt="Send" className="w-10 h-10" />
-                            </button>
-                        </div>
-                    ) : null}
-
-                     {/* Withdraw Bid Button - Show only when quote is pending */}
-                     {hasSubmittedQuote && quoteStatus === 'pending' && (
+                    <div className="flex items-center space-x-3">
+                        <input
+                            type="text"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Message..."
+                            className="flex-1 px-4 py-3 rounded-full text-sm focus:outline-none border shadow-custom bg-[#F9FAFB] border-primary-200"
+                        />
+                        <button
+                            onClick={handleSendMessage}
+                            disabled={!newMessage.trim()}
+                            className={`cursor-pointer ${!newMessage.trim() ? 'opacity-50' : ''}`}
+                        >
+                            <img src={SendIcon} alt="Send" className="w-10 h-10" />
+                        </button>
+                    </div>
+                                     {/* Withdraw Request Button - Show only when contacted but not connected */}
+                     {hasSubmittedQuote && quoteStatus === 'pending' && !isConnected && (
                                 <div className="flex justify-center pt-4">
                                     <button
                                         onClick={handleWithdrawBid}
                                         className="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg font-medium hover:bg-red-100 transition-colors cursor-pointer text-sm flex items-center justify-center"
                                     >
                                         <img src={WithdrawIcon} alt="Withdraw" className="w-4 h-4 mr-2" />
-                                        Withdraw Bid
+                                        Withdraw Request
                                     </button>
                                 </div>
                             )}
                 </div>
-
-                {/* Quote Summary inside chat */}
-                {hasSubmittedQuote && quoteStatus === 'accepted' && (
-                <div className="bg-white border-t border-gray-100 mt-4 pt-8">
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-primary-500">Quote Summary</h3>
-                            <div className="flex items-center space-x-2">
-                                <span className="text-sm text-primary-500 font-medium">Is Negotiable?</span>
-                                <button
-                                    onClick={() => setIsNegotiable(!isNegotiable)}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${isNegotiable ? 'bg-primary-500' : 'bg-gray-300'
-                                        }`}
-                                >
-                                    <span
-                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isNegotiable ? 'translate-x-6' : 'translate-x-1'
-                                            }`}
-                                    />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Budget Input - Show when negotiable is ON or no quote submitted */}
-                        <div className="space-y-3 sm:space-y-4">
-                            {(!hasSubmittedQuote || (hasSubmittedQuote && isNegotiable)) && (
-                                <div className="flex items-center space-x-1 sm:space-x-1">
-                                    <div className="flex-1">
-                                        <FloatingLabelInput
-                                            id="quoteAmount"
-                                            name="quoteAmount"
-                                            label="Budget Amount"
-                                            type="number"
-                                            value={quoteAmount}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                if (value === '' || (value.match(/^\d*\.?\d*$/) && parseFloat(value) >= 0)) {
-                                                    setQuoteAmount(value);
-                                                }
-                                            }}
-                                            placeholder=""
-                                            min="0"
-                                            step="0.01"
-                                            maxLength={10}
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={handleSendQuote}
-                                        disabled={!quoteAmount.trim() || isSubmittingQuote}
-                                        className="px-3 sm:px-4 py-2.5 sm:py-3 text-primary-500 font-medium hover:bg-primary-50 rounded-lg transition-colors cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed text-xs sm:text-sm"
-                                    >
-                                        {isSubmittingQuote ? 'Submitting...' : hasSubmittedQuote ? 'Post Budget' : 'Post Budget'}
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="flex space-x-3">
-                                <button
-                                    onClick={() => {
-                                        setIsNegotiable(false);
-                                        setQuoteAmount('');
-                                    }}
-                                    className="flex-1 text-center py-2.5 sm:py-3 text-red-500 font-medium cursor-pointer text-xs sm:text-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSendQuote}
-                                    disabled={!quoteAmount.trim() || isSubmittingQuote || quoteStatus === 'rejected'}
-                                    className="flex-1 bg-primary-500 text-white py-2.5 sm:py-3 rounded-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-xs sm:text-sm"
-                                >
-                                    {isSubmittingQuote ? 'Submitting...' : 'Send Quote'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                )}
             </div>
 
-            {/* Define Budget Modal - Show only when no quote submitted */}
-            {showBudgetModal && !hasSubmittedQuote && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4"
-                style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                >
-                    <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-xs sm:max-w-sm mx-auto">
-                        <div className="space-y-3 sm:space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-sm sm:text-base md:text-lg font-semibold text-primary-500">Define your price</h3>
-                            </div>
-
-                            <div className="relative">
-                                <FloatingLabelInput
-                                    id="modalQuoteAmount"
-                                    name="modalQuoteAmount"
-                                    label="Enter the amount here..."
-                                    type="number"
-                                    value={quoteAmount}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (value === '' || (value.match(/^\d*\.?\d*$/) && parseFloat(value) >= 0)) {
-                                            setQuoteAmount(value);
-                                        }
-                                    }}
-                                    placeholder=""
-                                    min="0"
-                                    step="0.01"
-                                    maxLength={10}
-                                />
-                            </div>
-                            
-                            <div className="flex items-center justify-end">
-                                <button
-                                    onClick={handleSendQuote}
-                                    disabled={!quoteAmount.trim()}
-                                    className="bg-primary-500 text-white py-2 px-4 rounded-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer text-xs sm:text-sm md:text-base"
-                                >
-                                    Send Quote
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
             {/* Withdraw Bid Confirmation Modal */}
             <ConfirmationModal
                 isOpen={showWithdrawModal}
                 onClose={handleCancelWithdraw}
                 onConfirm={handleConfirmWithdraw}
-                title="Withdraw Bid"
-                message="Are you sure you want to withdraw your bid? You will need to submit a new quote to bid on this job again."
+                title="Withdraw Request"
+                message="Are you sure you want to withdraw your request? You will need to contact the customer again if you change your mind."
                 confirmText="Withdraw"
                 cancelText="Cancel"
                 confirmButtonColor="bg-red-500 hover:bg-red-600"
@@ -1017,4 +840,4 @@ const CleanerChatPage = () => {
     );
 };
 
-export default CleanerChatPage;          
+export default CleanerChatPage;

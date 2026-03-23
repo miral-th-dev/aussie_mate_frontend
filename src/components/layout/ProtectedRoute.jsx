@@ -2,7 +2,8 @@ import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import AppLayout from './AppLayout'
-                      import Loader from '../common/Loader'
+import Loader from '../common/Loader'
+import { CLEANER_ROLES } from '../../routeGroups'
 
 const ProtectedRoute = ({ children, allowedRoles = [], showHeader = true }) => {
   const { user, loading } = useAuth()
@@ -22,12 +23,12 @@ const ProtectedRoute = ({ children, allowedRoles = [], showHeader = true }) => {
   if (allowedRoles.length > 0) {
     const userRole = user.role || user.userType
     const hasAccess = allowedRoles.includes(userRole)
-    
+
     if (!hasAccess) {
       // Redirect to appropriate dashboard based on user role
       if (userRole === 'Customer') {
         return <Navigate to="/customer-dashboard" replace />
-      } else if (['Professional Cleaner', 'Student Cleaner', 'NDIS Assistant', 'Retail Auditor', 'Pet Sitter', 'Housekeeper'].includes(userRole)) {
+      } else if (CLEANER_ROLES.includes(userRole)) {
         return <Navigate to="/cleaner-dashboard" replace />
       } else {
         return <Navigate to="/login" replace />

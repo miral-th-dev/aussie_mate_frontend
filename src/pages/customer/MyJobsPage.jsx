@@ -21,14 +21,8 @@ const tabs = [
   { id: 'completed', label: 'Completed' }
 ];
 
-const categoryOptions = [
-  { id: 'cleaning', label: 'Cleaning' },
-  { id: 'housekeeping', label: 'Housekeeping' },
-  { id: 'commercialCleaning', label: 'Commercial Cleaning' },
-  { id: 'petsitting', label: 'Pet Sitter' },
-  { id: 'handyman', label: 'Handyman' },
-  { id: 'supportServices', label: 'Support Service' }
-];
+// Remove hardcoded categoryOptions if they are now dynamic
+// const categoryOptions = [ ... ];
 
 // Helpers
 const dateFormatter = new Intl.DateTimeFormat('en-AU', {
@@ -146,6 +140,7 @@ const MyJobsPage = () => {
   const [draftBondCleaning, setDraftBondCleaning] = useState(false);
   const [draftDate, setDraftDate] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [categoryOptions, setCategoryOptions] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -154,7 +149,7 @@ const MyJobsPage = () => {
       case 'upcoming':
         return 'quoted,accepted';
       case 'ongoing':
-        return 'in_progress,pending_customer_confirmation';
+        return 'in_progress,pending_customer_confirmation,on_the_way';
       case 'completed':
         return 'completed';
       default:
@@ -170,8 +165,9 @@ const MyJobsPage = () => {
 
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((job) => {
-        const serviceType = (job.originalJob?.serviceType || job.serviceType || '').toLowerCase();
-        return selectedCategories.includes(serviceType);
+        // Use category ID or name for filtering
+        const jobCategoryId = job.originalJob?.categoryId?._id || job.originalJob?.categoryId || job.categoryId;
+        return selectedCategories.includes(jobCategoryId);
       });
     }
 
@@ -194,10 +190,21 @@ const MyJobsPage = () => {
     setJobs(applyFilters(allJobs));
   }, [allJobs, applyFilters]);
 
-  // Get current user ID
+  // Fetch categories and get current user ID
   useEffect(() => {
-    const getCurrentUserId = async () => {
+    const fetchInitialData = async () => {
       try {
+        // Fetch categories
+        const catResponse = await jobsAPI.getCategories();
+        if (catResponse.success && Array.isArray(catResponse.data)) {
+          const formattedCategories = catResponse.data.map(cat => ({
+            id: cat._id || cat.id,
+            label: cat.name || cat.title || 'Unknown Category'
+          }));
+          setCategoryOptions(formattedCategories);
+        }
+
+        // Fetch user profile if needed
         if (user?.id) {
           setCurrentUserId(user.id);
         } else {
@@ -206,12 +213,12 @@ const MyJobsPage = () => {
           setCurrentUserId(userData?._id || userData?.id);
         }
       } catch (error) {
-        console.error('Error fetching user ID:', error);
-        setError('Failed to load user information');
+        console.error('Error fetching initial data:', error);
+        setError('Failed to load initial information');
       }
     };
 
-    getCurrentUserId();
+    fetchInitialData();
   }, [user]);
 
   useEffect(() => {
@@ -295,7 +302,11 @@ const MyJobsPage = () => {
           params.endDate = endDate;
         }
 
-        const response = await jobsAPI.getCustomerJobs(currentUserId, params);
+        const response = await jobsAPI.getMyJobs({
+          ...params,
+          tab: activeTab === 'all' ? 'all' : activeTab,
+          categoryId: selectedCategories.join(','),
+        });
         const jobList = response?.data || [];
         const paginationMeta = response?.pagination;
         if (paginationMeta) {
@@ -324,14 +335,15 @@ const MyJobsPage = () => {
             }
 
             const shouldShowQuotes = quoteCount > 0 && !['accepted', 'in_progress', 'completed', 'pending_customer_confirmation'].includes(statusLower);
-            const quotes = shouldShowQuotes ? `${quoteCount} Quotes Received` : null;
+            const quotes = job.quotesReceivedDisplay || (shouldShowQuotes ? `${quoteCount} Quotes Received` : null);
 
             const jobIdentifier = job._id?.toString?.() || job.id || job.jobId || `job-${Math.random()}`;
             const messageCount = await getMessageCountForJob(jobIdentifier);
 
             const assignedCleanerName = (() => {
-              if (!job.assignedCleaner) return null;
-              const { firstName, lastName, name, fullName } = job.assignedCleaner;
+              const cleaner = job.assignedCleaner || job.assignedCleanerId || job.cleaner || job.completedBy;
+              if (!cleaner) return null;
+              const { firstName, lastName, name, fullName } = cleaner;
               const composed = `${firstName || ''} ${lastName || ''}`.trim();
               return composed || name || fullName || null;
             })();
@@ -350,6 +362,7 @@ const MyJobsPage = () => {
               payment: paymentAmount,
               quotes,
               assignedTo: assignedCleanerName,
+              category: job.categoryId?.name || 'Cleaning',
               scheduledDate: job.scheduledDate,
               createdAt: job.createdAt,
               messageCount,
@@ -380,7 +393,7 @@ const MyJobsPage = () => {
     };
 
     fetchJobs();
-  }, [currentUserId, statusFilter, debouncedQuery, startDate, endDate, page]);
+  }, [currentUserId, statusFilter, debouncedQuery, startDate, endDate, page, selectedCategories]);
 
   return (
     <div className="overflow-x-hidden">
@@ -432,7 +445,7 @@ const MyJobsPage = () => {
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600' : 'bg-white text-gray-600 border border-gray-200  focus:outline-none'
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600' : 'bg-[#F9FAFB] text-gray-600 border border-gray-200  focus:outline-none'
                 }`}
             >
               {t.label}
@@ -461,11 +474,9 @@ const MyJobsPage = () => {
             <div
               key={job.id}
               onClick={() => {
-                if (job.status === 'completed') {
+                if (job.status === 'completed' || job.status === 'pending_customer_confirmation') {
                   navigate(`/job-completed/${job.id}`);
-                } else if (job.status === 'pending_customer_confirmation') {
-                  navigate(`/job-completed/${job.id}`);
-                } else if (job.status === 'in_progress') {
+                } else if (job.status === 'in_progress' || job.status === 'started' ) {
                   navigate(`/customer-in-progress-job/${job.id}`);
                 } else {
                   navigate(`/customer-job-details/${job.id}`);
@@ -473,8 +484,12 @@ const MyJobsPage = () => {
               }}
               className="bg-white rounded-2xl border border-gray-200 shadow-custom p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
             >
-              <div className="flex items-start justify-between">
-                <div className="text-[15px] text-primary-200 font-medium">#{job.jobId}</div>
+
+            
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">
+                  {job?.category}
+                </span>
                 {(() => {
                   if (job.status === 'pending_customer_confirmation') {
                     return (
@@ -484,11 +499,11 @@ const MyJobsPage = () => {
                     );
                   }
                   // Show quotes badge only if it's not an active/pending job
-                  else if (job.quotes && !['in_progress', 'pending_customer_confirmation', 'completed'].includes(job.status)) {
+                  else if (job.quotes && !['in_progress', 'started', 'pending_customer_confirmation', 'completed'].includes(job.status)) {
                     return (
-                      <div className="flex items-center gap-1.5 bg-[#E0F2FE] px-2 py-1 rounded-full">
-                        <div className="w-2 h-2 bg-[#0369A1] rounded-full"></div>
-                        <span className="text-xs font-medium text-[#0369A1]">
+                      <div className="flex items-center gap-1.5 bg-[#DDEFFF] px-2 py-1 rounded-full">
+                        <div className="w-2 h-2 bg-[#0088FF] rounded-full"></div>
+                        <span className="text-xs font-medium text-[#0088FF]">
                           {job.quotes}
                         </span>
                       </div>
@@ -502,25 +517,30 @@ const MyJobsPage = () => {
                   }
                 })()}
               </div>
-              <h3 className="text-sm sm:text-base capitalize font-semibold text-primary-500 mb-2 line-clamp-2">{job.title}</h3>
 
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-3 leading-tight">
+                {job.title}
+              </h3>
 
-              <div className="flex items-center text-xs text-primary-200 font-medium mb-1">
-                <img src={CalendarIcon} alt="Date" className="w-4 h-4 mr-2" />
-                {job.dateLabel}
-              </div>
-              <div className="flex items-center text-xs text-primary-200 font-medium">
-                <img src={MapPinIcon} alt="Location" className="w-4 h-4 mr-2" />
-                {job.address}
-              </div>
+              <div className="space-y-2">
+                {/* Assigned cleaner */}
+                {(['in_progress', 'accepted', 'on_the_way', 'started'].includes(job.status) && job.assignedTo) && (
+                  <div className="flex items-center text-sm text-gray-600 font-medium">
+                    <img src={UserIcon} alt="Assigned" className="w-4 h-4 mr-2 opacity-70" />
+                    {job.assignedTo}
+                  </div>
+                )}
 
-              {/* Assigned cleaner */}
-              {(['in_progress'].includes(job.status) && job.assignedTo) && (
-                <div className="mt-1 flex items-center text-xs text-primary-200 font-medium">
-                  <img src={UserIcon} alt="Assigned" className="w-4 h-4 mr-2" />
-                  Assigned to: {job.assignedTo}
+                <div className="flex items-center text-sm text-gray-600 font-medium">
+                  <img src={CalendarIcon} alt="Date" className="w-4 h-4 mr-2 opacity-70" />
+                  {job.dateLabel}
                 </div>
-              )}
+
+                <div className="flex items-center text-sm text-gray-600 font-medium">
+                  <img src={MapPinIcon} alt="Location" className="w-4 h-4 mr-2 opacity-70" />
+                  <span className="line-clamp-1">{job.address}</span>
+                </div>
+              </div>
 
               {/* Footer Row */}
               <div className="mt-3 flex items-center justify-between">

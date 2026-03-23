@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Check, UserRound, X } from 'lucide-react';
-import { Button, PageHeader, Loader, JobOverviewCard, CompletionProofSection } from '../../components';
+import { Check, UserRound, X, Phone, MessageSquare, Calendar, MapPin, CalendarDays } from 'lucide-react';
+import { Button, PageHeader, Loader } from '../../components';
 import RatingIcon from '../../assets/rating.svg';
 import Rating2Icon from '../../assets/rating2.svg';
 import PdfIcon from '../../assets/pdf.svg';
@@ -19,6 +19,7 @@ const JobDetailsCompletedPage = () => {
   const [feedback, setFeedback] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [jobData, setJobData] = useState(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [invoiceData, setInvoiceData] = useState(null);
@@ -30,6 +31,7 @@ const JobDetailsCompletedPage = () => {
   const [completingJob, setCompletingJob] = useState(false);
   const [occurrences, setOccurrences] = useState([]);
   const [workProgress, setWorkProgress] = useState(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
 
   const resolveImageSrc = (image) => {
     if (!image) return '';
@@ -103,14 +105,7 @@ const JobDetailsCompletedPage = () => {
         }
 
         if (job) {
-          // Debug logging to understand the data structure
-          console.log('📸 Job data:', job);
-          console.log('📸 Photos data:', photosData);
-          console.log('📸 Job photos:', job.photos);
-          console.log('📸 Job beforePhotos:', job.beforePhotos);
-          console.log('📸 Job afterPhotos:', job.afterPhotos);
-          console.log('📸 Job completionProof:', job.completionProof);
-          console.log('📸 Job weeklyProgress:', job.weeklyProgress);
+
 
           // Check if this is a weekly job and show completed days
           if (job.weeklyProgress && job.weeklyProgress.weeklyCompletions) {
@@ -152,13 +147,8 @@ const JobDetailsCompletedPage = () => {
             instructions: job.specialInstructions || job.instructions || job.additionalNotes || '',
             frequency: job.frequency || job.recurringFrequency || job.schedule?.frequency || '',
             status: job.status || 'Completed',
-            completedAt: job.completedAt ? new Date(job.completedAt).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : 'Recently',
+            completedAt: job.completedAt || null, // Store as raw date string
+            scheduledDate: job.scheduledDate || null, 
             location: job.location?.address || job.location?.fullAddress || 'Location',
             photos: jobPhotos,
             cleaner: {
@@ -458,287 +448,244 @@ const JobDetailsCompletedPage = () => {
     <>
       <div className="max-w-7xl mx-auto min-h-screen">
         <PageHeader
-          title={`Job #${jobData.jobId} - ${jobData.title}`}
-          className="py-3 pl-3"
+          title={`#${jobData.jobId} - ${jobData.title}`}
+          className="py-4 px-4"
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
           }}
         />
 
-        {/* Success Message */}
-        {successMessage && (
-          <div className="mx-4 mt-2 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
-            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-              <Check className="w-3 h-3 text-white" strokeWidth={2} />
+        {/* Success/Error Alerts */}
+        <div className="px-4 space-y-2">
+          {successMessage && (
+            <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center gap-2 animate-fade-in scale-in">
+              <Check className="w-4 h-4 text-green-500" />
+              <p className="text-green-700 text-sm font-medium">{successMessage}</p>
             </div>
-            <p className="text-green-700 font-medium">{successMessage}</p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {errorMessage && (
-          <div className="mx-4 mt-2 bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3 animate-fade-in">
-            <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0">
-              <X className="w-3 h-3 text-white" strokeWidth={2} />
+          )}
+          {errorMessage && (
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-center gap-2 animate-fade-in scale-in">
+              <X className="w-4 h-4 text-red-500" />
+              <p className="text-red-700 text-sm font-medium">{errorMessage}</p>
             </div>
-            <p className="text-red-700 font-medium">{errorMessage}</p>
-          </div>
-        )}
-
-        {/* Completed Banner */}
-        <div className="bg-green-500 border border-green-500 px-4 py-2 mx-4 mt-2 rounded-xl">
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-[#1EB154] rounded-full mr-3"></div>
-            <span className="text-green-500 font-medium">
-              Completed on
-            </span>
-          </div>
+          )}
         </div>
 
-        {/* Cleaner Info Card */}
-        <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center space-x-3">
-            {/* Avatar */}
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              <UserRound className="w-6 h-6 text-gray-400" strokeWidth={2} />
-            </div>
-
-            <div className="flex-1">
-              <div className="flex items-center space-x-2">
-                <h3 className="font-semibold text-primary-500">Cleaner #{jobData.cleaner.id}</h3>
-              </div>
-
-              <div className="flex items-center mt-1 space-x-2">
-                <div className="flex items-center space-x-1 bg-[#FFF2DE] px-2 py-1 rounded-full" >
-                  <img src={RatingIcon} alt="Rating" className="w-4 h-4" />
-                  <span className="text-sm font-medium text-primary-500 font-medium">{jobData.cleaner.rating}</span>
-                </div>
-                {jobData.cleaner.tier && jobData.cleaner.tier !== 'none' && (
-                  <div className={`flex items-center space-x-1 px-2 py-1 rounded-full border ${jobData.cleaner.tier === 'gold'
-                    ? 'bg-gradient-to-r from-white to-[#FFDBAE] border-[#FFDBAE]'
-                    : jobData.cleaner.tier === 'silver'
-                      ? 'bg-gradient-to-r from-white to-[#E9E9E9] border-primary-200'
-                      : jobData.cleaner.tier === 'bronze'
-                        ? 'bg-gradient-to-r from-white to-[#D4A574] border-[#CD7F32]'
-                        : 'bg-gradient-to-r from-white to-gray-200 border-gray-300'
-                    }`}>
-                    <img
-                      src={
-                        jobData.cleaner.tier === 'gold'
-                          ? GoldBadgeIcon
-                          : jobData.cleaner.tier === 'silver'
-                            ? SilverBadgeIcon
-                            : BronzeBadgeIcon
-                      }
-                      alt="Badge"
-                      className="w-5 h-5"
-                    />
-                    <span className="text-sm text-primary-500 font-medium ml-1 capitalize">{jobData.cleaner.tier} Tier</span>
+        {/* Cleaner Info Card - Redesigned */}
+        <div className="px-4 mt-6">
+          <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative overflow-hidden group hover:border-blue-100 transition-colors">
+            <div className="flex items-start justify-between min-h-[140px]">
+              <div className="flex items-start gap-4 flex-1">
+                {/* Avatar */}
+                <div className="relative mt-1">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 ring-2 ring-white">
+                    {jobData.cleaner.photo ? (
+                      <img 
+                        src={resolveImageSrc(jobData.cleaner.photo)} 
+                        alt={jobData.cleaner.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <UserRound className="w-8 h-8 text-gray-300" strokeWidth={1.5} />
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-[22px] font-extrabold text-[#111827] leading-none">{jobData.cleaner.name || "John Doe"}</h3>
+                  
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <Phone className="w-4 h-4" />
+                      <span className="text-base font-bold text-gray-700">07 3803 6136</span>
+                    </div>
+                    <p className="text-sm text-gray-400 font-bold tracking-tight">
+                      2.4 km away — En route
+                    </p>
+                  </div>
+                  
+                  {/* Tier Badge */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gray-50 border border-gray-100 shadow-sm">
+                      <img 
+                        src={jobData.cleaner.tier === 'gold' ? GoldBadgeIcon : jobData.cleaner.tier === 'silver' ? SilverBadgeIcon : BronzeBadgeIcon} 
+                        alt="Badge" 
+                        className="w-5 h-5 drop-shadow-sm" 
+                      />
+                      <span className="text-sm font-bold text-gray-700 capitalize">
+                        {jobData.cleaner.tier || 'Silver'} Tier
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 px-3 py-2 rounded-full bg-orange-50/50 border border-orange-100/50">
+                      <img src={RatingIcon} alt="Rating" className="w-3.5 h-3.5" />
+                      <span className="text-sm font-bold text-orange-600">{jobData.cleaner.rating || "4.9"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Columns (Status Top, Icons Bottom) */}
+              <div className="flex flex-col items-end justify-between self-stretch">
+                <span className="px-4 py-2.5 rounded-full bg-[#FFF7ED] text-[#F97316] text-sm font-bold tracking-tight shadow-sm border border-orange-100/50">
+                  {jobData.status === 'Completed' || jobData.status?.toLowerCase() === 'completed' ? 'Completed' : 'In Progress'}
+                </span>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {/* handleChat */}}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
+                  >
+                    <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
+                  </button>
+                  <button 
+                    onClick={() => {/* handleCall */}}
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
+                  >
+                    <Phone className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mx-4 mt-4">
-          <JobOverviewCard
-            jobId={jobData.jobId}
-            title={jobData.title}
-            serviceType={jobData.serviceType}
-            serviceDetail={jobData.serviceDetail}
-            instructions={jobData.instructions}
-            scheduledDate={jobData.completedAt}
-            frequency={jobData.frequency || jobData.serviceFrequency || ''}
-            location={jobData.location}
-            photos={overviewPhotos}
-            viewerRole="customer"
-          />
-        </div>
+        {/* Job Content Redesign */}
+        <div className="px-6 mt-8 space-y-6">
+          <div>
+            <p className="text-sm font-bold text-gray-400 tracking-[0.1em] mb-1">
+              {jobData.serviceType || "Domestic / General Cleaning"}
+            </p>
+            <h2 className="text-[28px] font-extrabold text-gray-900 leading-tight">
+              {jobData.serviceDetail || "Townhouse Cleaning"}
+            </h2>
+          </div>
 
-        {/* Payment Info */}
-        <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100">
-          <div className="">
-            <h4 className="font-semibold text-primary-500 mb-1">Payment Summary</h4>
+          <p className="text-gray-500 text-base leading-snug font-medium">
+            {jobData.instructions || "Make sure you come prepared with all the equipment you'll need so we can get everything done smoothly."}
+          </p>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 group">
+              <div className="w-10 h-10 rounded-xl text-[#6B7280]  flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CalendarDays className="w-5 h-5" strokeWidth={2.5} />  
+
+                {/* flex items-center text-gray-700 font-medium */}
+              </div>
+              <div>
+                <p className="text-[15px] font-semibold text-[#6B7280]">
+                  {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  }) : "Pending Completion"}
+                  <span className="mx-2 text-gray-300">•</span>
+                  <span className="text-gray-500 font-semibold lowercase">One-time</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 group">
+              <div className="w-10 h-10 rounded-xl text-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <MapPin className="w-5 h-5" strokeWidth={2.5} />
+              </div>
+              <p className="text-base font-semibold text-[#6B7280] leading-snug">
+                {jobData.location || "12 King Street, Sydney NSW"}
+              </p>
+            </div>
+          </div>
+
+          {/* Photos Grid - Redesigned */}
+          {overviewPhotos.length > 0 && (
             <div className="">
-              <div className="flex ">
-                <span className="text-primary-200 font-medium mr-2">Total Paid:</span>
-                <span className="font-bold text-primary-600">${jobData.payment.totalPaid}</span>
+              <div className="grid grid-cols-2 gap-2 mb-8 max-w-lg">
+                {overviewPhotos.slice(0, 4).map((img, idx) => (
+                  <div key={idx} className="relative rounded-[24px] overflow-hidden group cursor-pointer border border-gray-100">
+                    <img 
+                      src={img} 
+                      alt={`Job detail ${idx + 1}`} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                    />
+                    {idx === 3 && overviewPhotos.length > 4 && (
+                      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center group-hover:bg-black/50 transition-colors">
+                        <span className="text-white text-2xl font-bold flex items-center gap-1">
+                          +{overviewPhotos.length - 4}
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Invoice */}
-        {invoiceData && (
-          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-primary-200 font-medium mr-2">Invoice:</span>
-                <img src={PdfIcon} alt="PDF" className="w-5 h-5 mr-2" />
-                <span className="text-gray-700">Invoice_{jobData.jobId}.pdf</span>
-              </div>
-              <button
-                onClick={handleDownloadInvoice}
-                className="cursor-pointer hover:opacity-75"
-              >
-                <img src={DownloadIcon} alt="Download" className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Stripe Invoice Status */}
-            <div className="mt-2 text-xs text-gray-500">
-              Status: <span className={`font-medium ${invoiceData.status === 'paid' ? 'text-green-600' : 'text-yellow-600'
-                }`}>
-                {invoiceData.status?.toUpperCase()}
+        {/* Completion Status Bar or Complete Button */}
+        {jobData.status?.toLowerCase() === 'completed' || jobData.status === 'Completed' ? (
+          <div className="px-4 mt-8">
+            <div className="bg-[#E9FBF0] rounded-2xl py-3 px-5 flex items-center gap-3 border border-[#D1F7E1]">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#1EB154] shadow-[0_0_8px_rgba(30,177,84,0.4)] animate-pulse" />
+              <span className="text-[#15803D] font-bold text-sm">
+                Completed on {jobData.completedAt ? new Date(jobData.completedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                }) : 'Recently'}
               </span>
             </div>
           </div>
-        )}
-
-        {/* Completed Days Summary for Weekly Jobs */}
-        {jobData.completionProof && (jobData.completionProof.beforeImages.length > 0 || jobData.completionProof.afterImages.length > 0) && (
-          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-primary-500 mb-3">Completed Work Summary</h3>
-            <div className="space-y-2">
-              <div className="text-sm text-gray-600">
-                <span className="font-medium text-green-600">
-                  {jobData.completionProof.beforeImages.length + jobData.completionProof.afterImages.length > 0 ? 'Work completed with photo proof' : 'Work completed'}
-                </span>
-              </div>
-              {jobData.completionProof.beforeImages.length > 0 && (
-                <div className="text-xs text-gray-500">
-                  Before photos: {jobData.completionProof.beforeImages.length}
-                </div>
-              )}
-              {jobData.completionProof.afterImages.length > 0 && (
-                <div className="text-xs text-gray-500">
-                  After photos: {jobData.completionProof.afterImages.length}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Completion Proof */}
-        <div className="mx-4 mt-4">
-          <CompletionProofSection
-            beforeImages={jobData.completionProof?.beforeImages || []}
-            afterImages={jobData.completionProof?.afterImages || []}
-          />
-        </div>
-
-        {/* Weekly Job Occurrences Section */}
-        {occurrences.length > 0 && (
-          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
-            <h3 className="text-lg font-semibold text-primary-500 mb-4">Work Progress</h3>
-            <div className="space-y-3">
-              {occurrences.map((occurrence) => (
-                <div
-                  key={occurrence._id}
-                  className={`flex items-center justify-between p-3 rounded-lg border-2 ${occurrence.status === 'completed'
-                    ? 'bg-green-50 border-green-300'
-                    : occurrence.status === 'pending_customer_confirmation'
-                      ? 'bg-blue-50 border-blue-300'
-                      : 'bg-gray-50 border-gray-200'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      {occurrence.status === 'completed' ? (
-                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" strokeWidth={2} />
-                        </div>
-                      ) : occurrence.status === 'pending_customer_confirmation' ? (
-                        <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-gray-300" />
-                      )}
-                    </div>
-                    <div>
-                      <div className="font-medium text-primary-500">
-                        {occurrence.label}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {new Date(occurrence.scheduledDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-primary-600">
-                        ${occurrence.amount}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {occurrence.beforePhotosCount + occurrence.afterPhotosCount} photos
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${occurrence.status === 'completed'
-                        ? 'bg-green-100 text-green-700'
-                        : occurrence.status === 'pending_customer_confirmation'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-600'
-                        }`}>
-                        {occurrence.statusDisplay}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Mark Job as Completed Section */}
-        {occurrences.length > 0 ? (
-          // Show buttons for individual occurrences that need confirmation
-          occurrences.filter(occ => occ.status === 'pending_customer_confirmation').length > 0 && (
-            <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
-              <h3 className="text-lg font-semibold text-primary-500 mb-4">Pending Confirmation</h3>
-              <div className="space-y-3">
-                {occurrences
-                  .filter(occ => occ.status === 'pending_customer_confirmation')
-                  .map((occurrence) => (
-                    <div key={occurrence._id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div>
-                        <div className="font-medium text-primary-500">{occurrence.label}</div>
-                        <div className="text-sm text-gray-500">
-                          ${occurrence.amount} • {occurrence.beforePhotosCount + occurrence.afterPhotosCount} photos
-                        </div>
-                      </div>
-                      <Button
-                        onClick={() => handleMarkOccurrenceCompleted(occurrence._id)}
-                        disabled={completingJob}
-                        size="sm"
-                        variant="primary"
-                      >
-                        {completingJob ? 'Completing...' : 'Mark as Completed'}
-                      </Button>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )
         ) : (
-          // Show regular completion button for one-time jobs
-          <div className="bg-white mx-4 mt-4 p-4 rounded-2xl shadow-sm border border-gray-100 mb-6">
-            <div className="flex flex-col items-center justify-center py-4">
-              <p className="text-primary-500 font-semibold mb-4 text-center">
-                Has your cleaner completed the job?
-              </p>
-              <Button
-                onClick={handleCompleteJob}
-                disabled={completingJob}
-                size="lg"
-              >
-                {completingJob ? 'Completing...' : 'Mark Job as Completed'}
-              </Button>
+          <div className="px-4 mt-8">
+            <Button
+              onClick={() => setShowCompleteModal(true)}
+              variant="primary"
+              className="py-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-100 transition-all hover:shadow-blue-200 active:scale-[0.98]"
+              disabled={completingJob}
+            >
+              {completingJob ? 'Completing...' : 'Mark Job as Completed'}
+            </Button>
+        
+          </div>
+        )}
+
+        {/* Complete Job Confirmation Modal */}
+        {showCompleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in" 
+              onClick={() => setShowCompleteModal(false)}
+            ></div>
+            <div className="relative bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-500">
+                  <Check className="w-8 h-8" strokeWidth={2.5} />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">Complete Job?</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-8 px-2">
+                  Are you sure the cleaner has finished the job? This will finalize the payment and allow you to rate the service.
+                </p>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCompleteModal(false)}
+                    className="flex-1 py-4 px-6 rounded-2xl bg-gray-100 text-gray-600 font-bold text-base hover:bg-gray-200 transition-colors"
+                  >
+                    Not Now
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCompleteModal(false);
+                      handleCompleteJob();
+                    }}
+                    className="whitespace-nowrap flex-1 py-4 px-6 rounded-2xl bg-primary-500 text-white font-bold text-base hover:bg-blue-600 shadow-lg shadow-blue-100 hover:shadow-blue-200 transition-all"
+                  >
+                   Complete Job
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

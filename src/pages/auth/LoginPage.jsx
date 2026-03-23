@@ -6,6 +6,7 @@ import logo from '../../assets/logo.png';
 import eyeIcon from '../../assets/eye 1.svg';
 import eyeOffIcon from '../../assets/eye-off 1.svg';
 import { FloatingLabelInput, Button } from '../../components';
+import { CLEANER_ROLES } from '../../routeGroups';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -34,7 +35,18 @@ const LoginPage = () => {
       // Validate using Yup schema
       await loginSchema.validate(formData, { abortEarly: false });
 
-      const response = await login(formData);
+      let response;
+      try {
+        response = await login(formData, 'Cleaner');
+      } catch (loginErr) {
+        // If login as Cleaner fails, try as Customer
+        try {
+          response = await login(formData, 'Customer');
+        } catch (finalErr) {
+          // Re-throw the original error if both fail
+          throw loginErr;
+        }
+      }
 
       // Get user data from response
       const userData = response.data?.user || response.user;
@@ -43,8 +55,22 @@ const LoginPage = () => {
       // Navigate based on user role
       if (userRole === 'Customer') {
         navigate('/customer-dashboard');
-      } else if (['Professional Cleaner', 'Student Cleaner', 'NDIS Assistant', 'Retail Auditor', 'Pet Sitter', 'Housekeeper'].includes(userRole)) {
-        navigate('/cleaner-dashboard');
+      } else if (CLEANER_ROLES.includes(userRole)) {
+        // Check subscription status for cleaners
+        try {
+          const { subscriptionsAPI } = await import('../../services/api');
+          const statusRes = await subscriptionsAPI.getMyStatus().catch(() => ({ success: false }));
+          
+          if (statusRes.success && statusRes.data?.subscription?.status === 'active') {
+            navigate('/cleaner-dashboard');
+          } else {
+            // Redirect to subscription screen if no active plan
+            navigate('/my-subscription');
+          }
+        } catch (err) {
+          console.error('Subscription check failed:', err);
+          navigate('/cleaner-dashboard'); // Fallback to dashboard
+        }
       } else {
         navigate('/');
       }

@@ -8,9 +8,7 @@ import { Button, RadioCard } from '../../components';
 
 const RoleSelectionPage = () => {
   const [selectedRole, setSelectedRole] = useState(null);
-  const [selectedProviderRole, setSelectedProviderRole] = useState(null);
   const [isNDISParticipant, setIsNDISParticipant] = useState(false);
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const navigate = useNavigate();
 
   const roleOptions = [
@@ -28,21 +26,7 @@ const RoleSelectionPage = () => {
     }
   ];
 
-  const providerRoleOptions = useMemo(
-    () => [
-      'Student Cleaner',
-      'Professional Cleaner',
-      'Support Service Provider (NDIS)',
-      'Pet Sitter',
-      'Housekeeper'
-    ],
-    []
-  );
 
-  // Map display name to backend role value
-  const roleDisplayToBackend = {
-    'Support Service Provider (NDIS)': 'NDIS Assistant'
-  };
 
   const handleContinue = () => {
     // For Customer, no specific role needed
@@ -55,15 +39,10 @@ const RoleSelectionPage = () => {
       return;
     }
 
-    // For Service Provider, specific role is required
+    // For Service Provider, specific role is no longer required
     if (selectedRole === 'Service Provider') {
-      if (!selectedProviderRole) {
-        return;
-      }
-      // Map display name to backend role value if needed
-      const backendRole = roleDisplayToBackend[selectedProviderRole] || selectedProviderRole;
       const params = new URLSearchParams({
-        role: backendRole,
+        role: 'Service Provider',
         ndis: isNDISParticipant ? 'true' : 'false'
       });
       navigate(`/signup?${params.toString()}`);
@@ -101,60 +80,7 @@ const RoleSelectionPage = () => {
             ))}
           </div>
 
-          {/* Service Provider Role Selection Dropdown */}
-          {selectedRole === 'Service Provider' && (
-            <div className="relative mt-6 ">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select your cleaner role
-              </label>
-              <div
-                onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none transition-all duration-200 cursor-pointer bg-white flex items-center justify-between"
-              >
-                <span className={selectedProviderRole ? 'text-gray-900' : 'text-gray-500'}>
-                  {selectedProviderRole || 'Select your cleaner role'}
-                </span>
-                <ChevronDown
-                  className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
-                    showRoleDropdown ? 'rotate-180' : ''
-                  }`}
-                />
-              </div>
 
-              {/* Dropdown Options */}
-              {showRoleDropdown && (
-                <div className="absolute z-10 w-full mt-2 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                  {providerRoleOptions.map((role, index) => (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        setSelectedProviderRole(role);
-                        setShowRoleDropdown(false);
-                      }}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl text-sm"
-                    >
-                      <span className="text-gray-900">{role}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {selectedRole === 'Service Provider' && selectedProviderRole === 'Student Cleaner' && (
-            <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
-                <Info className="h-5 w-5 text-amber-600" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-amber-700">Student work limits</h3>
-                <p className="mt-1 text-sm text-amber-600">
-                  As a Student Cleaner you’re permitted to work up to 24 hours per week in line with Australian visa
-                  regulations. Please plan your availability accordingly.
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* NDIS Participant Toggle - Only show for Customer */}
           {selectedRole === 'Customer' && (
@@ -184,16 +110,9 @@ const RoleSelectionPage = () => {
           <div className="pt-4 flex justify-end">
             <Button
               onClick={handleContinue}
-              disabled={
-                !selectedRole || 
-                (selectedRole === 'Service Provider' && !selectedProviderRole)
-              }
+              disabled={!selectedRole}
               size="lg"
-              className={`${
-                !selectedRole || (selectedRole === 'Service Provider' && !selectedProviderRole)
-                  ? 'opacity-50 cursor-not-allowed' 
-                  : ''
-              }`}
+              className={`${!selectedRole ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Continue For Profile Setup
             </Button>

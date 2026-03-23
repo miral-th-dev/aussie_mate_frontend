@@ -7,34 +7,40 @@ import MapPinIcon from '../../assets/map-pin 1.png';
 import CurrentLocationIcon from '../../assets/currentLocation.svg';
 import SearchIcon from '../../assets/search.svg';
 import { jobsAPI, userAPI, reviewsAPI } from '../../services/api';
-import ChatIcon from '../../assets/message2.svg';
+
 
 const CleanerJobsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Persistent activeTab using localStorage
+  const normalizeTab = (tab) => {
+    if (tab === 'live-jobs') return 'posted';
+    if (tab === 'my-bids') return 'booking_request';
+    if (tab === 'accepted') return 'assigned';
+    return tab;
+  };
+
   const [activeTab, setActiveTab] = useState(() => {
-    // Priority: location.state > localStorage > default
-    return location.state?.tab || localStorage.getItem('cleanerActiveTab') || 'live-jobs';
+    return normalizeTab(location.state?.tab) || 'posted';
   });
+
+  const [subFilter, setSubFilter] = useState('request_sent');
 
   // Update tab if location state changes (e.g. navigating from dashboard to a specific tab)
   useEffect(() => {
     if (location.state?.tab) {
-      setActiveTab(location.state.tab);
+      setActiveTab(normalizeTab(location.state.tab));
     }
   }, [location.state]);
 
-  useEffect(() => {
-    localStorage.setItem('cleanerActiveTab', activeTab);
-  }, [activeTab]);
+
 
   const [showSortModal, setShowSortModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [jobs, setJobs] = useState([]); // jobs for the current page
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -135,38 +141,36 @@ const CleanerJobsPage = () => {
   }, [showSortModal]);
 
   const tabs = [
-    { id: 'live-jobs', label: 'Live Jobs' },
-    { id: 'my-bids', label: 'My Bids' },
-    { id: 'accepted', label: 'Accepted' },
-    { id: 'completed', label: 'My Completed Jobs' }
+    { id: 'posted', label: 'Posted Jobs' },
+    { id: 'booking_request', label: 'Booking Requests' },
+    { id: 'assigned', label: 'Job Assigned' },
+    { id: 'completed', label: 'Completed' }
   ];
 
   // --- NEW: helper to fetch jobs list once per (status,page) and cache ---
-  const fetchJobsList = async ({ status, page = 1, limit = jobsPerPage, signal, search = '', currentUserId }) => {
-    // Convert status array to comma-separated string for API
-    const statusParam = Array.isArray(status) ? status.join(',') : status;
-
-    // key includes status & page & search so cache is per page and search
-    const cacheKey = `${statusParam}::page:${page}::limit:${limit}::search:${search}::cleaner:${currentUserId}`;
+  const fetchJobsList = async ({ tab, subFilter, page = 1, limit = jobsPerPage, signal, categoryId, location, isUrgent }) => {
+    // key includes tab & subFilter & page so cache is per page
+    const cacheKey = `feed::tab:${tab}::sub:${subFilter}::page:${page}::limit:${limit}::cat:${categoryId}::loc:${location}::urgent:${isUrgent}`;
 
     if (apiCache.current[cacheKey]) {
       return apiCache.current[cacheKey];
     }
 
-    // call backend with status and search parameters
-    const result = await jobsAPI.getAllJobs({
-      status: statusParam,
+    // call backend with feed parameters
+    const result = await jobsAPI.getCleanerJobFeed({
+      tab,
+      subFilter,
       page,
       limit,
-      search,
-      cleanerId: statusParam.includes('accepted') || statusParam.includes('completed') ? currentUserId : undefined,
-      quotedBy: statusParam.includes('quotedByMe') ? currentUserId : undefined,
+      categoryId,
+      location,
+      isUrgent,
       signal
     });
 
-    // normalize response: { jobs: [], total }
+    // normalize response
     const jobsArray = result?.data?.jobs || result?.data || [];
-    const total = result?.data?.total || result?.total || jobsArray.length;
+    const total = result?.data?.totalAvailable || result?.totalAvailable || jobsArray.length;
     const payload = { jobs: jobsArray, total };
     apiCache.current[cacheKey] = payload;
     return payload;
@@ -210,141 +214,29 @@ const CleanerJobsPage = () => {
       setLoading(true);
       setError('');
       try {
-        const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        const currentUserId = currentUser.id || currentUser._id;
-
-        // Map tab -> status string used by backend
-        const statusMap = {
-          'live-jobs': 'posted,quoted',
-          'my-bids': 'posted,quoted',
-          'accepted': 'accepted,in_progress',
-          'completed': 'completed'
-        };
-
-        const statusParam = statusMap[activeTab] || 'posted';
-        // Add a signature for my-bids to filter in fetchJobsList if needed
-        const effectiveStatus = activeTab === 'my-bids' ? `${statusParam},quotedByMe` : statusParam;
-
-        // Fetch a larger set to allow proper frontend filtering/pagination
         const result = await fetchJobsList({
-          status: effectiveStatus,
-          page: 1, // Fetch bulk
-          limit: 200, // Increase limit to ensure we have enough to filter
-          search: searchQuery.trim(),
-          currentUserId,
+          tab: activeTab,
+          subFilter: activeTab === 'booking_request' ? subFilter : undefined,
+          page: currentPage,
+          limit: jobsPerPage,
+          location: distance, // Assuming backend takes distance as location filter or similar
+          isUrgent,
           signal: controller.signal
         });
 
-        let jobsList = result.jobs || [];
-
-        // If 'my-bids', we need to filter for jobs where current cleaner has a pending quote
-        if (activeTab === 'my-bids') {
-          // Fetch details for jobs to check quotes (we fetch more to ensure we can find 10 matches)
-          const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-          const myFiltered = jobsWithDetails.filter(job => {
-            if (!job.quotes || job.quotes.length === 0) return false;
-            return job.quotes.some(q => {
-              const qCleanerId = q.cleanerId?._id || q.cleanerId || q.cleanerId?.id;
-              return (qCleanerId === currentUserId || qCleanerId?.toString() === currentUserId?.toString()) && q.status === 'pending';
-            });
-          });
-
-          const transformedAll = myFiltered.map(transformJobForUI);
-          const totalFiltered = transformedAll.length;
-          const startIndex = (currentPage - 1) * jobsPerPage;
-          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
-
-          setJobs(pageJobs);
-          setTotalJobs(totalFiltered);
-          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
-          setLoading(false);
-          return;
-        }
-
-        // For 'accepted' tab, filter for jobs assigned to current cleaner
-        if (activeTab === 'accepted') {
-          const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-
-          // Filter for jobs assigned to current cleaner
-          const acceptedJobs = jobsWithDetails.filter(job => {
-            const isAccepted = job.status === 'accepted' || job.status === 'in_progress';
-            const isAssigned =
-              job.assignedCleanerId === currentUserId ||
-              job.assignedCleanerId?.toString() === currentUserId?.toString() ||
-              job.cleanerId === currentUserId ||
-              job.cleanerId?.toString() === currentUserId?.toString() ||
-              job.acceptedBy === currentUserId ||
-              job.acceptedBy?.toString() === currentUserId?.toString();
-
-            // Also check if any quote from current cleaner is accepted
-            const hasAcceptedQuote = job.quotes?.some(q => {
-              const qCleanerId = q.cleanerId?._id || q.cleanerId?.id || q.cleanerId;
-              return (qCleanerId === currentUserId || qCleanerId?.toString() === currentUserId?.toString()) && q.status === 'accepted';
-            });
-
-            return isAccepted && (isAssigned || hasAcceptedQuote);
-          });
-
-          const transformedAll = acceptedJobs.map(transformJobForUI);
-          const totalFiltered = transformedAll.length;
-          const startIndex = (currentPage - 1) * jobsPerPage;
-          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
-
-          setJobs(pageJobs);
-          setTotalJobs(totalFiltered);
-          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
-          setLoading(false);
-          return;
-        }
-
-        // For 'completed' tab, filter for jobs completed by current cleaner
-        if (activeTab === 'completed') {
-          const jobsWithDetails = await fetchJobDetailsForPage(jobsList, controller.signal);
-
-          const completedJobs = jobsWithDetails.filter(job => {
-            if (job.status !== 'completed') return false;
-            return (
-              job.assignedCleanerId === currentUserId ||
-              job.assignedCleanerId?.toString() === currentUserId?.toString() ||
-              job.cleanerId === currentUserId ||
-              job.cleanerId?.toString() === currentUserId?.toString() ||
-              job.completedBy === currentUserId ||
-              job.completedBy?.toString() === currentUserId?.toString() ||
-              job.completedBy?._id === currentUserId ||
-              job.completedBy?._id?.toString() === currentUserId?.toString()
-            );
-          });
-
-          const transformedAll = completedJobs.map(transformJobForUI);
-          const totalFiltered = transformedAll.length;
-          const startIndex = (currentPage - 1) * jobsPerPage;
-          const pageJobs = transformedAll.slice(startIndex, startIndex + jobsPerPage);
-
-          setJobs(pageJobs);
-          setTotalJobs(totalFiltered);
-          setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
-          setLoading(false);
-          return;
-        }
-
-        // All tabs now fall through to the logic below which handles 
-        // searchable filtering and slicing for the current page.
-
-        // Filter and transform for all tabs (including live-jobs)
+        const jobsList = result.jobs || [];
         const allTransformed = jobsList.map(transformJobForUI);
+
+        // Client-side search filtering (if needed, otherwise rely on backend if they add search to feed)
         const filteredAll = allTransformed.filter(job => {
           if (searchQuery.trim() === '') return true;
           return job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             job.id?.toString().toLowerCase().includes(searchQuery.toLowerCase());
         });
 
-        const totalFiltered = filteredAll.length;
-        const startIndex = (currentPage - 1) * jobsPerPage;
-        const pageJobs = filteredAll.slice(startIndex, startIndex + jobsPerPage);
-
-        setJobs(pageJobs);
-        setTotalJobs(totalFiltered);
-        setTotalPages(Math.max(1, Math.ceil(totalFiltered / jobsPerPage)));
+        setJobs(filteredAll);
+        setTotalJobs(result.total || filteredAll.length);
+        setTotalPages(Math.max(1, Math.ceil((result.total || filteredAll.length) / jobsPerPage)));
       } catch (err) {
         if (err.name === 'AbortError') {
           // request aborted - ignore
@@ -358,11 +250,10 @@ const CleanerJobsPage = () => {
     })();
 
     return () => {
-      // cleanup - abort if component unmounts or next effect runs
       controller.abort();
       activeController.current = null;
     };
-  }, [activeTab, currentPage, searchQuery]);
+  }, [activeTab, subFilter, currentPage, searchQuery, distance, isUrgent, refreshTrigger]);
 
   // transform helper (keeps the UI shape identical to your original)
   const transformJobForUI = (job) => {
@@ -378,17 +269,22 @@ const CleanerJobsPage = () => {
 
     return {
       id: job._id || job.jobId || job.id,
-      title: job.title || job.serviceTypeDisplay || `${(job.serviceType || '').toString().replace(/\b\w/g, c => c.toUpperCase())}`.trim(),
+      title: job.serviceTypeId?.name || job.title || 'Cleaning Job',
       location: job.location?.address || job.location?.fullAddress || 'Location not specified',
       date: job.scheduledDate ? new Date(job.scheduledDate).toLocaleDateString('en-AU', {
         day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
       }) : 'Date not specified',
-      price: myQuote ? `$${myQuote.price}` : (job.estimatedPrice ? `$${job.estimatedPrice}` : job.budget ? `$${job.budget}` : 'Price not specified'),
+      // price: job.budget ? `$${job.budget}` : 'Price not specified',
       status: job.status || 'posted',
       timeAgo: job.createdAt ? getTimeAgo(new Date(job.createdAt)) : 'Recently posted',
       type: job.serviceType || 'general',
       originalJob: job,
-      myQuote
+      myQuote,
+      isRequestSent: job.isRequestSent || false,
+      isWaitlisted: job.isWaitlisted || false,
+      distance: job.distance !== undefined ? job.distance : null,
+      isUrgent: job.isUrgent || false,
+      category: job.categoryId?.name || 'Cleaning'
     };
   };
 
@@ -404,12 +300,17 @@ const CleanerJobsPage = () => {
   };
 
   const handleJobClick = (jobId, jobStatus) => {
-    if (jobStatus === 'in_progress') return;
+    // If job is in assigned tab or is active, always go to in-progress detail page
+    if (activeTab === 'assigned' || ['on_the_way', 'started', 'in_progress'].includes(jobStatus)) {
+      navigate(`/in-progress-job/${jobId}`);
+      return;
+    }
     if (jobStatus === 'completed') {
       navigate(`/cleaner-job-completed/${jobId}`);
       return;
     }
-    navigate(`/job-details/${jobId}`);
+    // Pass tab context so details page can show tab-specific actions (e.g., withdraw bid in booking requests)
+    navigate(`/job-details/${jobId}`, { state: { fromTab: activeTab } });
   };
 
   const handleInProgressJobClick = (jobId) => navigate(`/in-progress-job/${jobId}`);
@@ -424,13 +325,21 @@ const CleanerJobsPage = () => {
 
   const handleApplyFilters = () => {
     setShowSortModal(false);
-    // Filter logic can be applied here if needed
+    apiCache.current = {}; 
+    setRefreshTrigger(prev => prev + 1);
+    setCurrentPage(1); 
   };
 
   // Jobs are now filtered on backend, no need for client-side filtering
   const filteredJobs = jobs;
 
-  useEffect(() => setCurrentPage(1), [activeTab]);
+  useEffect(() => {
+    setCurrentPage(1);
+    // Reset subFilter if navigating to booking_request
+    if (activeTab !== 'booking_request') {
+      // Keep it saved but show subfilters only when in that tab
+    }
+  }, [activeTab]);
 
   // --- rest of your UI markup unchanged, using the same classes and structure ---
   // For brevity, I will reuse the existing UI code you provided earlier
@@ -456,7 +365,8 @@ const CleanerJobsPage = () => {
           }
         />
 
-        <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-custom">
+        {/* Flat container (no extra rounded background behind tabs/cards) to match Figma */}
+        <div className="bg-transparent rounded-none p-0 shadow-none">
           {/* Search & Sort */}
           <div className="px-4 py-3">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -485,12 +395,40 @@ const CleanerJobsPage = () => {
             <div className="flex gap-2 overflow-x-auto no-scrollbar scrollbar-hide pb-1">
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2.5 rounded-xl! text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeTab === tab.id ? 'bg-[#EBF2FD] text-primary-600 shadow-sm font-semibold border-none' : 'bg-[#F9FAFB] text-gray-600 border border-[#F3F3F3] hover:bg-gray-50'}`}>
-                  {tab.label}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 cursor-pointer ${activeTab === tab.id ? 'bg-[#EBF2FD] text-primary-600 font-semibold border-none' : 'bg-[#F3F3F3] text-gray-600 border border-[#F3F3F3] hover:bg-gray-50'}`}>
+                  {tab.label} 
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Sub-filters for Booking Requests */}
+          {activeTab === 'booking_request' && (
+            <div className="px-4 pb-4 flex items-center gap-6">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="subFilter"
+                  value="request_sent"
+                  checked={subFilter === 'request_sent'}
+                  onChange={(e) => setSubFilter(e.target.value)}
+                  className="w-5 h-5 border-2 border-gray-300 rounded-full checked:border-primary-500 checked:bg-primary-500 transition-all cursor-pointer"
+                />
+                <span className={`text-sm font-medium ${subFilter === 'request_sent' ? 'text-primary-600' : 'text-gray-500'}`}>Request Sent</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="subFilter"
+                  value="waitlisted"
+                  checked={subFilter === 'waitlisted'}
+                  onChange={(e) => setSubFilter(e.target.value)}
+                  className="w-5 h-5 border-2 border-gray-300 rounded-full checked:border-primary-500 checked:bg-primary-500 transition-all cursor-pointer"
+                />
+                <span className={`text-sm font-medium ${subFilter === 'waitlisted' ? 'text-primary-600' : 'text-gray-500'}`}>Waitlisted</span>
+              </label>
+            </div>
+          )}
 
           {/* Cards: uses same rendering as before but using `jobs` from optimized loader */}
           <div className="px-4 pb-6">
@@ -505,96 +443,76 @@ const CleanerJobsPage = () => {
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {filteredJobs.map(job => (
-                  <div key={job.id} onClick={() => handleJobClick(job.id, job.originalJob?.status)}
-                    className={`bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm transition-all duration-200 ${job.originalJob?.status === 'in_progress' ? 'cursor-default' : 'cursor-pointer hover:shadow-md'}`}>
-                    {/* Job ID and Status */}
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-sm text-primary-200 font-medium">
-                        #{job.originalJob?.jobId || job.id?.substring(0, 8) || 'AM' + Math.random().toString(36).substr(2, 5).toUpperCase()}
+                  <div 
+                    key={job.id} 
+                    onClick={() => handleJobClick(job.id, job.originalJob?.status)}
+                    className="bg-white border border-gray-200 rounded-2xl p-5 cursor-pointer"
+                  >
+                    <div className="flex flex-col gap-3">
+                      {/* Top Info: Category and Status */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500">
+                          {job.category}
+                        </span>
+                        <div className="flex gap-2">
+                          {/* {job.isUrgent && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200 uppercase tracking-wider">
+                              Urgent
+                            </span>
+                          )} */}
+                          {activeTab === 'completed' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600 border border-green-200 uppercase tracking-wider">
+                              Completed
+                            </span>
+                          )}
+                          {activeTab === 'assigned' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary-600 border border-primary-200 uppercase tracking-wider">
+                              Assigned
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {activeTab === 'completed' && (
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#D1FAE5] border border-[#D1FAE5] text-[#059669]">
-                          Completed
-                        </span>
-                      )}
-                      {activeTab === 'accepted' && job.originalJob?.status === 'in_progress' && (
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-500 border border-yellow-500 text-yellow-500">
-                          Awaiting Payment
-                        </span>
-                      )}
-                      {activeTab === 'accepted' && job.originalJob?.status === 'accepted' && (
-                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#D1FAE5] border border-[#D1FAE5] text-[#059669]">
-                          Accepted
-                        </span>
-                      )}
-                      {activeTab === 'my-bids' && job.myQuote && (
-                        <div className="flex flex-col items-end">
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#E0F2FE] text-[#0369A1] mb-1">
-                            Quotes Sent
-                          </span>
+
+                      {/* Job Title */}
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                        {job.title}
+                      </h3>
+
+                      {/* Details with Icons */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <img src={CalendarIcon} alt="Date" className="w-4 h-4 opacity-60" />
+                          <span className="text-sm font-medium">{job.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <img src={MapPinIcon} alt="Location" className="w-4 h-4 opacity-60" />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium truncate block">{job.location}</span>
+                            {job.distance !== null && job.distance > 0 && (
+                              <span className="text-[11px] font-bold text-primary-500 uppercase">
+                                {job.distance} KM AWAY
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                   
+
+                      {/* Assigned By (Simple) */}
+                      {activeTab === 'assigned' && job.originalJob?.customerId && (
+                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+                          <img 
+                            src={job.originalJob.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.originalJob.customerId.firstName}+${job.originalJob.customerId.lastName}&background=random`} 
+                            alt="Customer" 
+                            className="w-6 h-6 rounded-full object-cover" 
+                          />
+                          <p className="text-xs text-gray-400">
+                            Assigned by <span className="font-bold text-gray-700">{job.originalJob.customerId.firstName}</span>
+                          </p>
                         </div>
                       )}
                     </div>
-
-                    {/* Job Title */}
-                    <h3 className="text-lg font-semibold text-primary-500 mb-2 capitalize">{job.title}</h3>
-
-                    {/* Job Details with Icons */}
-                    <div className="space-y-1">
-                      {/* Location */}
-                      <div className="flex items-center">
-                        <img src={MapPinIcon} alt="Location" className="w-4 h-4 mr-3" />
-                        <span className="text-sm text-primary-200 font-medium">{job.location}</span>
-                      </div>
-
-                      {/* Date & Time */}
-                      <div className="flex items-center">
-                        <img src={CalendarIcon} alt="Date" className="w-4 h-4 mr-3" />
-                        <span className="text-sm text-primary-200 font-medium">
-                          {activeTab === 'completed' ? `Completed: ${job.date}` : job.date}
-                        </span>
-                      </div>
-
-                      {/* My Quote Amount for My Bids tab */}
-                      {activeTab === 'my-bids' && job.myQuote && (
-                        <div className="flex items-center">
-                          <span className="text-sm font-semibold text-primary-500">
-                            My Quote: <span className="ml-1 text-primary-600">${job.myQuote.price}</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Chat with Customer Button for Accepted Jobs (not in_progress) */}
-                    {activeTab === 'accepted' && job.originalJob?.status === 'accepted' && (
-                      <div className="flex items-center justify-end cursor-pointer mt-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/chat/${job.id}`);
-                          }}
-                          className="text-primary-600 px-3 py-2 rounded-full font-medium transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer text-sm border border-[#9CC0F6] shadow-custom"
-                        >
-                          <img src={ChatIcon} alt="Chat" className="w-5 h-5 " />
-                          Chat with Customer
-                        </button>
-                      </div>
-                    )}
-
-                    {/* View Details Button for In Progress Jobs */}
-                    {activeTab === 'accepted' && job.originalJob?.status === 'in_progress' && (
-                      <div className="flex items-center justify-end cursor-pointer mt-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInProgressJobClick(job.id);
-                          }}
-                          className="text-primary-600 px-3 py-2 rounded-full font-medium transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer text-sm border border-[#9CC0F6] shadow-custom"
-                        >
-                          View Details
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -722,10 +640,10 @@ const CleanerJobsPage = () => {
             <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">
               <Button
                 onClick={handleResetFilters}
-                variant="outline"
+                variant="secondary"
                 size="md"
                 fullWidth
-                className="border-primary-200 text-primary-500 hover:bg-primary-50"
+                className="border-[#9CC0F6] text-"
               >
                 Reset
               </Button>

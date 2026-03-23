@@ -14,7 +14,9 @@ const ServiceCommonSections = ({
   instructionsValue = '',
   onInstructionsChange,
   instructionsPlaceholder = 'Write your instructions here....',
-  showInstructions = true
+  showInstructions = true,
+  fileUploadTitle = 'Upload Photos',
+  fileUploadSubtitle = '(Optional)'
 }) => {
   return (
     <>
@@ -27,10 +29,10 @@ const ServiceCommonSections = ({
           {instructionsHeader ? (
             instructionsHeader
           ) : (
-            <h3 className="text-base font-medium text-primary-500 mb-3 sm:mb-4">
+            <h3 className="text-sm sm:text-base font-medium text-[#111827] mb-2 sm:mb-3">
               {instructionsTitle}
               {instructionsSubtitle && (
-                <span className="text-primary-200 font-medium text-xs sm:text-base"> {instructionsSubtitle}</span>
+                <span className="text-gray-400 font-medium text-xs sm:text-sm ml-1"> {instructionsSubtitle}</span>
               )}
             </h3>
           )}
@@ -47,14 +49,20 @@ const ServiceCommonSections = ({
       )}
 
       {fileUploadProps && (
-        <div>
+        <div className="pt-2">
+          <h3 className="text-sm sm:text-base font-medium text-[#111827] mb-2 sm:mb-3">
+            {fileUploadTitle}
+            {fileUploadSubtitle && (
+              <span className="text-gray-400 font-medium text-xs sm:text-sm ml-1"> {fileUploadSubtitle}</span>
+            )}
+          </h3>
           {uploadError && (
             <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded text-xs sm:text-sm">
               {uploadError}
             </div>
           )}
 
-          <FileUploadArea {...fileUploadProps} />
+          <FileUploadArea {...fileUploadProps} title={null} description={null} />
 
           {selectedFiles.length > 0 && (
             <div className="mt-4">

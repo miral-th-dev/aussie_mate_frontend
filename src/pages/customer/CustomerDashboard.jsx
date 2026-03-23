@@ -10,9 +10,6 @@ import { Button, Loader } from '../../components';
 import { jobsAPI, userAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { getStatusChip } from '../../utils/statusUtils';
-import CardBG2 from '../../assets/CardBG2.png';
-import CardBG3 from '../../assets/CardBG3.png';
-import CardBG4 from '../../assets/CardBG4.png';
 import RewardImage from '../../assets/Reward.jpg';
 import CoinImage from '../../assets/coin.png';
 import CalendarIcon from '../../assets/Calendar.svg';
@@ -60,12 +57,13 @@ const CustomerDashboard = () => {
 
   const getActionText = (status) => {
     const s = (status || '').toString().toLowerCase();
-    if (s === 'in_progress') return 'Track Job';
+    if (['in_progress', 'in progress', 'started'].includes(s)) return 'Track Job';
     if (s === 'completed') return 'Rate & Review';
     return 'View Quotes';
   };
+
   const handleViewJobs = () => {
-    navigate('/my-jobs');
+    navigate('/my-jobs', { state: { tab: 'all' } });
   };
   const handleViewRewards = () => {
     navigate('/rewards');
@@ -99,26 +97,45 @@ const CustomerDashboard = () => {
 
       try {
         setLoading(true);
-        const res = await jobsAPI.getCustomerJobs(currentUserId, { page: 1, limit: 10 });
+        const res = await jobsAPI.getMyJobs({ 
+          page: 1, 
+          limit: 10,
+          tab: 'all'
+        });
         const list = res?.data || res || [];
 
         const normalized = list.map((j) => {
           const status = (j.status || '').toString();
-          const assignedTo = j.assignedCleaner?.name || j.assignedCleaner?.fullName || j.cleaner?.name || j.assignedTo || null;
+          
+          // Improved name extraction
+          const cleaner = j.assignedCleanerId || j.completedBy || j.assignedCleaner || j.cleaner;
+          let assignedTo = null;
+          if (cleaner) {
+            if (cleaner.firstName) {
+              assignedTo = `${cleaner.firstName} ${cleaner.lastName || ''}`.trim();
+            } else {
+              assignedTo = cleaner.name || cleaner.fullName || j.assignedTo || null;
+            }
+          }
+
           const dateLabel = formatDate(j.createdAt);
+
           const title = j.title || j.serviceTypeDisplay || `${(j.serviceType || '').toString().replace(/\b\w/g, c => c.toUpperCase())}`.trim();
+          const categoryName = j.categoryName || (j.serviceTypeDisplay && j.serviceTypeDisplay.split(' ')[0]) || 'Other Categories';
           const statusChip = getStatusChip(status);
 
           return {
             id: j.jobId || j._id || j.reference || j.id,
             rawId: j.id || j._id, // Add raw database ID for navigation if needed
             title,
+            categoryName,
             status: statusChip.label,
             rawStatus: status.toLowerCase(),
             date: dateLabel,
             action: getActionText(status),
             assignedTo
           };
+
         });
 
         setOngoingJobs(normalized);
@@ -177,26 +194,38 @@ const CustomerDashboard = () => {
     <>
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto py-1 px-4 sm:px-6 lg:px-8 pb-6">
-        {/* Search Section */}
-        <div className="bg-white px-4 sm:px-6 py-4 rounded-2xl mb-4 sm:mb-6 mt-4 shadow-custom">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
-                <img src={SearchIcon} alt="Search" className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search services, e.g. bond clean..."
-                className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-100 rounded-lg text-sm text-primary-200 font-medium focus:outline-none"
-              />
+        {/* Combined Search and Post Job Section */}
+        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-custom space-y-6 mt-4 mb-4 sm:mb-6 border border-gray-50">
+          {/* Search Bar */}
+          <div className="relative w-full">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
+              <img src={SearchIcon} alt="Search" className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search services, e.g. bond clean..."
+              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-50 rounded-xl text-sm text-primary-200 font-medium focus:outline-none focus:ring-1 focus:ring-primary-500/10 transition-all"
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-gray-100 w-full"></div>
+
+          {/* Post Job Layout Section */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-center sm:text-left">
+              <h2 className="text-sm sm:text-xl font-bold text-[#111827] mb-1">Book a cleaner in minutes</h2>
+              <p className="text-sm sm:text-base text-gray-400 font-medium">
+                Post job &rarr; Receive quotes &rarr; Choose &amp; pay securely
+              </p>
             </div>
             <Button
               onClick={() => navigate('/post-new-job')}
-              size="sm"
+              size="lg"
               icon={PlusIcon}
+              className="w-full sm:w-auto px-7 sm:px-10 py-2 sm:py-3 rounded-full shadow-lg shadow-blue-500/20"
             >
-              <span className="hidden sm:inline">Post New Job</span>
-              <span className="sm:hidden">Post Job</span>
+              Post New Job
             </Button>
           </div>
         </div>
@@ -316,56 +345,64 @@ const CustomerDashboard = () => {
             >
               {ongoingJobs.map((job) => (
                 <SwiperSlide key={job.id}>
-                  <div
-                    onClick={() => {
-                      if (job.rawStatus === 'completed' || job.rawStatus === 'pending_customer_confirmation') {
-                        navigate(`/job-completed/${job.rawId}`);
-                      } else if (job.rawStatus === 'in_progress') {
-                        navigate(`/customer-in-progress-job/${job.rawId}`);
-                      } else {
-                        navigate(`/customer-job-details/${job.rawId}`);
-                      }
-                    }}
+                    <div
+                      onClick={() => {
+                        if (job.rawStatus === 'completed' || job.rawStatus === 'pending_customer_confirmation') {
+                          navigate(`/job-completed/${job.rawId}`);
+                        } else if (job.rawStatus === 'in_progress') {
+                          navigate(`/customer-in-progress-job/${job.rawId}`);
+                        } else {
+                          navigate(`/customer-job-details/${job.rawId}`);
+                        }
+                      }}
                     className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 shadow-custom h-44 sm:h-48 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                  >
-                    <div className="flex flex-col justify-between h-full">
-                      <div>
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="text-xs sm:text-sm text-primary-200 font-medium">#{job.id}</div>
-                          {job.status && (
-                            <span className={`inline-block font-semibold text-xs px-2 py-1 rounded-full ${job.rawStatus === 'quoted' || job.rawStatus === 'posted'
+                    >
+                      <div className="flex flex-col justify-between h-full">
+                        <div>
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="text-[10px] sm:text-xs text-gray-400 font-medium ">
+                              {job.categoryName}
+                            </div>
+                            {job.status && (
+                              <span className={`inline-block font-semibold text-[10px] px-2 py-0.5 rounded-full ${job.rawStatus === 'quoted' || job.rawStatus === 'posted'
                                 ? 'bg-[#E5F3FF] text-[#0088FF] border border-[#DDEFFF]'
-                                : job.rawStatus === 'in_progress'
-                                  ? 'bg-[#FFEBCA] text-yellow-500 border border-yellow-500'
+                                : job.rawStatus === 'in_progress' || job.rawStatus === 'started'
+                                  ? 'bg-[#FFEBCA] text-[#FF8800] border-[#FFEBCA]'
                                   : job.rawStatus === 'completed'
-                                    ? 'bg-green-500 text-[#10B981] border border-[#D2F8E0]'
-                                    : 'bg-[#E5F3FF] text-[#0088FF] border border-[#E5F3FF]'
-                              }`}>
-                              {job.status}
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="font-semibold text-primary-500 mb-2 line-clamp-2 text-sm sm:text-base capitalize" >{job.title}</h4>
-                        <div className="flex items-center text-xs font-medium text-primary-200 mb-1">
-                          <img src={CalendarIcon} alt="Calendar" className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                          {job.date}
-                        </div>
-                        {job.assignedTo && (
-                          <div className="flex items-center text-xs text-[#6B7280]">
-                            <img src={PersonIcon} alt="Person" className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                            <span className="truncate">Assigned to: {job.assignedTo}</span>
+                                    ? 'bg-[#DBF9E7] text-green-500 border-green-500'
+                                    : 'bg-[#E5F3FF] text-[#0088FF] border-[#E5F3FF]'
+                                }`}>
+                                {job.status}
+                              </span>
+
+                            )}
                           </div>
-                        )}
+                          <h4 className="font-semibold text-[#111827] mb-2 line-clamp-1 text-sm sm:text-lg capitalize">{job.title}</h4>
+                          <div className="space-y-1.5">
+                            <div className="flex items-center text-xs font-medium text-gray-500">
+                              <img src={CalendarIcon} alt="Calendar" className="w-3.5 h-3.5 mr-2 opacity-60" />
+                              {job.date} 
+                            </div>
+                            {job.assignedTo && (
+                              <div className="flex items-center text-xs font-medium text-gray-500">
+                                <img src={PersonIcon} alt="Person" className="w-3.5 h-3.5 mr-2 opacity-60" />
+                                <span className="truncate">Assigned to: {job.assignedTo}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="secondary"
+
+
+                          size="sm"
+                          className="w-full mt-3 text-xs sm:text-sm font-semibold py-2"
+                        >
+                          {job.action}
+                        </Button>
                       </div>
-                      <Button
-                        variant="secondary"
-                        size="xs"
-                        className="w-full mt-2 sm:mt-3 text-xs sm:text-sm font-medium"
-                      >
-                        {job.action}
-                      </Button>
                     </div>
-                  </div>
+
                 </SwiperSlide>
               ))}
             </Swiper>

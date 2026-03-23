@@ -7,7 +7,10 @@ import {
   Ruler,
   AlertTriangle,
   CalendarDays,
+  Phone,
+  MapPin,
 } from 'lucide-react';
+
 import { Button, ConfirmationModal, PageHeader, JobOverviewCard } from '../../components';
 import ThreeDotIcon from '../../assets/3dot.svg';
 import UserIcon from '../../assets/user.svg';
@@ -15,7 +18,7 @@ import RatingIcon from '../../assets/rating.svg';
 import SilverBadgeIcon from '../../assets/silverBadge.svg';
 import GoldBadgeIcon from '../../assets/goldBadge.svg';
 import BronzeBadgeIcon from '../../assets/bronzeBadge.svg';
-import MessageIcon from '../../assets/message2.svg';
+
 import CloseIcon from '../../assets/close.svg';
 import { jobsAPI, quotesAPI } from '../../services/api';
 import { chatAPI } from '../../services/chatAPI';
@@ -29,13 +32,14 @@ const CustomerJobDetailsPage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [showAcceptModal, setShowAcceptModal] = useState(false);
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [quoteToAccept, setQuoteToAccept] = useState(null);
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [quoteToConnect, setQuoteToConnect] = useState(null);
   const [showDeclineModal, setShowDeclineModal] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [quoteToDecline, setQuoteToDecline] = useState(null);
   const [cleanerQuotes, setCleanerQuotes] = useState([]);
+  const [waitlistedCleaners, setWaitlistedCleaners] = useState([]);
   const [chatRooms, setChatRooms] = useState([]);
   const dropdownRef = useRef(null);
 
@@ -49,10 +53,8 @@ const CustomerJobDetailsPage = () => {
 
         if (response.success && response.data) {
           setJob(response.data);
-
-          if (response.data.quotes && response.data.quotes.length > 0) {
-            setCleanerQuotes(response.data.quotes);
-          }
+          setCleanerQuotes(response.data.contactedCleaners || []);
+          setWaitlistedCleaners(response.data.waitlistedCleaners || []);
         } else {
           setError('Job not found');
         }
@@ -104,6 +106,7 @@ const CustomerJobDetailsPage = () => {
   const getServiceDetail = (job) => {
     if (!job) return '';
     return (
+      job.serviceTypeId?.name ||
       job.serviceDetail ||
       job.serviceDetailName ||
       job.service?.detail ||
@@ -179,56 +182,93 @@ const CustomerJobDetailsPage = () => {
     setShowCancelModal(true);
   };
 
-  const handleAcceptQuote = (quoteId) => {
-    const quote = cleanerQuotes.find(q => q._id === quoteId);
-    if (quote) {
-      setQuoteToAccept(quote);
-      setShowAcceptModal(true);
+  const handleConnect = (cleanerId) => {
+    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
+    if (item) {
+      setQuoteToConnect(item);
+      setShowConnectModal(true);
     }
   };
 
-  const handleDeclineQuote = (quoteId) => {
-    const quote = cleanerQuotes.find(q => q._id === quoteId);
-    if (quote) {
-      setQuoteToDecline(quote);
+  const handleAcceptQuote = (cleanerId) => {
+    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
+    if (item) {
+      setQuoteToConnect(item);
+      setShowConnectModal(true);
+    }
+  };
+
+  const handleDeclineQuote = (cleanerId) => {
+    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
+    if (item) {
+      setQuoteToDecline(item);
       setShowDeclineModal(true);
     }
   };
 
-  const handleConfirmAcceptQuote = async () => {
-    if (!quoteToAccept) return;
+  const handleConfirmConnect = async () => {
+    if (!quoteToConnect) return;
+    const cleanerId = quoteToConnect.cleanerId?._id || quoteToConnect.cleanerId || quoteToConnect.id;
 
     try {
-      setIsAccepting(true);
+      setIsConnecting(true);
+      // Connect with cleaner via job endpoint
+      const response = await jobsAPI.connectCleaner(jobId, cleanerId);
 
-      const response = await quotesAPI.acceptQuote(jobId, quoteToAccept._id);
-
-      if (response.success) {
-        const updatedQuotes = cleanerQuotes.map(quote =>
-          quote._id === quoteToAccept._id
-            ? { ...quote, status: 'accepted' }
-            : { ...quote, status: 'rejected' }
-        );
-        setCleanerQuotes(updatedQuotes);
-
-        // Close modal
-        setShowAcceptModal(false);
-        setQuoteToAccept(null);
+      // If success OR if already connected, we can proceed to chat
+      if (response.success || response.error === 'Already connected with this cleaner') {
+        setShowConnectModal(false);
+        navigate(`/customer-chat/${jobId}?cleaner=${cleanerId}`);
       } else {
-        setError(response.error || 'Failed to accept quote');
-        setShowAcceptModal(false);
+        setError(response.message || response.error || 'Failed to connect with cleaner');
+        setShowConnectModal(false);
       }
     } catch (err) {
-      setError('Failed to accept quote. Please try again.');
-      setShowAcceptModal(false);
+      // Check if error message indicates already connected
+      if (err.message && err.message.includes('Already connected')) {
+        setShowConnectModal(false);
+        navigate(`/customer-chat/${jobId}?cleaner=${cleanerId}`);
+      } else {
+        setError('Failed to connect. Please try again.');
+        setShowConnectModal(false);
+      }
     } finally {
-      setIsAccepting(false);
+      setIsConnecting(false);
     }
   };
 
+  const handleConfirmAcceptQuote = async () => {
+    if (!quoteToConnect) return;
+    const cleanerId = quoteToConnect.cleanerId?._id || quoteToConnect.cleanerId || quoteToConnect.id;
+
+    try {
+      setIsConnecting(true);
+
+      const response = await jobsAPI.assignCleaner(jobId, cleanerId);
+
+      if (response.success) {
+        setShowConnectModal(false);
+        navigate(`/booking-confirmation/${jobId}?cleaner=${cleanerId}`);
+      } else {
+        setError(response.message || response.error || 'Failed to assign cleaner');
+        setShowConnectModal(false);
+      }
+    } catch (err) {
+      setError('Failed to assign cleaner. Please try again.');
+      setShowConnectModal(false);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleCancelConnect = () => {
+    setShowConnectModal(false);
+    setQuoteToConnect(null);
+  };
+
   const handleCancelAcceptQuote = () => {
-    setShowAcceptModal(false);
-    setQuoteToAccept(null);
+    setShowConnectModal(false);
+    setQuoteToConnect(null);
   };
 
   const handleConfirmDeclineQuote = async () => {
@@ -237,8 +277,9 @@ const CustomerJobDetailsPage = () => {
     try {
       setIsDeclining(true);
 
-      // Call API to reject quote
-      const response = await quotesAPI.rejectQuote(jobId, quoteToDecline._id);
+      // Call API to reject cleaner
+      const cleanerId = quoteToDecline.cleanerId?._id || quoteToDecline.cleanerId || quoteToDecline.id;
+      const response = await quotesAPI.rejectQuote(jobId, cleanerId);
 
       if (response.success) {
         // Update the quote status locally
@@ -420,7 +461,7 @@ const CustomerJobDetailsPage = () => {
 
     const assignedCleanerRating =
       typeof assignedCleaner === 'object'
-        ? assignedCleaner.averageRating || assignedCleaner.rating
+        ? assignedCleaner?.averageRating || assignedCleaner?.rating
         : '';
 
     const customer =
@@ -511,22 +552,27 @@ const CustomerJobDetailsPage = () => {
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
-  // Helper function to format cleaner data from quotes
-  const formatCleanerData = (quote) => {
-    const cleaner = quote.cleanerId || quote.cleaner;
-    const cleanerId = cleaner?._id || cleaner?.id || quote.cleanerId || quote._id || quote.id;
+  // Helper function to format cleaner data from contactedCleaners
+  const formatCleanerData = (item) => {
+    const cleaner = item.cleaner;
+    const cleanerId = item.cleanerId?._id || item.cleanerId || cleaner?._id || cleaner?.id;
+
+    const distance = item.distance || cleaner?.distance;
 
     return {
       id: cleanerId,
-      quoteId: quote._id || quote.id,
-      name: cleaner ? `${cleaner.firstName || ''} ${cleaner.lastName || ''}`.trim() || `Cleaner #${cleanerId?.slice(-4)}` : 'Cleaner',
+      name: cleaner ? `${cleaner.firstName || ''} ${cleaner.lastName || ''}`.trim() : 'Cleaner',
+      phone: cleaner?.phone || '',
+      photo: resolveImageSrc(cleaner?.profilePhoto || cleaner?.profileImage),
       rating: cleaner?.averageRating !== undefined ? cleaner.averageRating : (cleaner?.rating || 0),
-      reviews: cleaner?.reviewCount || 0,
-      tier: cleaner?.tier,
-      quoteAmount: quote.price || quote.amount || 0,
+      reviews: cleaner?.totalReviews || cleaner?.reviewCount || 0,
+      tier: (cleaner?.tier || 'none').toLowerCase(),
       isVerified: cleaner?.isVerified || false,
-      status: quote.status || 'pending',
-      distance: quote.distance || cleaner?.distance || 'Distance not available'
+      isConnected: item.isConnected || false,
+      chatRoomId: item.chatRoomId,
+      distance: distance ? `${distance} km away` : 'Distance unknown',
+      message: item.introMessage || 'Hi, I can do this job. I have experience in cleaning.',
+      isWaitlisted: item.isWaitlisted || false,
     };
   };
 
@@ -578,7 +624,7 @@ const CustomerJobDetailsPage = () => {
     <>
       <div className="max-w-6xl mx-auto py-3 sm:py-4 px-3 sm:px-4 md:px-4">
         <PageHeader
-          title={`Job Details - ${job.serviceType || 'Cleaning'}`}
+          title={serviceDetail || `Job Details - ${job.serviceType || 'Cleaning'}`}
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
@@ -616,255 +662,245 @@ const CustomerJobDetailsPage = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-6">
-        <div className="mb-3 sm:mb-4">
-          <JobOverviewCard
-            jobId={job.jobId || job.referenceId || job._id?.slice(-6)}
-            title={getJobTitle(job)}
-            serviceType={job.serviceType || job.category || job.service}
-            serviceDetail={serviceDetail}
-            instructions={
-              job.specialInstructions ||
-              job.instructions ||
-              job.additionalNotes ||
-              ''
-            }
-            scheduledDate={scheduledDateLabel}
-            frequency={jobFrequencyLabel}
-            location={job.location?.address || job.address || job.locationDescription || 'Location not specified'}
-            photos={jobPhotos}
-            viewerRole="customer"
-            metaInfo={jobOverviewMeta}
-            roleSections={roleSections}
-          />
-        </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          {/* Status Badge */}
+          <div className="mb-4">
+            <div className="inline-flex items-center gap-1.5 bg-[#DDEFFF] px-3 py-1.5 rounded-full">
+              <div className="w-2 h-2 bg-[#0088FF] rounded-full"></div>
+              <span className="text-xs font-semibold text-[#0088FF]">
+                {cleanerQuotes.length} Quotes Received
+              </span>
+            </div>
+          </div>
 
-        {/* Custom Job Dates Section */}
-        {job?.frequency === 'Custom' && job?.occurrences && job.occurrences.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-custom p-3 sm:p-4 md:p-6 mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-3 sm:mb-4">
-              Job Schedule
-            </h3>
-            <div className="space-y-2 sm:space-y-3">
-              {job.occurrences.map((occurrence, index) => (
-                <div key={occurrence._id || index} className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                      <CalendarDays className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" strokeWidth={2} />
+          {/* Job Header */}
+          <div className="mb-6">
+            <p className="text-xl font-medium text-gray-500 mb-1 leading-tight">
+              {job.categoryId?.name || 'Cleaning'}
+            </p>
+            <h1 className="text-1xl sm:text-2xl font-extrabold text-[#111827] mb-2 leading-tight">
+              {serviceDetail || job.title}
+            </h1>
+            <p className="text-sm sm:text-base text-gray-500 leading-relaxed mb-6">
+              {job.instructions || 'No description provided.'}
+            </p>
+
+            {/* Meta Info */}
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex items-center text-gray-700 font-medium">
+                <CalendarDays className="w-5 h-5 mr-3 text-gray-400" strokeWidth={1.5} />
+                <span className="text-sm sm:text-base">{scheduledDateLabel}</span>
+              </div>
+              <div className="flex items-start text-gray-700 font-medium">
+                <MapPin className="w-5 h-5 mr-3 mt-0.5 text-gray-400 flex-shrink-0" strokeWidth={1.5} />
+                <span className="text-sm sm:text-base leading-snug">{job.location?.address || job.address || 'Location not specified'}</span>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Photo Grid */}
+          {jobPhotos.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 mb-8 max-w-lg">
+              {jobPhotos.slice(0, 4).map((photo, index) => (
+                <div key={index} className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 group">
+                  <img
+                    src={photo}
+                    alt={`Job ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  {index === 3 && jobPhotos.length > 4 && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-white text-2xl font-bold">+{jobPhotos.length - 3}</span>
                     </div>
-                    <div>
-                      <div className="font-medium text-primary-500 text-sm sm:text-base">
-                        {occurrence.label || `Job ${index + 1}`}
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-500">
-                        {formatDate(occurrence.scheduledDate)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm sm:text-base font-semibold text-primary-600">
-                      ${occurrence.amount || 0}
-                    </div>
-                    <div className={`text-xs font-medium px-2 py-1 rounded-full inline-block mt-1 ${
-                      occurrence.status === 'completed' ? 'bg-green-100 text-green-700' :
-                      occurrence.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                      occurrence.status === 'pending_customer_confirmation' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {occurrence.statusDisplay || occurrence.status || 'Pending'}
-                    </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
-            {/* Summary */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-600">
-                  <span className="font-medium text-green-600">
-                    {job.occurrences.filter(occ => occ.status === 'completed').length}
-                  </span> completed •
-                  <span className="font-medium text-blue-600 ml-1">
-                    {job.occurrences.filter(occ => occ.status === 'in_progress').length}
-                  </span> in progress •
-                  <span className="font-medium text-gray-600 ml-1">
-                    {job.occurrences.filter(occ => occ.status === 'pending' || occ.status === 'pending_customer_confirmation').length}
-                  </span> pending
-                </div>
-                <div className="text-sm font-medium text-primary-600">
-                  Total: ${job.occurrences.reduce((sum, occ) => sum + (occ.amount || 0), 0)}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        {/* Custom Job Dates Section */}
+
 
         {/* Service Provider Quotes Section */}
-        <div className="bg-white rounded-2xl shadow-custom p-3 sm:p-4 md:p-6">
-          <div className="mb-3 sm:mb-4">
-            <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1 sm:mb-2">
-              {job.serviceType === 'petSitting' ? 'Pet Sitter Quotes' :
-                job.serviceType === 'cleaning' ? 'Cleaner Quotes' :
-                  job.serviceType === 'handyman' ? 'Handyman Quotes' :
-                    job.serviceType === 'housekeeping' ? 'Housekeeper Quotes' :
-                      job.serviceType === 'commercialCleaning' ? 'Commercial Cleaner Quotes' :
-                        job.serviceType === 'ndisSupport' ? 'NDIS Support Quotes' :
-                          'Pet Sitting Quote'} ({cleanerQuotes.filter(quote => quote.status !== 'rejected').length})
+        <div className="mt-8 border-t border-gray-100 pt-8">
+          <div className="mb-6">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+              Cleaner Quotes ({cleanerQuotes.length})
             </h3>
-            <p className="text-xs sm:text-sm text-primary-200 font-medium">
-              {cleanerQuotes.filter(quote => quote.status !== 'rejected').length > 0
-                ? (job.serviceType === 'petSitting' ? "Pet sitters nearby have sent their offers. Review and chat before choosing." :
-                  job.serviceType === 'cleaning' ? "Cleaners nearby have sent their offers. Review and chat before choosing." :
-                    job.serviceType === 'handyman' ? "Handymen nearby have sent their offers. Review and chat before choosing." :
-                      job.serviceType === 'housekeeping' ? "Housekeepers nearby have sent their offers. Review and chat before choosing." :
-                        job.serviceType === 'commercialCleaning' ? "Commercial cleaners nearby have sent their offers. Review and chat before choosing." :
-                          job.serviceType === 'ndisSupport' ? "NDIS support providers nearby have sent their offers. Review and chat before choosing." :
-                            "Service providers nearby have sent their offers. Review and chat before choosing.")
-                : (job.serviceType === 'petSitting' ? "No quotes yet. Pet sitters will send quotes soon." :
-                  job.serviceType === 'cleaning' ? "No quotes yet. Cleaners will send quotes soon." :
-                    job.serviceType === 'handyman' ? "No quotes yet. Handymen will send quotes soon." :
-                      job.serviceType === 'housekeeping' ? "No quotes yet. Housekeepers will send quotes soon." :
-                        job.serviceType === 'commercialCleaning' ? "No quotes yet. Commercial cleaners will send quotes soon." :
-                          job.serviceType === 'ndisSupport' ? "No quotes yet. NDIS support providers will send quotes soon." :
-                            "No quotes yet. Service providers will send quotes soon.")
-              }
+            <p className="text-sm text-gray-500 font-medium leading-relaxed">
+              Cleaners nearby have sent their offers. Review and chat before choosing.
             </p>
           </div>
 
-          {cleanerQuotes.filter(quote => quote.status !== 'rejected').length > 0 && (
-            <div className="space-y-2 sm:space-y-3">
-              {cleanerQuotes.filter(quote => quote.status !== 'rejected').map((quote, index) => {
-                const cleaner = formatCleanerData(quote);
-                const chatStatus = getChatStatus(cleaner.id);
+          {cleanerQuotes.length > 0 && (
+            <div className="space-y-6">
+              {cleanerQuotes.map((item, index) => {
+                const cleaner = formatCleanerData(item);
 
                 return (
-                  <div key={quote._id || quote.id || `quote-${index}`} className="border border-primary-200 shadow-custom rounded-xl p-3 sm:p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
-                      <div className="flex-1">
-                        {/* Top row: Cleaner ID, Badge, Rating */}
-                        <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
-                          <div className="flex items-center space-x-1">
-                            <img src={UserIcon} alt="User" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            <span className="text-xs sm:text-sm font-medium text-primary-500">
-                              {cleaner.name}
-                            </span>
-                          </div>
-                          {cleaner.tier && cleaner.tier !== 'none' && (
-                            <div className={`flex items-center space-x-1 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border-[0.6px] ${cleaner.tier === 'gold'
-                              ? 'bg-[linear-gradient(94.49deg,#FFDBAE_0%,#FFE7C4_100%)] border-[#FFDBAE]'
-                              : cleaner.tier === 'silver'
-                                ? 'bg-[linear-gradient(94.49deg,#FDFDFD_0%,#E9E9E9_100%)] border-primary-200'
-                                : cleaner.tier === 'bronze'
-                                  ? 'bg-[linear-gradient(94.49deg,#D4A574_0%,#E6C7A3_100%)] border-[#CD7F32]'
-                                  : 'bg-gray-100 border-gray-300'
-                              }`}>
-                              <img
-                                src={
-                                  cleaner.tier === 'gold'
-                                    ? GoldBadgeIcon
-                                    : cleaner.tier === 'silver'
-                                      ? SilverBadgeIcon
-                                      : BronzeBadgeIcon
-                                }
-                                alt="Badge"
-                                className="w-3 h-3 sm:w-4 sm:h-4"
-                              />
-                              <span className="text-xs text-primary-500 font-medium capitalize">
-                                {cleaner.tier}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-center space-x-1 bg-[#FFF2DE] px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-                            <img src={RatingIcon} alt="Rating" className="w-3 h-3" />
-                            <span className="text-xs font-medium text-primary-500">
-                              {cleaner.rating}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Quote details */}
-                        <div className="space-y-1">
-                          <div className="text-xs sm:text-sm text-[#374151] font-medium">
-                            Quote Amount: <span className="font-bold text-primary-600">${cleaner.quoteAmount}</span>
-                            {cleaner.estimatedDuration && (
-                              <span className="text-xs text-gray-500 ml-2">({cleaner.estimatedDuration})</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-primary-500 font-medium">
-                            {cleaner.distance}
-                          </div>
-
-                          {/* Chat Status */}
-                          {chatStatus.hasChat && (
-                            <div className="flex items-center space-x-2 mt-2">
-                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                              <span className="text-xs text-green-600 font-medium">
-                                {chatStatus.lastMessage}
-                              </span>
-                              {chatStatus.unreadCount > 0 && (
-                                <span className="bg-red-500 text-red-500 font-medium border border-red-500 text-xs px-1.5 py-0.5 rounded-full">
-                                  {chatStatus.unreadCount}
-                                </span>
-                              )}
+                  <div key={item._id || item.id || `contacted-${index}`} className="bg-white rounded-[24px] border border-gray-100 p-5 shadow-sm">
+                    {/* Header: Avatar, Info, and Tier */}
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="flex gap-4">
+                        <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
+                          {cleaner.photo ? (
+                            <img src={cleaner.photo} alt={cleaner.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400">
+                              <img src={UserIcon} className="w-8 h-8 opacity-40" alt="User" />
                             </div>
                           )}
                         </div>
-                      </div>
+                        <div>
+                          <h4 className="text-xl font-bold text-gray-900 mb-1">
+                            {cleaner.name}
+                          </h4>
 
-                      {/* Action buttons */}
-                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto mt-2 sm:mt-0 sm:ml-4">
-                        {/* For pending quotes - show Accept and Decline buttons */}
-                        {quote.status === 'pending' && (
-                          <>
-                            <Button
-                              onClick={() => handleAcceptQuote(quote._id)}
-                              variant="success"
-                              size="sm"
-                              className="px-3 sm:px-4 py-2"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              onClick={() => handleDeclineQuote(quote._id)}
-                              variant="danger"
-                              size="sm"
-                              className="px-3 sm:px-4 py-2"
-                            >
-                              Decline
-                            </Button>
-                          </>
-                        )}
-
-                        {/* For accepted quotes - show Start Chat button */}
-                        {quote.status === 'accepted' && (
-                          <Button
-                            onClick={() => {
-                              if (cleaner.id && cleaner.id !== 'undefined' && cleaner.id !== 'null') {
-                                navigate(`/customer-chat/${jobId}?cleaner=${cleaner.id}`);
-                              } else {
-                                setError('Unable to start chat - cleaner information not available. Please try refreshing the page.');
-                              }
-                            }}
-                            variant="secondary"
-                            size="sm"
-                            icon={MessageIcon}
-                            className="px-3 sm:px-4 py-2 shadow-custom"
-                          >
-                            Start Chat
-                          </Button>
-                        )}
-
-                        {/* Quote Status for rejected quotes */}
-                        {quote.status === 'rejected' && (
-                          <div className="bg-red-500 text-red-500 border border-red-500 px-3 sm:px-4 py-2 rounded-xl flex items-center justify-center shadow-custom">
-                            <span className="text-xs sm:text-sm font-medium">Rejected</span>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center text-gray-600">
+                              <Phone className="w-3.5 h-3.5 mr-2 text-gray-400" strokeWidth={2} />
+                              <span className="text-sm font-semibold">{cleaner.phone || '07 3803 6136'}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 font-medium ml-5.5">
+                              {cleaner.distance} — En route
+                            </p>
                           </div>
-                        )}
-
+                        </div>
                       </div>
+
+                      {/* Tier Badge */}
+                      {cleaner.tier && cleaner.tier !== 'none' && (
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+                          <img
+                            src={
+                              cleaner.tier === 'gold'
+                                ? GoldBadgeIcon
+                                : cleaner.tier === 'silver'
+                                  ? SilverBadgeIcon
+                                  : BronzeBadgeIcon
+                            }
+                            alt="Badge"
+                            className="w-4 h-4"
+                          />
+                          <span className="text-sm text-gray-700 font-bold capitalize">
+                            {cleaner.tier} Tier
+                          </span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Message Bubble */}
+                    <div className="bg-[#EBF2FD] rounded-[24px] p-5 mb-6">
+                      <p className="text-gray-900 text-sm font-semibold leading-relaxed">
+                        Hello,<br />
+                        {cleaner.message}
+                      </p>
+                    </div>
+
+                    {/* Footer Action Button */}
+                    <Button
+                      onClick={() => {
+                        if (cleaner.isConnected) {
+                          navigate(`/customer-chat/${jobId}?cleaner=${cleaner.id}`);
+                        } else {
+                          handleAcceptQuote(cleaner.id);
+                        }
+                      }}
+                      variant=""
+                      fullWidth
+                      className="py-3 text-base font-bold rounded-full border border-[#DCE4FF] bg-white text-[#1F6FEB] hover:bg-[#1F6FEB] hover:text-white transition-all cursor-pointer"
+                    >
+                      {cleaner.isConnected ? 'Message' : 'Connect & Message'}
+                    </Button>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Waitlisted Section */}
+          {waitlistedCleaners.length > 0 && (
+            <div className="mt-8">
+              <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Waitlisted Cleaners</h4>
+              <div className="space-y-4">
+                {waitlistedCleaners.map((item, index) => {
+                  const cleaner = formatCleanerData(item);
+
+                  return (
+                    <div key={`waitlisted-${index}`} className="bg-white rounded-[24px] border border-gray-100 p-4 sm:p-5 shadow-sm opacity-95">
+                      {/* Upper Header: Avatar, Name, Phone, and Tier Badge */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex gap-3 sm:gap-4">
+                          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100">
+                            {cleaner.photo ? (
+                              <img src={cleaner.photo} alt={cleaner.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-300">
+                                <img src={UserIcon} className="w-6 h-6 sm:w-8 sm:h-8" alt="User" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="pt-0.5 sm:pt-1">
+                            <h4 className="text-[18px] sm:text-lg font-semibold text-primary-500 mb-1">
+                              {cleaner.name}
+                            </h4>
+                            <div className="flex items-center gap-1.5 text-[#374151] mb-1">
+                              <div className="flex items-center gap-1">
+                                <img src={RatingIcon} alt="Rating" className="w-3.5 h-3.5" />
+                                <span className="text-sm font-semibold">{cleaner.rating}</span>
+                                <span className="text-xs text-gray-400">({cleaner.reviews} reviews)</span>
+                              </div>
+                            </div>
+                            <div className="text-xs sm:text-sm text-gray-400 font-normal">
+                              {cleaner.distance}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Tier Badge Pill */}
+                        {cleaner.tier && cleaner.tier !== 'none' && (
+                          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-100 bg-gray-50/50 shadow-sm`}>
+                            <img
+                              src={
+                                cleaner.tier === 'gold'
+                                  ? GoldBadgeIcon
+                                  : cleaner.tier === 'silver'
+                                    ? SilverBadgeIcon
+                                    : BronzeBadgeIcon
+                              }
+                              alt="Badge"
+                              className="w-4 h-4 sm:w-5 sm:h-5"
+                            />
+                            <span className="text-xs sm:text-sm text-[#374151] font-semibold capitalize whitespace-nowrap">
+                              {cleaner.tier} Tier
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Intro Message Bubble */}
+                      <div className="bg-[#F8FAFC] rounded-[20px] p-4 mb-4 border border-blue-50/50">
+                        <p className="text-gray-500 text-sm font-medium leading-[1.45] italic">
+                          "I'm on the waitlist for this job. Connect with me to discuss how I can help!"
+                        </p>
+                      </div>
+
+                      {/* Footer Action Button */}
+                      <div className="flex justify-end">
+                        <Button
+                          onClick={() => handleAcceptQuote(cleaner.id)}
+                          variant=""
+                          className="px-8 py-2.5 text-sm sm:text-md font-bold rounded-full border border-[#DCE4FF] bg-white text-[#1F6FEB] hover:bg-[#1F6FEB] hover:text-white hover:border-[#1F6FEB] shadow-sm transition-all cursor-pointer"
+                        >
+                          Connect & Message
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -897,21 +933,25 @@ const CustomerJobDetailsPage = () => {
         isLoading={isCancelling}
       />
 
-      {/* Accept Quote Confirmation Modal */}
+      {/* Connect Confirmation Modal */}
       <ConfirmationModal
-        isOpen={showAcceptModal}
-        onClose={handleCancelAcceptQuote}
-        onConfirm={handleConfirmAcceptQuote}
-        title="Accept Quote?"
-        message={
-          quoteToAccept ?
-            `Are you sure you want to accept this quote for $${quoteToAccept.price}? This will reject all other quotes and confirm this cleaner for your job.` :
-            "Are you sure you want to accept this quote?"
+        isOpen={showConnectModal}
+        onClose={handleCancelConnect}
+        onConfirm={handleConfirmConnect}
+        title={
+          quoteToConnect
+            ? `Connect with ${quoteToConnect.cleaner?.firstName || quoteToConnect.cleanerId?.firstName || 'Cleaner'}?`
+            : "Connect with Cleaner?"
         }
-        confirmText="Accept Quote"
-        cancelText="Cancel"
-        confirmButtonColor="bg-green-500 text-green-500! hover:text-[#00832D]! border border-green-500"
-        isLoading={isAccepting}
+        message={
+          quoteToConnect ?
+            `We'll notify ${quoteToConnect.cleaner?.firstName || quoteToConnect.cleanerId?.firstName || 'the cleaner'} that you want to connect about the job.` :
+            "We'll notify the cleaner that you want to connect about the job."
+        }
+        confirmText="Connect"
+        cancelText="Not Now"
+        confirmButtonColor="bg-blue-600 hover:bg-blue-700"
+        isLoading={isConnecting}
       />
 
       {/* Decline Quote Confirmation Modal */}
@@ -919,13 +959,13 @@ const CustomerJobDetailsPage = () => {
         isOpen={showDeclineModal}
         onClose={handleCancelDeclineQuote}
         onConfirm={handleConfirmDeclineQuote}
-        title="Decline Quote?"
+        title="Decline Cleaner?"
         message={
           quoteToDecline ?
-            `Are you sure you want to decline this quote for $${quoteToDecline.price}? This action cannot be undone.` :
-            "Are you sure you want to decline this quote?"
+            `Are you sure you want to decline ${quoteToDecline.cleaner?.firstName || 'this cleaner'}? This action cannot be undone.` :
+            "Are you sure you want to decline this cleaner?"
         }
-        confirmText="Decline Quote"
+        confirmText="Decline Cleaner"
         cancelText="Cancel"
         confirmButtonColor="bg-red-500 hover:bg-[#EF4444] text-red-500! hover:text-white! border border-red-500"
         isLoading={isDeclining}

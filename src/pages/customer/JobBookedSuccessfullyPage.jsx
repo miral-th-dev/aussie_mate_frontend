@@ -85,7 +85,30 @@ const JobBookedSuccessfullyPage = () => {
           const processedPhotos = photos.map(resolveImageSrc).filter(Boolean);
           setJobPhotos(processedPhotos);
 
-          const acceptedQuote = fetchedJobData.quotes?.find(q => q.status === 'accepted');
+          let acceptedQuote = fetchedJobData.quotes?.find(q => q.status === 'accepted');
+
+          // Fallback: If no "accepted" quote, but job is assigned/in_progress, find the assigned cleaner's quote
+          if (!acceptedQuote && (fetchedJobData.status === 'assigned' || fetchedJobData.status === 'in_progress')) {
+            const assignedId = fetchedJobData.assignedCleanerId?._id || fetchedJobData.assignedCleanerId || fetchedJobData.assignedCleaner?._id || fetchedJobData.assignedCleaner;
+            
+            if (assignedId) {
+              acceptedQuote = fetchedJobData.quotes?.find(q => {
+                const qCleanerId = q.cleanerId?._id || q.cleanerId;
+                return qCleanerId === assignedId;
+              });
+            }
+          }
+
+          // If still no quote object found, but job is assigned, create a minimal quote object from job data
+          if (!acceptedQuote && (fetchedJobData.status === 'assigned' || fetchedJobData.status === 'in_progress')) {
+            acceptedQuote = {
+              price: fetchedJobData.price || 0,
+              basePrice: fetchedJobData.basePrice || 0,
+              addOns: fetchedJobData.addOns || 0,
+              cleanerId: fetchedJobData.assignedCleanerId || fetchedJobData.assignedCleaner
+            };
+          }
+
           if (!acceptedQuote) {
             setError('No accepted quote found');
             setLoading(false);

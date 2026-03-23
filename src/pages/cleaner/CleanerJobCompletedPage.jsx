@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Button, PageHeader, Loader, JobOverviewCard, CompletionProofSection } from '../../components';
+import { Check, UserRound, CalendarDays, MapPin, X, Phone, MessageSquare } from 'lucide-react';
+import { Button, PageHeader, Loader } from '../../components';
 import { jobsAPI, jobPhotosAPI, reviewsAPI } from '../../services/api';
-import StarFullIcon from '../../assets/rating.svg';
+import RatingIcon from '../../assets/rating.svg';
 
 const resolveImageSrc = (image) => {
   if (!image) return '';
@@ -17,7 +18,6 @@ const CleanerJobCompletedPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [customerReview, setCustomerReview] = useState(null);
-
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -36,65 +36,48 @@ const CleanerJobCompletedPage = () => {
           const job = jobResponse.data;
           const photosData = photosResponse.data || photosResponse;
 
-          if (
-            job.status === 'in_progress' ||
-            job.status === 'in-progress' ||
-            job.status === 'started' ||
-            job.status === 'accepted'
-          ) {
+          // If job is not completed, redirect to in-progress details
+          if (!['completed', 'Completed'].includes(job.status)) {
             navigate(`/cleaner-jobs/${jobId}`, { replace: true });
             return;
           }
 
-          const acceptedQuote = job.quotes?.find((q) => q.status === 'accepted');
           const customer = job.customerId;
-
           const beforeImages = photosData.beforePhotos || job.beforePhotos || [];
           const afterImages = photosData.afterPhotos || job.afterPhotos || [];
-          // Get original job photos (uploaded when job was created)
           const jobPhotos = job.photos || [];
 
           const transformedData = {
             jobId: job.jobId || job._id,
-            title: job.title || job.serviceType,
-            serviceType: job.serviceType,
-            serviceDetail: job.serviceDetail,
-            instructions: job.instructions,
-            scheduledDate: job.completedAt || job.scheduledDate,
-            frequency: job.frequency || 'One-time',
-            location: job.location?.address || job.location?.fullAddress || 'Location not available',
+            title: job.serviceTypeDisplay || job.title || job.serviceType,
+            serviceType: job.categoryId?.name || job.category || 'Cleaning Service',
+            serviceDetail: job.serviceTypeId?.name || job.serviceDetail || '',
+            instructions: job.instructions || '',
+            scheduledDate: job.scheduledDate || job.completedAt,
+            location: job.location?.address || job.location?.fullAddress || 'Location',
             photos: jobPhotos,
-            completionProof: {
-              beforeImages,
-              afterImages,
-            },
-            payment: {
-              totalPaid: acceptedQuote?.price || job.estimatedPrice || 0,
-              paidOnline: acceptedQuote?.price || job.estimatedPrice || 0,
-            },
-            customerName: customer
-              ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim()
-              : 'Customer',
+            status: job.status,
+            customer: {
+              id: customer?._id || customer?.id || 'N/A',
+              name: customer ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() : 'Customer',
+              phone: customer?.phone || 'N/A',
+              photo: customer?.profilePhoto
+            }
           };
 
           setJobData(transformedData);
 
-          if (reviewResponse && reviewResponse.success && reviewResponse.data) {
+          // Get review for this specific job from API data first
+          if (job.review) {
+            setCustomerReview(job.review);
+          } 
+          // Fallback to searching in MyReviews
+          else if (reviewResponse?.success && reviewResponse?.data) {
             const reviews = reviewResponse.data.reviews || reviewResponse.data;
             const jobReview = Array.isArray(reviews)
-              ? reviews.find(
-                (r) =>
-                  r.jobId === jobId ||
-                  r.jobId?._id === jobId ||
-                  r.job === jobId ||
-                  r.job?._id === jobId ||
-                  r.job?.jobId === jobId,
-              )
+              ? reviews.find(r => (r.jobId?._id || r.jobId) === jobId)
               : null;
-
-            if (jobReview) {
-              setCustomerReview(jobReview);
-            }
+            if (jobReview) setCustomerReview(jobReview);
           }
         } else {
           setError('Job not found');
@@ -106,133 +89,155 @@ const CleanerJobCompletedPage = () => {
       }
     };
 
-    if (jobId) {
-      fetchJobDetails();
-    }
+    if (jobId) fetchJobDetails();
   }, [jobId, navigate]);
 
   const overviewPhotos = useMemo(() => {
     if (!jobData) return [];
-    // Only show original job photos, not completion proof photos
-    const jobPhotos = jobData.photos || [];
-    return jobPhotos.map(resolveImageSrc).filter(Boolean);
+    return jobData.photos?.map(resolveImageSrc).filter(Boolean) || [];
   }, [jobData]);
 
-  if (loading) {
-    return <Loader fullscreen message="Loading job details..." />;
-  }
-
+  if (loading) return <Loader fullscreen message="Loading job details..." />;
   if (error || !jobData) {
     return (
-      <div className="bg-gray-50 min-h-screen">
-        <div className="flex items-center justify-center py-12 sm:py-20 px-4">
-          <div className="text-sm sm:text-base text-red-500 text-center">{error || 'Job not found'}</div>
-        </div>
+      <div className="bg-gray-50 min-h-screen p-4 flex items-center justify-center">
+        <div className="text-red-500 font-medium">{error || 'Job details not available'}</div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-3 sm:px-4 pb-6">
-        <PageHeader
-          title="Job Completed"
-          onBack={() => {
-            const savedTab = localStorage.getItem('cleanerActiveTab');
-            navigate('/cleaner-jobs', { state: { tab: savedTab || 'completed' }, replace: true });
-          }}
-          className="py-2 sm:py-3"
-        />
-
-        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-custom mb-4 sm:mb-6">
-          <JobOverviewCard
-            jobId={jobData.jobId}
-            title={jobData.title}
-            serviceType={jobData.serviceType}
-            serviceDetail={jobData.serviceDetail}
-            instructions={jobData.instructions}
-            scheduledDate={jobData.completedAt}
-            frequency={jobData.frequency}
-            location={jobData.location}
-            photos={overviewPhotos}
-            viewerRole="cleaner"
-            roleSections={{}}
-            metaInfo={[]}
+      <div className="max-w-7xl mx-auto min-h-screen bg-white">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4">
+          <PageHeader
+            title={jobData.title || "Job Detail"}
+            className="p-0 border-none shadow-none"
+            onBack={() => navigate('/cleaner-jobs')}
           />
-
-          {customerReview && (
-            <div className="mt-4 sm:mt-6 border border-[#EBF2FD] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[#F8FAFF]">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 mb-2 sm:mb-3">
-                <h3 className="text-base sm:text-lg font-semibold text-primary-500 sm:mr-2">Customer Review:-</h3>
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, idx) => (
-                    <img
-                      key={idx}
-                      src={StarFullIcon}
-                      alt="Star"
-                      className={`w-4 h-4 sm:w-5 sm:h-5 ${idx < (customerReview.rating || 0) ? 'opacity-100' : 'opacity-30'}`}
-                    />
-                  ))}
-                  <span className="text-xs sm:text-sm font-medium text-primary-500">
-                    {customerReview.rating || 0}/5
-                  </span>
-                </div>
-              </div>
-              {customerReview.feedback && (
-                <p className="text-xs sm:text-sm text-primary-500 italic mb-2 sm:mb-3">
-                  "{customerReview.feedback}"
-                </p>
-              )}
-              {customerReview.likedAspects?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {customerReview.likedAspects.map((aspect) => (
-                    <span
-                      key={aspect}
-                      className="px-2 sm:px-3 py-0.5 sm:py-1 bg-[#EBF2FD] text-primary-600 text-[10px] sm:text-xs font-medium rounded-full border border-[#9CC0F6]"
-                    >
-                      {aspect}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <div className="mt-4 sm:mt-6 border border-[#EBF2FD] rounded-xl sm:rounded-2xl p-3 sm:p-4 bg-[#F8FAFF]">
-            <h3 className="text-base sm:text-lg font-semibold text-primary-500 mb-2 sm:mb-3">Payment Summary</h3>
-            <div className="space-y-1.5 sm:space-y-2">
-              <div className="flex flex-col sm:flex-row text-xs sm:text-sm">
-                <span className="text-primary-300 font-medium sm:mr-2">Total Amount:-</span>
-                <span className="text-primary-500 font-semibold">
-                  ${jobData.payment.totalPaid}
-                </span>
-              </div>
-              <div className="flex flex-col sm:flex-row text-xs sm:text-sm">
-                <span className="text-primary-300 font-medium sm:mr-2">Paid Online:-</span>
-                <span className="text-green-600 font-semibold">
-                  ${jobData.payment.paidOnline}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 sm:mt-6">
-            <CompletionProofSection
-              beforeImages={jobData.completionProof?.beforeImages || []}
-              afterImages={jobData.completionProof?.afterImages || []}
-            />
+          <div className="bg-[#E9FBF0] text-[#1EB154] px-3 py-1.5 rounded-full text-xs font-bold border border-[#D1F7E1]">
+            Completed
           </div>
         </div>
 
-        <div className="flex justify-end mt-4 sm:mt-6">
-          <Button onClick={() => navigate('/cleaner-jobs')} className="w-full sm:w-auto">
+        <div className="px-4 pb-20">
+          {/* Left Column: Job Info */}
+          <div className="space-y-6 pt-6">
+            {/* Job Summary Card */}
+            <div className="bg-[#E9EEFC] rounded-[32px] p-6 border border-[#D5DEFA]">
+              <p className="text-sm font-semibold text-gray-400 mb-1 tracking-tight">
+                {jobData.serviceType}
+              </p>
+              <h1 className="text-2xl font-extrabold text-gray-900 mb-2 leading-tight">
+                {jobData.title}
+              </h1>
+
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center gap-2.5 text-[#6B7280]">
+                  <CalendarDays className="w-5 h-5" strokeWidth={2.5} />
+                  <span className="text-[15px] font-semibold">
+                    {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    }) : "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-[#6B7280]">
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <span className="text-[15px] font-semibold leading-snug">
+                    {jobData.location}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Assigned By Section */}
+            <div className="space-y-3">
+              <h3 className="text-[#111827] font-semibold text-lg px-1">Assigned By</h3>
+              <div className="bg-white rounded-[24px] p-4 border border-gray-100 shadow-sm flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                    {jobData.customer.photo ? (
+                      <img src={resolveImageSrc(jobData.customer.photo)} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <UserRound className="w-7 h-7 text-gray-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 text-lg">{jobData.customer.name}</h4>
+                    <div className="flex items-center gap-1.5 text-gray-400">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="text-sm font-semibold">{jobData.customer.phone}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50">
+                    <MessageSquare className="w-5 h-5" />
+                  </button>
+                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50">
+                    <Phone className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Review & Photos */}
+          <div className="space-y-6 pt-6">
+            {/* Customer Review Section */}
+            {customerReview ? (
+              <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm text-center">
+                <div className="flex justify-center gap-1.5 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <img
+                      key={star}
+                      src={RatingIcon}
+                      alt="star"
+                      className={`w-8 h-8 ${star <= (customerReview.rating || 0) ? 'opacity-100' : 'opacity-20 grayscale'}`}
+                    />
+                  ))}
+                </div>
+                
+                <p className="text-[#111827] font-Medium text-lg leading-snug mb-6">
+                  {customerReview.feedback || "The customer didn't leave a written review."}
+                </p>
+
+                {customerReview.likedAspects?.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {customerReview.likedAspects.map(aspect => (
+                      <span key={aspect} className="px-5 py-2 rounded-full border border-blue-100 bg-blue-50 text-blue-600 font-bold text-sm">
+                        {aspect}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-[24px] p-8 border border-dashed border-gray-200 text-center">
+                <p className="text-gray-400 font-medium">No review received yet</p>
+              </div>
+            )}
+
+  
+          </div>
+        </div>
+
+        {/* Bottom Button */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md flex justify-center z-10">
+          <Button onClick={() => navigate('/cleaner-jobs')} className="w-auto px-10 rounded-2xl py-3 font-bold text-base">
             Back to My Jobs
           </Button>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
 export default CleanerJobCompletedPage;
 
