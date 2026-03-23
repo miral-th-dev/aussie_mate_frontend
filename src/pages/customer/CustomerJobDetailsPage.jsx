@@ -29,6 +29,7 @@ const CustomerJobDetailsPage = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -212,6 +213,7 @@ const CustomerJobDetailsPage = () => {
 
     try {
       setIsConnecting(true);
+      setActionError('');
       // Connect with cleaner via job endpoint
       const response = await jobsAPI.connectCleaner(jobId, cleanerId);
 
@@ -220,8 +222,7 @@ const CustomerJobDetailsPage = () => {
         setShowConnectModal(false);
         navigate(`/customer-chat/${jobId}?cleaner=${cleanerId}`);
       } else {
-        setError(response.message || response.error || 'Failed to connect with cleaner');
-        setShowConnectModal(false);
+        setActionError(response.message || response.error || 'Failed to connect with cleaner');
       }
     } catch (err) {
       // Check if error message indicates already connected
@@ -229,8 +230,7 @@ const CustomerJobDetailsPage = () => {
         setShowConnectModal(false);
         navigate(`/customer-chat/${jobId}?cleaner=${cleanerId}`);
       } else {
-        setError('Failed to connect. Please try again.');
-        setShowConnectModal(false);
+        setActionError(err.message || 'Failed to connect. Please try again.');
       }
     } finally {
       setIsConnecting(false);
@@ -243,6 +243,7 @@ const CustomerJobDetailsPage = () => {
 
     try {
       setIsConnecting(true);
+      setActionError('');
 
       const response = await jobsAPI.assignCleaner(jobId, cleanerId);
 
@@ -250,12 +251,10 @@ const CustomerJobDetailsPage = () => {
         setShowConnectModal(false);
         navigate(`/booking-confirmation/${jobId}?cleaner=${cleanerId}`);
       } else {
-        setError(response.message || response.error || 'Failed to assign cleaner');
-        setShowConnectModal(false);
+        setActionError(response.message || response.error || 'Failed to assign cleaner');
       }
     } catch (err) {
-      setError('Failed to assign cleaner. Please try again.');
-      setShowConnectModal(false);
+      setActionError(err.message || 'Failed to assign cleaner. Please try again.');
     } finally {
       setIsConnecting(false);
     }
@@ -264,11 +263,13 @@ const CustomerJobDetailsPage = () => {
   const handleCancelConnect = () => {
     setShowConnectModal(false);
     setQuoteToConnect(null);
+    setActionError('');
   };
 
   const handleCancelAcceptQuote = () => {
     setShowConnectModal(false);
     setQuoteToConnect(null);
+    setActionError('');
   };
 
   const handleConfirmDeclineQuote = async () => {
@@ -952,6 +953,7 @@ const CustomerJobDetailsPage = () => {
         cancelText="Not Now"
         confirmButtonColor="bg-blue-600 hover:bg-blue-700"
         isLoading={isConnecting}
+        errorMessage={actionError}
       />
 
       {/* Decline Quote Confirmation Modal */}

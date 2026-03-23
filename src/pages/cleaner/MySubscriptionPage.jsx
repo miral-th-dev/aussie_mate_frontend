@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
@@ -31,6 +31,14 @@ const MySubscriptionPage = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isExpired, setIsExpired] = useState(false);
+
+  const canBuyCredits = useMemo(() => {
+    if (!activeSubscription) return false;
+    // Rule: can buy credits ONLY if NOT expired AND credits are exhausted
+    const creditsPerLead = activeSubscription.subscription?.planId?.creditsPerLead || 1;
+    return !isExpired && activeSubscription.availableCredits < creditsPerLead;
+  }, [activeSubscription, isExpired]);
 
   useEffect(() => {
     fetchSubscriptionData();
@@ -48,14 +56,20 @@ const MySubscriptionPage = () => {
 
       // Fetch my status
       const statusRes = await subscriptionsAPI.getMyStatus().catch(() => ({ success: false }));
-      if (statusRes.success && statusRes.data?.subscription?.status === 'active') {
-        console.log(statusRes.data);
-        setActiveSubscription(statusRes.data);
+      if (statusRes.success && statusRes.data) {
+        // Check if expired
+        const expiryDate = new Date(statusRes.data.subscription?.currentPeriodEnd);
+        const now = new Date();
+        setIsExpired(expiryDate < now);
 
-        // Fetch history if active subscription exists
-        const historyRes = await subscriptionsAPI.getHistory().catch(() => ({ success: false }));
-        if (historyRes.success) {
-          setHistory(historyRes.data);
+        if (statusRes.data.subscription?.status === 'active') {
+          setActiveSubscription(statusRes.data);
+
+          // Fetch history if active subscription exists
+          const historyRes = await subscriptionsAPI.getHistory().catch(() => ({ success: false }));
+          if (historyRes.success) {
+            setHistory(historyRes.data);
+          }
         }
       }
     } catch (err) {
@@ -142,7 +156,7 @@ const MySubscriptionPage = () => {
           </div>
         )}
 
-        {activeSubscription ? (
+        {activeSubscription && !isExpired ? (
           /* Active Subscription View */
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Out of Credits Alert - Web optimized centering */}
@@ -278,15 +292,17 @@ const MySubscriptionPage = () => {
                   Estimated Leads Remaining: <span className="text-[#111827] ml-1">{Math.floor(activeSubscription.availableCredits / (activeSubscription.subscription?.planId?.creditsPerLead || 1))} leads</span>
                 </p>
 
-                <button
-                  onClick={() => navigate('/buy-credits')}
-                  className="flex items-center gap-2 text-[#1F6FEB] font-black text-sm hover:opacity-80 transition-opacity"
-                >
-                  <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center">
-                    <Plus className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                  </div>
-                  Buy Credits
-                </button>
+                {canBuyCredits && (
+                  <button
+                    onClick={() => navigate('/buy-credits')}
+                    className="flex items-center gap-2 text-[#1F6FEB] font-black text-sm hover:opacity-80 transition-opacity"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center">
+                      <Plus className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                    </div>
+                    Buy Credits
+                  </button>
+                )}
               </div>
 
               {/* Lead Usage History */}
@@ -363,9 +379,24 @@ const MySubscriptionPage = () => {
               </div>
             </div>
           </div>
-        ) : (
+        ) : null}
+
+        {(!activeSubscription || isExpired) && (
           /* "No Subscription" Plan Selection View */
-          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
+            {isExpired && activeSubscription && (
+               <div className="bg-amber-50 rounded-[32px] p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
+               <div className="w-20 h-20 bg-amber-100 rounded-[28px] flex items-center justify-center flex-shrink-0">
+                 <Clock className="w-10 h-10 text-amber-600" />
+               </div>
+               <div className="text-center md:text-left flex-1">
+                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Subscription Expired!</h3>
+                 <p className="text-gray-500 font-medium max-w-xl">
+                   Your subscription for <b>{activeSubscription.subscription?.planId?.name}</b> ended on <b>{formatDate(activeSubscription.subscription?.currentPeriodEnd)}</b>. To continue receiving leads, please renew your subscription or choose a new plan below.
+                 </p>
+               </div>
+             </div>
+            )}
             {/* Header section - split layout for desktop */}
             <div className="flex flex-col gap-10">
               <div className="max-w-4xl">

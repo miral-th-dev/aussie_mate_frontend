@@ -176,30 +176,7 @@ const CleanerJobsPage = () => {
     return payload;
   };
 
-  // --- NEW: fetch job details only for current page items (reduces N->jobsPerPage API calls) ---
-  const fetchJobDetailsForPage = async (jobsList, signal) => {
-    // jobsList: array of job objects (from getAllJobs)
-    // Only fetch details for those actually shown on the page and only when needed
-    const promises = jobsList.map(async (job) => {
-      // Check if the job object already contains sufficient details
-      // If it has quotes array and assignedCleanerId, we can skip fetching full details
-      const hasQuotes = Array.isArray(job.quotes) && job.quotes.length >= 0;
-      const hasAssignedCleaner = job.assignedCleanerId !== undefined;
 
-      // If job already has the essential data, return it without making API call
-      if (hasQuotes && hasAssignedCleaner) {
-        return job;
-      }
-
-      try {
-        const details = await jobsAPI.getJobById(job._id || job.jobId || job.id, { signal });
-        return (details.success && details.data) ? details.data : job;
-      } catch {
-        return job;
-      }
-    });
-    return Promise.all(promises);
-  };
 
   // main data loader - reacts to tab/page/search changes
   useEffect(() => {
@@ -282,7 +259,7 @@ const CleanerJobsPage = () => {
       Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c; // Distance in km
-    return Math.round(distance * 10) / 10; // Round to 1 decimal place
+    return distance; // Return raw distance for precise formatting in transformJobForUI
   };
 
   const getCoordinates = (coordinates) => {
@@ -384,7 +361,7 @@ const CleanerJobsPage = () => {
       myQuote,
       isRequestSent: job.isRequestSent || false,
       isWaitlisted: job.isWaitlisted || false,
-      distance: jobDistance !== undefined ? jobDistance : null,
+      distance: (jobDistance !== undefined && jobDistance !== null) ? parseFloat(jobDistance).toFixed(3) : null,
       isUrgent: job.isUrgent || false,
       category: job.categoryId?.name || 'Cleaning'
     };

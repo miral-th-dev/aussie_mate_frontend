@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { PageHeader, JobOverviewCard, ConfirmationModal } from '../../components';
 import ChatIcon from '../../assets/message2.svg';
-import { jobsAPI } from '../../services/api';
+import { jobsAPI, subscriptionsAPI } from '../../services/api';
 import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays, Trash2 } from 'lucide-react';
 
 const JobDetailsPage = () => {
@@ -17,6 +17,8 @@ const JobDetailsPage = () => {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [modalError, setModalError] = useState('');
+  const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -54,8 +56,23 @@ const JobDetailsPage = () => {
       }
     };
 
+    const fetchSubscriptionStatus = async () => {
+      try {
+        setLoadingSubscription(true);
+        const res = await subscriptionsAPI.getMyStatus().catch(() => ({ success: false }));
+        if (res.success && res.data?.subscription?.currentPeriodEnd) {
+          setIsSubscriptionExpired(new Date(res.data.subscription.currentPeriodEnd) < new Date());
+        }
+      } catch (err) {
+        console.error('Error fetching subscription status:', err);
+      } finally {
+        setLoadingSubscription(false);
+      }
+    };
+
     if (jobId) {
       fetchJobDetails();
+      fetchSubscriptionStatus();
     }
   }, [jobId]);
 
@@ -267,6 +284,10 @@ const JobDetailsPage = () => {
 
   // Figma/Web: Chat should open directly (no intro popup)
   const handleChatWithCustomer = () => {
+    if (isSubscriptionExpired && !isContacted) {
+      navigate('/my-subscription');
+      return;
+    }
     navigate(`/chat/${jobId}`);
   };
 
@@ -355,10 +376,14 @@ const JobDetailsPage = () => {
               <div className="flex gap-2">
                 <button
                   onClick={handleChatWithCustomer}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm border transition-colors cursor-pointer ${
+                    (isSubscriptionExpired && !isContacted)
+                      ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                      : 'bg-[#F1F6FF] text-primary-600 border-[#E0EAFF] hover:bg-blue-50'
+                  }`}
                 >
                   <img src={ChatIcon} alt="Chat" className="w-4 h-4" />
-                   Chat
+                   {isSubscriptionExpired && !isContacted ? 'Renew to Chat' : 'Chat'}
                 </button>
                 {/* Call button - only if phone is available (usually hidden until booking) */}
                 {isConnected && job.customerId.phone && (

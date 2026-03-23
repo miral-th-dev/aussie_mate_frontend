@@ -421,6 +421,13 @@ const CleanerChatPage = () => {
                     setMessages(prev => [...prev, { ...tempMessage, isOptimistic: false }]);
                     setNewMessage('');
                     
+                    if (isSubscriptionExpired) {
+                        setError('Your subscription has expired. Please renew your plan to connect with new customers.');
+                        setMessages(prev => prev.filter(m => m._id !== tempMessage._id));
+                        navigate('/my-subscription');
+                        return;
+                    }
+
                     const response = await jobsAPI.contactJob(jobId, { message: messageContent });
                     if (response.success) {
                         // After contact, refresh to get room info if possible, or wait for socket

@@ -394,6 +394,19 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
     fetchSubscription();
   }, [user]);
 
+  const isExpired = useMemo(() => {
+    if (!subscriptionStatus?.subscription?.currentPeriodEnd) return false;
+    return new Date(subscriptionStatus.subscription.currentPeriodEnd) < new Date();
+  }, [subscriptionStatus]);
+
+  const canBuyCredits = useMemo(() => {
+    if (!subscriptionStatus) return false;
+    // Rule: can buy credits ONLY if NOT expired AND credits are exhausted
+    // Exhausted means less than what's needed for a lead (default 1 if missing)
+    const creditsPerLead = subscriptionStatus.subscription?.planId?.creditsPerLead || 1;
+    return !isExpired && subscriptionStatus.availableCredits < creditsPerLead;
+  }, [subscriptionStatus, isExpired]);
+
   const handleJobClick = (job) => {
     const status = (job.statusRaw || job.status || "").toLowerCase().trim();
     const jobIdentifier = job.rawId || job.id;
@@ -444,86 +457,109 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
         {!loadingSubscription && (
           <div className="mt-4 sm:mt-5 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
             {subscriptionStatus ? (
-              /* Credits Usage Card (Subscribed) */
-              <div className="rounded-[32px] p-5 sm:p-6 overflow-hidden relative">
-                {/* Background Image */}
-                <div className="absolute inset-0">
-                  <img
-                    src={CleanerBG}
-                    alt="Cleaner Background"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                {/* Decoration */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-2xl pointer-events-none" />
-
-                <div className="relative z-10">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg sm:text-xl font-semibold text-[#111111] flex items-center gap-2">
-                      Credits Usage
-                    </h3>
+              <>
+                <div className="rounded-[32px] p-5 sm:p-6 overflow-hidden relative">
+                  {/* Background Image */}
+                  <div className="absolute inset-0">
+                    <img
+                      src={CleanerBG}
+                      alt="Cleaner Background"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
+                  {/* Decoration */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full -mr-16 -mt-16 blur-2xl pointer-events-none" />
 
-                  <div className="mb-8 relative">
-                    <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
-                      <div
-                        className="h-full bg-[#22C55E] rounded-full transition-all duration-1000 relative"
-                        style={{ 
-                          width: `${Math.min(100, Math.max(0, ((subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits) / subscriptionStatus.subscription?.planId?.creditsPerMonth) * 100))}%`,
-                          backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
-                          backgroundSize: '1rem 1rem'
-                        }}
-                      />
+                  <div className="relative z-10">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg sm:text-xl font-semibold text-[#111111] flex items-center gap-2">
+                        Credits Usage
+                      </h3>
                     </div>
 
-                    {/* Progress Indicator Tooltip */}
-                    <div
-                      className="absolute left-0 -bottom-2 transform translate-y-full"
-                      style={{
-                        left: `${Math.min(90, Math.max(0, ((subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits) / subscriptionStatus.subscription?.planId?.creditsPerMonth) * 100))}%`,
-                      }}
-                    >
-                      <div className="relative bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm whitespace-nowrap">
-                        {/* Triangle decorator */}
-                        <div className="absolute -top-1 left-4 w-2 h-2 bg-white border-t border-l border-gray-200 rotate-45" />
+                    <div className="mb-8 relative">
+                      <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
+                        <div
+                          className="h-full bg-[#22C55E] rounded-full transition-all duration-1000 relative"
+                          style={{ 
+                            width: `${Math.min(100, Math.max(0, ((subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits) / subscriptionStatus.subscription?.planId?.creditsPerMonth) * 100))}%`,
+                            backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
+                            backgroundSize: '1rem 1rem'
+                          }}
+                        />
+                      </div>
 
-                        <p className="text-sm font-bold text-gray-900">
-                          {subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits} <span className="text-gray-400 font-medium">of</span> {subscriptionStatus.subscription?.planId?.creditsPerMonth} <span className="text-gray-400 font-normal">Credits Used</span>
-                        </p>
+                      {/* Progress Indicator Tooltip */}
+                      <div
+                        className="absolute left-0 -bottom-2 transform translate-y-full"
+                        style={{
+                          left: `${Math.min(90, Math.max(0, ((subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits) / subscriptionStatus.subscription?.planId?.creditsPerMonth) * 100))}%`,
+                        }}
+                      >
+                        <div className="relative bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm whitespace-nowrap">
+                          {/* Triangle decorator */}
+                          <div className="absolute -top-1 left-4 w-2 h-2 bg-white border-t border-l border-gray-200 rotate-45" />
+
+                          <p className="text-sm font-bold text-gray-900">
+                            {subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits} <span className="text-gray-400 font-medium">of</span> {subscriptionStatus.subscription?.planId?.creditsPerMonth} <span className="text-gray-400 font-normal">Credits Used</span>
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex justify-between items-center mt-12 mb-4 px-1">
-                    <p className="text-xs sm:text-sm font-medium text-gray-500">
-                      Remaining Credits:{" "}
-                      <span className="text-black font-semibold">
-                        {subscriptionStatus.availableCredits}
-                      </span>
-                    </p>
-                    <p className="text-xs sm:text-sm font-medium text-gray-500">
-                      Estimated leads:{" "}
-                      <span className="text-black font-semibold">
-                        {Math.floor(
-                          subscriptionStatus.availableCredits /
-                            (subscriptionStatus.subscription?.planId
-                              ?.creditsPerLead || 1),
-                        )}
-                      </span>
-                    </p>
-                  </div>
+                    <div className="flex justify-between items-center mt-12 mb-4 px-1">
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">
+                        Remaining Credits:{" "}
+                        <span className="text-black font-semibold">
+                          {subscriptionStatus.availableCredits}
+                        </span>
+                      </p>
+                      <p className="text-xs sm:text-sm font-medium text-gray-500">
+                        Estimated leads:{" "}
+                        <span className="text-black font-semibold">
+                          {Math.floor(
+                            subscriptionStatus.availableCredits /
+                              (subscriptionStatus.subscription?.planId
+                                ?.creditsPerLead || 1),
+                          )}
+                        </span>
+                      </p>
+                    </div>
 
-                  <button 
-                    onClick={() => navigate('/buy-credits')}
-                    className="flex items-center gap-2 text-primary-500 font-black text-sm hover:translate-x-1 transition-transform cursor-pointer"
-                  >
-                    <span className="flex items-center justify-center w-4 h-4 bg-[#1F6FEB] rounded-full font-medium">
-                      <Plus className="w-3 h-3 text-white stroke-[3]" />
-                    </span>
-                    Buy Credits
-                  </button>
+                    {canBuyCredits && (
+                      <button 
+                        onClick={() => navigate('/buy-credits')}
+                        className="flex items-center gap-2 text-primary-500 font-black text-sm hover:translate-x-1 transition-transform cursor-pointer"
+                      >
+                        <span className="flex items-center justify-center w-4 h-4 bg-[#1F6FEB] rounded-full font-medium">
+                          <Plus className="w-3 h-3 text-white stroke-[3]" />
+                        </span>
+                        Buy Credits
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {isExpired && (
+                  <div className="mt-4 bg-amber-50 rounded-[24px] p-6 border border-amber-100 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in">
+                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-6 h-6 text-amber-600" />
+                    </div>
+                    <div className="text-center sm:text-left flex-1">
+                      <p className="text-gray-900 font-bold">Subscription Expired</p>
+                      <p className="text-gray-500 text-sm font-medium">Your subscription has ended. Renew now to continue getting new leads.</p>
+                    </div>
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      className="rounded-xl px-6"
+                      onClick={() => navigate('/my-subscription')}
+                    >
+                      Renew Plan
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               /* Start Getting Cleaning Leads (Not Subscribed) */
               <div className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden">
