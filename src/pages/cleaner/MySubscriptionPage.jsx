@@ -143,7 +143,7 @@ const MySubscriptionPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="max-w-7xl mx-auto mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
         <PageHeader
           title={activeSubscription ? "Your Active Plan" : "My Subscription"}
           onBack={() => navigate(-1)}
@@ -383,7 +383,7 @@ const MySubscriptionPage = () => {
 
         {(!activeSubscription || isExpired) && (
           /* "No Subscription" Plan Selection View */
-          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
             {isExpired && activeSubscription && (
                <div className="bg-amber-50 rounded-[32px] p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
                <div className="w-20 h-20 bg-amber-100 rounded-[28px] flex items-center justify-center flex-shrink-0">
@@ -398,16 +398,16 @@ const MySubscriptionPage = () => {
              </div>
             )}
             {/* Header section - split layout for desktop */}
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-col gap-5">
               <div className="max-w-4xl">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Get Cleaning Leads</h2>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Get Cleaning Leads</h2>
                 <p className="text-gray-500 font-medium text-lg leading-relaxed">
                   Subscribe to access verified customer jobs in your service categories.
                 </p>
               </div>
 
               <div className="w-full">
-                <p className="text-2xl font-bold text-gray-900 mb-6">Why Subscribe?</p>
+                <p className="text-2xl font-semibold text-gray-900 mb-4">Why Subscribe?</p>
                 <div className="space-y-5">
                   {[
                     "Get direct job leads from customers",
@@ -443,22 +443,22 @@ const MySubscriptionPage = () => {
                     {/* Additional CSS Glow for Vividness */}
                     <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-bl from-purple-400/30 via-blue-300/20 to-transparent blur-[100px] rounded-full -mr-32 -mt-32" />
                   </div>
-                  <div className="p-6 md:p-8 relative z-10 flex flex-col gap-6 text-[#111827]">
+                  <div className="p-6 relative z-10 flex flex-col gap-4 text-[#111827]">
                     {/* Row 1: Plan Name & Actions - Spread Out */}
                     <div className="flex flex-wrap justify-between items-center w-full gap-4">
-                      <h4 className="text-[22px] font-bold">
+                      <h4 className="text-[22px] font-semibold">
                         {plan.name}
                       </h4>
                       <div className="flex items-center gap-6">
                         <button
                           onClick={() => handleViewCategories(plan)}
-                          className="text-[#111827] font-bold text-sm hover:text-primary-600 transition-colors"
+                          className="text-[#111827] font-medium text-sm hover:text-primary-600 transition-colors cursor-pointer"
                         >
                           View Included Categories
                         </button>
                         <Button
                           variant="primary"
-                          className="h-12 rounded-full font-bold text-sm bg-[#1F6FEB] hover:bg-blue-700 transition-colors px-8 whitespace-nowrap"
+                          className="h-10 rounded-full font-medium text-sm bg-[#1F6FEB]  whitespace-nowrap"
                           onClick={() => handleSubscribe(plan._id)}
                         >
                           Subscribe to {plan.name.split(/[\s/-]/)[0]} Plan
@@ -468,8 +468,8 @@ const MySubscriptionPage = () => {
 
                     {/* Row 2: Price - Compacted */}
                     <div className="flex items-baseline gap-2">
-                      <span className="text-[40px] leading-tight font-bold tracking-tight">${plan.pricePerMonth}</span>
-                      <span className="text-gray-400 font-medium text-lg">/ month</span>
+                      <span className="text-[30px] leading-tight font-medium tracking-tight">${plan.pricePerMonth}</span>
+                      <span className="text-gray-400 font-medium text-md">/ month</span>
                     </div>
 
                     {/* Row 3: Info Boxes (50/50) - Balanced */}
@@ -482,7 +482,7 @@ const MySubscriptionPage = () => {
                           </div>
                           <div>
                             <p className="text-[11px] font-medium text-gray-400 leading-tight">Duration Badge</p>
-                            <p className="text-[15px] font-bold whitespace-nowrap">{plan.durationMonths || 6} Month Contract</p>
+                            <p className="text-[15px] font-semibold whitespace-nowrap">{plan.durationMonths || 6} Month Contract</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -491,7 +491,7 @@ const MySubscriptionPage = () => {
                           </div>
                           <div>
                             <p className="text-[11px] font-medium text-gray-400 leading-tight">Credits</p>
-                            <p className="text-[15px] font-bold whitespace-nowrap">{plan.creditsPerMonth} Credits</p>
+                            <p className="text-[15px] font-semibold whitespace-nowrap">{plan.creditsPerMonth} Credits</p>
                           </div>
                         </div>
                       </div>
@@ -501,13 +501,13 @@ const MySubscriptionPage = () => {
                         <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-blue-50 rounded-xl">
                           <span className="text-2xl">🎁</span>
                         </div>
-                        <p className="text-[15px] font-bold">{plan.bonusLeads || 2} Free Bonus Leads</p>
+                        <p className="text-[15px] font-semibold">{plan.bonusLeads || 2} Free Bonus Leads</p>
                       </div>
                     </div>
 
                     {/* Row 4: Usage Details - Vertical Stack as requested */}
                     <div className="pt-2">
-                      <p className="text-[16px] font-bold mb-3">Usage</p>
+                      <p className="text-[16px] font-semibold mb-3">Usage</p>
                       <ul className="space-y-2">
                         <li className="flex items-center gap-2 text-gray-500 font-medium text-sm">
                           <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />

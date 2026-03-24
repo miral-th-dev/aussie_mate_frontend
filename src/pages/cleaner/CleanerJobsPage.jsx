@@ -426,11 +426,11 @@ const CleanerJobsPage = () => {
 
   return (
     <div className='pb-6'>
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-7xl">
         <PageHeader
           title="Jobs"
           onBack={() => navigate('/cleaner-dashboard')}
-          className="py-3"
+          className="py-3 px-4 sm:px-6 lg:px-8"
           rightSlot={
             <div
               className="flex items-center gap-2 cursor-pointer"
@@ -447,7 +447,7 @@ const CleanerJobsPage = () => {
         {/* Flat container (no extra rounded background behind tabs/cards) to match Figma */}
         <div className="bg-transparent rounded-none p-0 shadow-none">
           {/* Search & Sort */}
-          <div className="px-4 py-3">
+          <div className="px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <img src={SearchIcon} alt="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 " />
@@ -470,7 +470,7 @@ const CleanerJobsPage = () => {
           </div>
 
           {/* Tabs */}
-          <div className="px-4 pb-4">
+          <div className="px-4 sm:px-6 lg:px-8 pb-4">
             <div className="flex gap-2 overflow-x-auto no-scrollbar scrollbar-hide pb-1">
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
@@ -483,7 +483,7 @@ const CleanerJobsPage = () => {
 
           {/* Sub-filters for Booking Requests */}
           {activeTab === 'booking_request' && (
-            <div className="px-4 pb-4 flex items-center gap-6">
+            <div className="px-4 sm:px-6 lg:px-8 pb-4 flex items-center gap-6">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="radio"
@@ -510,7 +510,7 @@ const CleanerJobsPage = () => {
           )}
 
           {/* Cards: uses same rendering as before but using `jobs` from optimized loader */}
-          <div className="px-4 pb-6">
+          <div className="px-4 sm:px-6 lg:px-8 pb-6">
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map(i => <div key={i} className="bg-white border border-gray-200 rounded-3xl p-6 animate-pulse">...</div>)}
@@ -553,7 +553,7 @@ const CleanerJobsPage = () => {
                       </div>
 
                       {/* Job Title */}
-                      <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                      <h3 className="text-lg font-semibold text-gray-900 leading-tight">
                         {job.title}
                       </h3>
 
@@ -567,11 +567,11 @@ const CleanerJobsPage = () => {
                           <img src={MapPinIcon} alt="Location" className="w-4 h-4 opacity-60" />
                           <div className="min-w-0">
                             <span className="text-sm font-medium truncate block">{job.location}</span>
-                            {job.distance !== null && (
-                              <span className="text-[11px] font-bold text-primary-500 uppercase">
+                            {/* {job.distance !== null && (
+                              <span className="text-[11px] font-semibold text-primary-500 uppercase">
                                 {job.distance} KM AWAY
                               </span>
-                            )}
+                            )} */}
                           </div>
                         </div>
                       </div>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Check, UserRound, CalendarDays, MapPin, X, Phone, MessageSquare } from 'lucide-react';
 import { Button, PageHeader, Loader } from '../../components';
 import { jobsAPI, jobPhotosAPI, reviewsAPI } from '../../services/api';
-import RatingIcon from '../../assets/rating.svg';
+import RatingIcon from '../../assets/Rating1.svg';
 
 const resolveImageSrc = (image) => {
   if (!image) return '';
@@ -108,9 +108,9 @@ const CleanerJobCompletedPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto min-h-screen bg-white px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center justify-between py-4">
           <PageHeader
             title={jobData.title || "Job Detail"}
             className="p-0 border-none shadow-none"
@@ -121,22 +121,22 @@ const CleanerJobCompletedPage = () => {
           </div>
         </div>
 
-        <div className="px-4 pb-20">
+        <div className="pb-20">
           {/* Left Column: Job Info */}
-          <div className="space-y-6 pt-6">
+          <div className="space-y-6">
             {/* Job Summary Card */}
             <div className="bg-[#E9EEFC] rounded-[32px] p-6 border border-[#D5DEFA]">
               <p className="text-sm font-semibold text-gray-400 mb-1 tracking-tight">
                 {jobData.serviceType}
               </p>
-              <h1 className="text-2xl font-extrabold text-gray-900 mb-2 leading-tight">
+              <h1 className="text-2xl font-semibold text-gray-900 mb-2 leading-tight">
                 {jobData.title}
               </h1>
 
               <div className="space-y-4 pt-1">
                 <div className="flex items-center gap-2.5 text-[#6B7280]">
                   <CalendarDays className="w-5 h-5" strokeWidth={2.5} />
-                  <span className="text-[15px] font-semibold">
+                  <span className="text-[15px] font-medium">
                     {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -147,7 +147,7 @@ const CleanerJobCompletedPage = () => {
 
                 <div className="flex items-start gap-2.5 text-[#6B7280]">
                   <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
-                  <span className="text-[15px] font-semibold leading-snug">
+                  <span className="text-[15px] font-medium leading-snug">
                     {jobData.location}
                   </span>
                 </div>
@@ -169,18 +169,18 @@ const CleanerJobCompletedPage = () => {
                     )}
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 text-lg">{jobData.customer.name}</h4>
+                    <h4 className="font-semibold text-gray-900 text-lg">{jobData.customer.name}</h4>
                     <div className="flex items-center gap-1.5 text-gray-400">
                       <Phone className="w-3.5 h-3.5" />
-                      <span className="text-sm font-semibold">{jobData.customer.phone}</span>
+                      <span className="text-sm font-medium">{jobData.customer.phone}</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50">
+                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50 cursor-pointer">
                     <MessageSquare className="w-5 h-5" />
                   </button>
-                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50">
+                  <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50 cursor-pointer">
                     <Phone className="w-5 h-5" />
                   </button>
                 </div>
@@ -211,7 +211,7 @@ const CleanerJobCompletedPage = () => {
                 {customerReview.likedAspects?.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {customerReview.likedAspects.map(aspect => (
-                      <span key={aspect} className="px-5 py-2 rounded-full border border-blue-100 bg-blue-50 text-blue-600 font-bold text-sm">
+                      <span key={aspect} className="px-5 py-2 rounded-full border border-blue-100 bg-blue-50 text-blue-600 font-semibold text-sm">
                         {aspect}
                       </span>
                     ))}

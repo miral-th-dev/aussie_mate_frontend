@@ -441,14 +441,14 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Greeting + Availability */}
         <div className="flex flex-col pt-3 sm:pt-4">
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">
             Hi, {greetingName}
           </h2>
-          <p className="text-gray-500 font-medium">
+          <p className="text-gray-500 font-medium text-sm sm:text-md">
             Welcome to AussieMate
           </p>
           <div className="mt-4">
-            <p className="text-gray-900 font-bold">Start getting cleaning jobs near you.</p>
+            <p className="text-gray-900 font-semibold">Start getting cleaning jobs near you.</p>
             <p className="text-gray-500 font-medium">Purchase a plan to unlock customer leads.</p>
           </div>
         </div>
@@ -610,20 +610,20 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
           </div>
         )}
         {subscriptionStatus && (
-          <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center transition-all hover:shadow-md">
+          <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
                 <img
                   src={BoldJobIcon}
                   alt="jobs"
-                  className="w-5 h-5"
+                  className="w-10 h-10"
                 />
               </div>
-              <h3 className="text-base sm:text-lg font-bold text-gray-900">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                 Live Jobs near you
               </h3>
             </div>
-            <div className="flex items-center gap-2 text-primary-600 font-bold text-sm">
+            <div className="flex items-center gap-2 text-primary-600 font-semibold text-sm">
               <span className="w-2 h-2 rounded-full bg-primary-500"></span>
               {liveJobsLabel}
             </div>
@@ -635,7 +635,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
         {subscriptionStatus && (
           <div className="mt-6 mb-12">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-semibold text-gray-900">
             Your Assigned Jobs
               </h3>
 
@@ -737,7 +737,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                             <span className="text-[13px] font-medium text-gray-400">
                               {job.category}
                             </span>
-                            <div className="text-[#111827] font-bold text-[17px] leading-tight capitalize">
+                            <div className="text-[#111827] font-semibold text-[17px] leading-tight capitalize">
                               {job.title}
                             </div>
                           </div>
