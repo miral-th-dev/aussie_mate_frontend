@@ -318,7 +318,7 @@ const JobDetailsPage = () => {
 
   return (
     <>
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
+      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-7xl">
         <PageHeader
           title={getJobTitle(job)}
           onBack={() => {
@@ -369,7 +369,7 @@ const JobDetailsPage = () => {
                 />
                 <div>
                   <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Posted by</p>
-                  <p className="text-lg font-bold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
+                  <p className="text-lg font-semibold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
                 </div>
               </div>
               

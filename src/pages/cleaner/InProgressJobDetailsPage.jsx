@@ -608,8 +608,8 @@ const InProgressJobDetailsPage = () => {
 
     return (
         <>
-            <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl">
-                <div className="px-4 py-2 sm:py-4">
+            <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="py-2 sm:py-4">
                     <PageHeader
                         title={headerTitle}
                         onBack={() => {
@@ -620,14 +620,14 @@ const InProgressJobDetailsPage = () => {
                     />
                 </div>
 
-                <div className="px-4 pb-6">
+                <div className="pb-6">
                     {/* Job Details Card (Figma Style) */}
                     <div className="bg-[#F8FAFF] rounded-3xl p-5 mb-6 border border-[#E9EFFF]">
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
                                 {getJobCategory(job)}
                             </span>
-                            <h2 className="text-[20px] font-bold text-primary-500 mt-1 leading-tight">
+                            <h2 className="text-[20px] font-semibold text-primary-500 mt-1 leading-tight">
                                 {headerTitle}
                             </h2>
                         </div>
@@ -731,7 +731,7 @@ const InProgressJobDetailsPage = () => {
 
                     {/* Assigned By Section */}
                     <div className="mb-6">
-                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-3 ml-1">Assigned By</h3>
+                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 ml-1">Assigned By</h3>
                         <div className="bg-white rounded-3xl p-4 border border-[#F1F5F9] shadow-sm">
                             <div className="flex items-center justify-between mb-5">
                                 <div className="flex items-center gap-3">
@@ -749,7 +749,7 @@ const InProgressJobDetailsPage = () => {
                                         )}
                                     </div>
                                     <div>
-                                        <h4 className="text-lg font-bold text-primary-500">
+                                        <h4 className="text-lg font-semibold text-primary-500">
                                             {customer?.firstName || 'Customer'} {customer?.lastName?.slice(0, 1) || ''}.
                                         </h4>
                                         <div className="flex items-center text-sm text-[#4B5563] font-medium mt-0.5">
@@ -776,7 +776,7 @@ const InProgressJobDetailsPage = () => {
 
                             <button
                                 onClick={handleGetDirections}
-                                className="flex items-center gap-2 text-[#1F6FEB] text-sm font-bold pl-1 hover:underline cursor-pointer"
+                                className="flex items-center gap-2 text-[#1F6FEB] text-sm font-semibold pl-1 hover:underline cursor-pointer"
                             >
                                 <img src={MapPinIcon1} alt="Directions" className="w-4 h-4" />
                                 {showMap ? 'Hide Map' : 'Get Directions'}

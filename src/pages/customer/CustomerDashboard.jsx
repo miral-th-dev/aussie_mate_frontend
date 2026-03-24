@@ -242,7 +242,7 @@ const CustomerDashboard = () => {
             <Button
               onClick={() => navigate("/post-new-job")}
               variant="primary"
-              size="lg"
+              size="md"
               className="w-full sm:w-auto rounded-full"
             >
               <span className="w-5 h-5 flex items-center justify-center rounded-full bg-white text-primary-600">
