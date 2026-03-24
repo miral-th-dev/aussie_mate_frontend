@@ -231,7 +231,7 @@ const MySubscriptionPage = () => {
                     <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
                       <span className="text-3xl">🎁</span>
                     </div>
-                    <p className="text-xl font-medium text-[#111827]">{activeSubscription?.subscription?.planId?.bonusLeads} Free Bonus Leads</p>
+                    <p className="text-xl font-medium text-[#111827]">{activeSubscription?.subscription?.planId?.bonusLeads ?? 0} Free Bonus Leads</p>
                   </div>
                 </div>
               </div>
@@ -334,10 +334,15 @@ const MySubscriptionPage = () => {
                             <Briefcase className="w-6 h-6" strokeWidth={1.5} />
                           </div> */}
                           <div>
-                            <p className="text-[16px] font-black text-[#111827] leading-tight mb-1">
+                            <p className="text-[16px] font-black text-[#111827] leading-tight mb-1 flex items-center flex-wrap gap-2">
                               {item.type === 'debit' && item.jobId?.categoryId?.name && item.jobId?.serviceTypeId?.name
                                 ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
                                 : item.description}
+                              {item.reason === 'bonus_lead_usage' && (
+                                <span className="px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
+                                  Bonus Lead
+                                </span>
+                              )}
                             </p>
                             <p className="text-[13px] text-gray-400 font-semibold">
                               {item.jobId ? (
@@ -501,7 +506,7 @@ const MySubscriptionPage = () => {
                         <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-blue-50 rounded-xl">
                           <span className="text-2xl">🎁</span>
                         </div>
-                        <p className="text-[15px] font-bold">{plan.bonusLeads || 2} Free Bonus Leads</p>
+                        <p className="text-[15px] font-bold">{plan.bonusLeads ?? 0} Free Bonus Leads</p>
                       </div>
                     </div>
 
@@ -602,7 +607,14 @@ const MySubscriptionPage = () => {
                           <Briefcase className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-base font-bold text-gray-800 mb-0.5">{item.description}</p>
+                          <p className="text-base font-bold text-gray-800 mb-0.5 flex items-center flex-wrap gap-2">
+                            {item.description}
+                            {item.reason === 'bonus_lead_usage' && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
+                                Bonus Lead
+                              </span>
+                            )}
+                          </p>
                           <p className="text-sm text-gray-500 font-medium">#{typeof item.jobId === 'object' ? item.jobId?.jobId : (item.jobId || 'N/A')} • {formatDate(item.createdAt)}</p>
                         </div>
                       </div>

@@ -81,6 +81,10 @@ class SocketService {
     this.socket.on('chat_history', (messages) => {
       this.notifyListeners('chatHistory', messages);
     });
+
+    this.socket.on('chat_not_found', (data) => {
+      this.notifyListeners('chatNotFound', data);
+    });
     
     this.socket.on('receive_message', (message) => {
       this.notifyListeners('newMessage', message);

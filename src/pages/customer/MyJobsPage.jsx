@@ -163,28 +163,13 @@ const MyJobsPage = () => {
   const applyFilters = useCallback((jobList) => {
     let filtered = jobList;
 
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter((job) => {
-        // Use category ID or name for filtering
-        const jobCategoryId = job.originalJob?.categoryId?._id || job.originalJob?.categoryId || job.categoryId;
-        return selectedCategories.includes(jobCategoryId);
-      });
-    }
-
+    // Bond cleaning is currently not filtered by backend, so handle in frontend
     if (bondCleaningFilter) {
-      filtered = filtered.filter((job) => Boolean(job.originalJob?.isBondCleaning));
-    }
-
-    if (filterDate) {
-      filtered = filtered.filter((job) => {
-        const dateSource = job.scheduledDate || job.createdAt;
-        if (!dateSource) return false;
-        return dayjs(dateSource).format('YYYY-MM-DD') === filterDate;
-      });
+      filtered = filtered.filter((job) => Boolean(job.originalJob?.bondCleaning || job.originalJob?.isBondCleaning));
     }
 
     return filtered;
-  }, [selectedCategories, bondCleaningFilter, filterDate]);
+  }, [bondCleaningFilter]);
 
   useEffect(() => {
     setJobs(applyFilters(allJobs));
@@ -427,11 +412,11 @@ const MyJobsPage = () => {
           >
             <SlidersHorizontal className="w-5 h-5" />
           </button>
-          {(startDate || endDate) && (
+          {(isFiltersApplied || isDateRangeApplied) && (
             <button
-              onClick={() => { setStartDate(''); setEndDate(''); }}
+              onClick={handleClearFilters}
               className="p-2 sm:p-3 rounded-xl! bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
-              title="Clear date filter"
+              title="Clear all filters"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>

@@ -4,7 +4,7 @@ import { FloatingLabelInput, ConfirmationModal, PhoneValidationAlert, PageHeader
 import InfoIcon from '../../assets/info.svg';
 import SendIcon from '../../assets/sendChat.svg';
 import MessageIcon from '../../assets/message2.svg';
-import { jobsAPI, quotesAPI } from '../../services/api';
+import { jobsAPI, quotesAPI, subscriptionsAPI } from '../../services/api';
 import { chatAPI } from '../../services/chatAPI';
 import { socketService } from '../../services/socketService';
 import WithdrawIcon from '../../assets/trash-red.svg';
@@ -40,6 +40,7 @@ const CleanerChatPage = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [effectiveCleanerId, setEffectiveCleanerId] = useState(null);
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
+    const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
     const messagesEndRef = useRef(null);
     const lastMessageRef = useRef(null);
 
@@ -76,12 +77,47 @@ const CleanerChatPage = () => {
         // Connect to socket directly
         socketService.connect(token);
 
+        // Fetch subscription status
+        const fetchSubscriptionStatus = async () => {
+            try {
+                const response = await subscriptionsAPI.getMyStatus();
+                if (response.success && response.data) {
+                    setIsSubscriptionExpired(response.data.isSubscriptionExpired);
+                }
+            } catch (err) {
+                console.error('Error fetching subscription status:', err);
+            }
+        };
+
+        fetchSubscriptionStatus();
+
         // Socket event listeners
         socketService.on('connectionStatus', (status) => {
             setIsConnected(status);
         });
         socketService.on('chatJoined', (data) => {
             setCurrentChatRoom(data);
+        });
+        socketService.on('chatNotFound', (data) => {
+            // Silently handle chat room join failure - room might not exist yet for first contact
+            if (messages.length === 0) {
+                setMessages([
+                    {
+                        _id: 'demo_welcome',
+                        id: 1,
+                        senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
+                        content: "Hi! I'm ready to discuss this cleaning job with you.",
+                        message: "Hi! I'm ready to discuss this cleaning job with you.",
+                        messageType: 'text',
+                        createdAt: new Date(Date.now() - 60000).toISOString(),
+                        time: new Date(Date.now() - 60000).toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        }).toLowerCase()
+                    }
+                ]);
+            }
         });
         socketService.on('chatHistory', (historyMessages) => {
             setIsLoadingMessages(false);
@@ -167,26 +203,8 @@ const CleanerChatPage = () => {
                 setPhoneValidationError(error.message);
                 setShowPhoneAlert(true);
                 // No auto-hide - user must manually close
-            } else if (error.message === 'Failed to join chat' || error.message === 'Chat room not found') {
-                // Silently handle chat room join failure - room might not exist yet for first contact
-                if (messages.length === 0) {
-                    setMessages([
-                        {
-                            _id: 'demo_welcome',
-                            id: 1,
-                            senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
-                            content: "Hi! I'm ready to discuss this cleaning job with you.",
-                            message: "Hi! I'm ready to discuss this cleaning job with you.",
-                            messageType: 'text',
-                            createdAt: new Date(Date.now() - 60000).toISOString(),
-                            time: new Date(Date.now() - 60000).toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: '2-digit',
-                                hour12: true
-                            }).toLowerCase()
-                        }
-                    ]);
-                }
+            } else if (error.message === 'Failed to join chat') {
+                // Silently handle chat room join failure
             } else if (error.message === 'You must submit a quote for this job first. Once the customer accepts your quote, you can start chatting.') {
                 // Silently handle quote requirement message
             } else if (error.message === 'Access denied. Please check your login status or contact support.') {
@@ -201,6 +219,7 @@ const CleanerChatPage = () => {
         return () => {
             socketService.off('connectionStatus', setIsConnected);
             socketService.off('chatJoined', () => {});
+            socketService.off('chatNotFound', () => {});
             socketService.off('chatHistory', () => {});
             socketService.off('newMessage', () => {});
             socketService.off('error', () => {});
