@@ -335,8 +335,8 @@ const CustomerChatPage = () => {
 
 
   return (
-    <div className='px-3 md:px-4'>
-      <div className="max-w-7xl mx-auto py-4 px-1">
+    <div className='px-4 md:px-8'>
+      <div className="max-w-7xl mx-auto py-4">
         <PageHeader
           title={cleanerName || `Cleaner #${cleanerId?.slice(-4) || '1047'}`}
           onBack={() => navigate(-1)}

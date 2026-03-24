@@ -20,7 +20,8 @@ import {
   DollarSign, 
   MapPin,
   BookOpen,
-  Briefcase
+  Briefcase,
+  Crown
 } from 'lucide-react';
 import ProfileBG from '../../assets/CardBG7.png';
 
@@ -186,7 +187,7 @@ const ProfilePage = () => {
         // ...(user?.role === 'Customer' ? [{ icon: FileText, label: 'Invoices & History', path: '/invoices' }] : []),
         
         // Cleaner-only menu items
-        ...(user?.role !== 'Customer' ? [{ icon: Briefcase, label: 'My Subscription', path: '/my-subscription' }] : []),
+        ...(user?.role !== 'Customer' ? [{ icon: Crown, label: 'My Subscription', path: '/my-subscription' }] : []),
         ...(user?.role !== 'Customer' ? [{ icon: ShieldCheck, label: 'Verification & Documents', path: '/verification' }] : []),
         ...(user?.role !== 'Customer' ? [{ icon: DollarSign, label: 'Payments & Payouts', path: '/payments' }] : []),
         ...(user?.role !== 'Customer' ? [{ icon: Star, label: 'Ratings & Reviews', path: '/reviews' }] : []),

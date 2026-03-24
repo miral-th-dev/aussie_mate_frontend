@@ -363,7 +363,7 @@ const JobDetailsPage = () => {
             <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img 
-                  src={job.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.customerId.firstName}+${job.customerId.lastName}&background=random`} 
+                  src={job.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.customerId.firstName}+${job.customerId.lastName}`} 
                   alt="Customer" 
                   className="w-12 h-12 rounded-full border border-gray-200 object-cover" 
                 />
@@ -444,9 +444,9 @@ const JobDetailsPage = () => {
     <button
       type="button"
       onClick={() => { setModalError(''); setShowWithdrawModal(true); }}
-       className="flex items-center gap-3 px-10 py-4 rounded-full bg-[#FFE4E4B2] text-[#EF4444] font-semibold text-lg hover:bg-red-200 transition-all cursor-pointer"
+       className="flex items-center gap-3 px-5 py-2 rounded-full bg-[#FFE4E4B2] text-[#EF4444] font-medium text-md cursor-pointer"
     >
-       <Trash2 className="w-7 h-7" strokeWidth={2.2} />
+       <Trash2 className="w-5 h-5" strokeWidth={2.2} />
       Withdraw Bid
     </button>
   </div>

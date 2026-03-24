@@ -43,7 +43,7 @@ const FileUploadArea = ({
   };
 
   return (
-    <div className={`mb-6 ${className}`}>
+    <div className={`${className}`}>
       {title && (
         <h3 className="text-base font-medium text-primary-500 mb-1">{title}</h3>
       )}

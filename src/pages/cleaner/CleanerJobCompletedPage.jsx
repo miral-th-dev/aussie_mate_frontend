@@ -4,6 +4,7 @@ import { Check, UserRound, CalendarDays, MapPin, X, Phone, MessageSquare } from 
 import { Button, PageHeader, Loader } from '../../components';
 import { jobsAPI, jobPhotosAPI, reviewsAPI } from '../../services/api';
 import RatingIcon from '../../assets/Rating1.svg';
+import RatingEmptyIcon from '../../assets/rating3.svg';
 
 const resolveImageSrc = (image) => {
   if (!image) return '';
@@ -116,7 +117,7 @@ const CleanerJobCompletedPage = () => {
             className="p-0 border-none shadow-none"
             onBack={() => navigate('/cleaner-jobs')}
           />
-          <div className="bg-[#E9FBF0] text-[#1EB154] px-3 py-1.5 rounded-full text-xs font-bold border border-[#D1F7E1]">
+          <div className="bg-[#E9FBF0] text-[#1EB154] px-3 py-1.5 rounded-full text-xs font-medium border border-[#D1F7E1]">
             Completed
           </div>
         </div>
@@ -125,18 +126,18 @@ const CleanerJobCompletedPage = () => {
           {/* Left Column: Job Info */}
           <div className="space-y-6">
             {/* Job Summary Card */}
-            <div className="bg-[#E9EEFC] rounded-[32px] p-6 border border-[#D5DEFA]">
-              <p className="text-sm font-semibold text-gray-400 mb-1 tracking-tight">
+            <div className="bg-[linear-gradient(129.21deg,_#E9EEFC_-1.01%,_#FFFFFF_100.1%)] rounded-[32px] p-6 border border-[#D5DEFA]">
+              <p className="text-sm font-medium text-gray-400 mb-1 tracking-tight">
                 {jobData.serviceType}
               </p>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-2 leading-tight">
+              <h1 className="text-md font-semibold text-gray-900 mb-2 leading-tight">
                 {jobData.title}
               </h1>
 
               <div className="space-y-4 pt-1">
                 <div className="flex items-center gap-2.5 text-[#6B7280]">
-                  <CalendarDays className="w-5 h-5" strokeWidth={2.5} />
-                  <span className="text-[15px] font-medium">
+                  <CalendarDays className="w-5 h-5 text-[#111827]"/>
+                  <span className="text-[14px] font-medium">
                     {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -146,7 +147,7 @@ const CleanerJobCompletedPage = () => {
                 </div>
 
                 <div className="flex items-start gap-2.5 text-[#6B7280]">
-                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#111827]"/>
                   <span className="text-[15px] font-medium leading-snug">
                     {jobData.location}
                   </span>
@@ -156,7 +157,7 @@ const CleanerJobCompletedPage = () => {
 
             {/* Assigned By Section */}
             <div className="space-y-3">
-              <h3 className="text-[#111827] font-semibold text-lg px-1">Assigned By</h3>
+              <h3 className="text-[#111827] font-medium text-lg px-1">Assigned By</h3>
               <div className="bg-white rounded-[24px] p-4 border border-gray-100 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
@@ -170,20 +171,20 @@ const CleanerJobCompletedPage = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900 text-lg">{jobData.customer.name}</h4>
-                    <div className="flex items-center gap-1.5 text-gray-400">
+                    <div className="flex items-center gap-1.5 text-[#374151]">
                       <Phone className="w-3.5 h-3.5" />
                       <span className="text-sm font-medium">{jobData.customer.phone}</span>
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                {/* <div className="flex gap-2">
                   <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50 cursor-pointer">
                     <MessageSquare className="w-5 h-5" />
                   </button>
                   <button className="w-10 h-10 rounded-xl bg-white border border-blue-100 flex items-center justify-center text-blue-500 transition-colors hover:bg-blue-50 cursor-pointer">
                     <Phone className="w-5 h-5" />
                   </button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -197,9 +198,9 @@ const CleanerJobCompletedPage = () => {
                   {[1, 2, 3, 4, 5].map((star) => (
                     <img
                       key={star}
-                      src={RatingIcon}
+                      src={star <= (customerReview.rating || 0) ? RatingIcon : RatingEmptyIcon}
                       alt="star"
-                      className={`w-8 h-8 ${star <= (customerReview.rating || 0) ? 'opacity-100' : 'opacity-20 grayscale'}`}
+                      className="w-8 h-8"
                     />
                   ))}
                 </div>
@@ -229,11 +230,11 @@ const CleanerJobCompletedPage = () => {
         </div>
 
         {/* Bottom Button */}
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md flex justify-center z-10">
+        {/* <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md flex justify-center z-10">
           <Button onClick={() => navigate('/cleaner-jobs')} className="w-auto px-10 rounded-2xl py-3 font-bold text-base">
             Back to My Jobs
           </Button>
-        </div>
+        </div> */}
       </div>
     </>
   );

@@ -209,10 +209,10 @@ const CustomerDashboard = () => {
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto py-1 px-4 sm:px-6 lg:px-8 pb-6">
         {/* Combined Search and Post Job Section */}
-        <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-custom space-y-6 mt-4 mb-4 sm:mb-6 border border-gray-50">
+        <div className="mt-4 mb-4 sm:mb-6">
           {/* Search Bar */}
-          <div className="relative w-full">
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center">
+          {/* <div className="relative w-full bg-white rounded-full border border-[#E5E7EB]">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center justify-center ">
               <img
                 src={SearchIcon}
                 alt="Search"
@@ -222,15 +222,15 @@ const CustomerDashboard = () => {
             <input
               type="text"
               placeholder="Search services, e.g. bond clean..."
-              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-50 rounded-xl text-sm text-primary-200 font-medium focus:outline-none focus:ring-1 focus:ring-primary-500/10 transition-all"
+              className="w-full pl-9 sm:pl-10 pr-4 py-2.5 sm:py-3 bg-gray-50 rounded-xl text-sm text-primary-200 font-medium focus:outline-none focus:ring-1 focus:ring-gray-300 transition-all"
             />
-          </div>
+          </div> */}
 
           {/* Divider */}
-          <div className="h-px bg-gray-100 w-full"></div>
+          {/* <div className="h-px bg-gray-100 w-full"></div> */}
 
           {/* Post Job Layout Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
               <h2 className="text-sm sm:text-xl font-semibold text-[#111827] mb-1">
                 Book a cleaner in minutes
@@ -250,7 +250,7 @@ const CustomerDashboard = () => {
               </span>
               Post Job
             </Button>
-          </div>
+          </div> */}
         </div>
 
         {/* MatePoints Section */}
@@ -269,30 +269,33 @@ const CustomerDashboard = () => {
             <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
               <div className="flex-1 text-center sm:text-left">
                 <h3 className="text-base sm:text-lg md:text-xl font-semibold text-primary-500 mb-1">
-                  Earn MatePoints with Every Booking
+                  Book a cleaner in minutes
                 </h3>
-                <p className="text-xs sm:text-sm md:text-base text-[#374151] mb-2 sm:mb-3">
-                  Collect points on each job completed and redeem them for
-                  discounts & perks.
+                <p className="text-xs sm:text-sm md:text-base text-[#374151] mb-3 sm:mb-4">
+                  Post job &rarr; Receive quotes &rarr; Choose &amp; pay
+                  securely
                 </p>
                 <Button
-                  onClick={handleViewRewards}
+                  onClick={() => navigate("/post-new-job")}
                   size="sm"
-                  className="bg-[#111827] hover:bg-[#111827] text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-[8px] text-xs sm:text-sm font-medium"
+                  className="bg-[#111827] hover:bg-[#111827] text-white px-3 sm:px-4 py-2 sm:py-3 rounded-[8px] text-xs sm:text-sm font-medium"
                 >
-                  View Rewards
+                  <span className="w-5 h-5 flex items-center justify-center rounded-full bg-white text-black">
+                    +
+                  </span>
+                  Post Job
                 </Button>
               </div>
             </div>
 
             {/* Coin in right bottom corner */}
-            <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10">
+            {/* <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10">
               <img
                 src={CoinImage}
                 alt="Coin"
                 className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24"
               />
-            </div>
+            </div> */}
           </div>
         </div>
 

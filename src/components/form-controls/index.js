@@ -5,6 +5,7 @@ export { default as FloatingLabelInput } from './FloatingLabelInput';
 export { default as FileUploadArea } from './FileUploadArea';
 export { default as RadioButtonGroup } from './RadioButtonGroup';
 export { default as RadioCard } from './RadioCard';
+export { default as RadioButton } from './RadioButton';
 export { default as Calendar } from './Calendar';
 export { default as CustomSelect } from './CustomSelect';
 

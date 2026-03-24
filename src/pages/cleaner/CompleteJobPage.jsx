@@ -787,7 +787,7 @@ const CompleteJobPage = () => {
               ></div>
               <div className="relative bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
                 <div className="p-8 text-center">
-                  <h3 className="text-2xl font-bold text-primary-500 mb-3">Complete Job?</h3>
+                  <h3 className="text-2xl font-semibold text-primary-500 mb-3">Complete Job?</h3>
                   <p className="text-gray-500 text-sm leading-relaxed mb-8">
                     Check your assigned work along with the before and after photos, and complete the job.
                   </p>
@@ -795,7 +795,7 @@ const CompleteJobPage = () => {
                   <div className="flex gap-3">
                     <button
                       onClick={() => setShowCompleteModal(false)}
-                      className="flex-1 py-4 px-6 rounded-full bg-gray-100 text-primary-500 font-semibold text-base hover:bg-gray-200 transition-colors"
+                      className="flex-1 py-4 px-6 rounded-full bg-gray-100 text-primary-500 font-medium text-base hover:bg-gray-200 transition-colors cursor-pointer"
                     >
                       Not Now
                     </button>
@@ -804,7 +804,7 @@ const CompleteJobPage = () => {
                         setShowCompleteModal(false);
                         handleCompleteJob();
                       }}
-                      className="flex-1 py-4 px-6 rounded-full bg-primary-500 text-white font-semibold text-base hover:bg-blue-700 transition-shadow hover:shadow-lg shadow-blue-200 transition-colors"
+                      className="flex-1 py-4 px-6 rounded-full bg-primary-500 text-white font-medium text-base hover:bg-blue-700 transition-shadow hover:shadow-lg shadow-blue-200 transition-colors cursor-pointer"
                     >
                       Complete Job
                     </button>

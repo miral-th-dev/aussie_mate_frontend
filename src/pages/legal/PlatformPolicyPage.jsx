@@ -727,7 +727,7 @@ const PlatformPolicyPage = () => {
               >
                 ← Back to Home
               </Link> */}
-              <div className="flex gap-4">
+              {/* <div className="flex gap-4">
                 <Link
                   to="/terms"
                   className="text-blue-600 hover:text-blue-700 font-medium"
@@ -740,7 +740,7 @@ const PlatformPolicyPage = () => {
                 >
                   Privacy Policy
                 </Link>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
