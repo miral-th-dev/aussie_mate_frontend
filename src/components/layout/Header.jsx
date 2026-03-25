@@ -133,11 +133,11 @@ const Header = () => {
         </div>
 
         {/* Right: Icons */}
-        <div className="flex-1 flex items-center justify-end space-x-2 sm:space-x-2 md:space-x-3 flex-shrink-0" >
+        <div className="flex-1 flex items-center justify-end space-x-2 md:space-x-3 " >
           {/* Notification Icon */}
           <button 
             onClick={() => navigate('/notifications')}
-            className="relative p-1.5 sm:p-2 md:p-2.5 hover:bg-gray-100 rounded-lg! transition-colors cursor-pointer"
+            className="relative p-0.5 sm:p-1 md:p-1 hover:bg-gray-100 rounded-lg! transition-colors cursor-pointer"
           >
             <img src={NotificationIcon} alt="Notifications" className="w-7 h-7 sm:w-7 sm:h-7 md:w-9 md:h-9" />
           </button>

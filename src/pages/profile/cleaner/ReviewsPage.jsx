@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 import { Button, PageHeader, Loader } from '../../../components';
-import StarIcon from '../../../assets/rating.svg';
+import StarIcon from '../../../assets/Rating1.svg';
+import StarEmptyIcon from '../../../assets/rating3.svg';
 import { reviewsAPI } from '../../../services/api';
 
 const ReviewsPage = () => {
@@ -54,25 +55,15 @@ const ReviewsPage = () => {
   const renderStars = (rating, size = 'w-4 h-4') => {
     const stars = [];
     const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
 
-    for (let i = 0; i < 5; i++) {
-      if (i < fullStars) {
+    for (let i = 1; i <= 5; i++) {
+      if (i <= fullStars) {
         stars.push(
-          <img key={i} src={StarIcon} alt="Star" className={`${size} text-yellow-400`} />
-        );
-      } else if (i === fullStars && hasHalfStar) {
-        stars.push(
-          <div key={i} className="relative">
-            <img src={StarIcon} alt="Star" className={`${size} text-gray-300`} />
-            <div className="absolute inset-0 overflow-hidden" style={{ width: '50%' }}>
-              <img src={StarIcon} alt="Star" className={`${size} text-yellow-400`} />
-            </div>
-          </div>
+          <img key={i} src={StarIcon} alt="Star" className={size} />
         );
       } else {
         stars.push(
-          <img key={i} src={StarIcon} alt="Star" className={`${size} text-gray-300`} />
+          <img key={i} src={StarEmptyIcon} alt="Star" className={size} />
         );
       }
     }
@@ -149,7 +140,7 @@ const ReviewsPage = () => {
 
   return (
     <>
-      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-4 py-4 max-sm:px-3 max-sm:py-3">
+      <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-7xl px-4 py-4 sm:px-8 max-sm:py-3">
         <PageHeader
           title="Ratings & Reviews"
           onBack={() => navigate(-1)}
@@ -224,7 +215,7 @@ const ReviewsPage = () => {
                     {/* Review Content */}
                     <div className="flex-1">
                       <div className="flex items-center  mb-2 max-sm:mb-1.5">
-                        <h4 className="font-semibold text-primary-500 text-lg max-sm:text-sm">
+                        <h4 className="font-medium text-primary-500 text-md max-sm:text-sm">
                           {getCustomerName(review)}
                         </h4>
                       </div>
@@ -255,7 +246,7 @@ const ReviewsPage = () => {
                       {/* Feedback */}
                       {review.feedback && (
                         <div className="mb-3 max-sm:mb-2">
-                          <p className="text-base text-primary-200 font-medium italic leading-relaxed max-sm:text-xs">
+                          <p className="text-base text-primary-200 font-medium leading-relaxed max-sm:text-xs">
                             "{review.feedback}"
                           </p>
                         </div>

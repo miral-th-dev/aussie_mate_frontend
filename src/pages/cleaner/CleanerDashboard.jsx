@@ -440,7 +440,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
     <div className="pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Greeting + Availability */}
-        <div className="flex flex-col pt-3 sm:pt-4">
+        <div className="flex flex-col mt-5 sm:mt-6 bg-white rounded-4xl border border-gray-100 p-5 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">
             Hi, {greetingName}
           </h2>
@@ -610,7 +610,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
           </div>
         )}
         {subscriptionStatus && (
-          <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center">
+          <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
                 <img
@@ -634,9 +634,9 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
         {/* Active Jobs - Only if Subscribed */}
         {subscriptionStatus && (
           <div className="mt-6 mb-12">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
               <h3 className="text-xl font-semibold text-gray-900">
-            Your Assigned Jobs
+                Your Assigned Jobs
               </h3>
 
             {/* Navigation Buttons */}

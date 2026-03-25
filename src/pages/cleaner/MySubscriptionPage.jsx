@@ -143,10 +143,11 @@ const MySubscriptionPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <PageHeader
           title={activeSubscription ? "Your Active Plan" : "My Subscription"}
           onBack={() => navigate(-1)}
+          className="mb-4 sm:mb-4"
         />
 
         {error && (
@@ -197,13 +198,13 @@ const MySubscriptionPage = () => {
                   <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-gradient-to-bl from-purple-400/30 via-blue-300/20 to-transparent blur-[100px] rounded-full -mr-32 -mt-32" />
                 </div>
 
-                <div className="p-6 md:p-8 relative z-10 flex flex-col gap-6 text-[#111827]">
+                <div className="p-6 relative z-10 flex flex-col gap-4 text-[#111827]">
                   <div className="flex justify-between items-start">
                     <div>
                       <span className="inline-flex items-center px-4 py-1 rounded-full border border-[#DBF9E7] bg-[#EBFBF5] text-[#10B981] text-xs font-medium mb-4">
                         Active
                       </span>
-                      <h2 className="text-2xl font-medium text-[#111827]">
+                      <h2 className="text-xl font-medium text-[#111827]">
                         {activeSubscription.subscription?.planId?.name}
                       </h2>
                     </div>
@@ -215,13 +216,13 @@ const MySubscriptionPage = () => {
                       <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
                         <Coins className="w-3.5 h-3.5 text-[#1F6FEB]" />
                       </div>
-                      <span className="text-[#1F6FEB] font-bold text-base">Credits</span>
+                      <span className="text-[#1F6FEB] font-medium text-base">Credits</span>
                     </div>
-                    <p className="text-xl font-black text-[#111827]">{activeSubscription.availableCredits} Credits</p>
+                    <p className="text-xl font-semibold text-[#111827]">{activeSubscription.availableCredits} Credits</p>
                   </div>
 
-                  <div className="mt-2">
-                    <p className="text-lg font-medium text-[#374151]">
+                  <div>
+                    <p className="text-md font-medium text-[#374151]">
                       {formatDate(activeSubscription.subscription?.currentPeriodStart)} - {formatDate(activeSubscription.subscription?.currentPeriodEnd)}
                     </p>
                   </div>
@@ -229,19 +230,17 @@ const MySubscriptionPage = () => {
                   {/* Bonus Leads Box - Clean White per Figma */}
                   <div className="bg-white border border-[#F3F3F3] rounded-[14px] p-2 flex items-center gap-4 max-w-2xl">
                     <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                      <span className="text-3xl">🎁</span>
+                      <span className="text-2xl">🎁</span>
                     </div>
-                    <p className="text-xl font-medium text-[#111827]">{activeSubscription?.subscription?.planId?.bonusLeads ?? 0} Free Bonus Leads</p>
+                    <p className="text-lg font-medium text-[#111827]">{activeSubscription?.subscription?.planId?.bonusLeads ?? 0} Free Bonus Leads</p>
                   </div>
                 </div>
               </div>
 
               {/* Credit Usage Section - Moved to its own card as requested */}
               <div className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] p-8 shadow-sm">
-                <p className="text-2xl font-black text-[#111827] mb-2">Credit Usage</p>
-                <p className="text-base text-gray-500 font-medium mb-6">
-                  Track the credits used when you respond to customer job leads.
-                </p>
+                <p className="text-2xl font-semibold text-[#111827] mb-2">Credit Usage</p>
+                
 
                 <div className="mb-8 relative">
                   <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
@@ -288,8 +287,8 @@ const MySubscriptionPage = () => {
                   </div>
                 </div>
 
-                <p className="text-base font-black text-[#111827] mb-6">
-                  Estimated Leads Remaining: <span className="text-[#111827] ml-1">{Math.floor(activeSubscription.availableCredits / (activeSubscription.subscription?.planId?.creditsPerLead || 1))} leads</span>
+                <p className="text-base font-medium text-[#374151] mb-6">
+                  Estimated Leads Remaining: <span className="text-[#111827] ml-1 font-semibold">{Math.floor(activeSubscription.availableCredits / (activeSubscription.subscription?.planId?.creditsPerLead || 1))} leads</span>
                 </p>
 
                 {canBuyCredits && (
@@ -311,7 +310,7 @@ const MySubscriptionPage = () => {
                   <div className="flex items-center gap-3">
          
                     <div className="flex flex-col">
-                      <h3 className="text-[20px] font-black text-[#111827]">
+                      <h3 className="text-[20px] font-semibold text-[#111827]">
                         Lead Usage History
                       </h3>
                       <p className="text-sm text-gray-500">
@@ -334,7 +333,7 @@ const MySubscriptionPage = () => {
                             <Briefcase className="w-6 h-6" strokeWidth={1.5} />
                           </div> */}
                           <div>
-                            <p className="text-[16px] font-black text-[#111827] leading-tight mb-1 flex items-center flex-wrap gap-2">
+                            <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
                               {item.type === 'debit' && item.jobId?.categoryId?.name && item.jobId?.serviceTypeId?.name
                                 ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
                                 : item.description}
@@ -344,7 +343,7 @@ const MySubscriptionPage = () => {
                                 </span>
                               )}
                             </p>
-                            <p className="text-[13px] text-gray-400 font-semibold">
+                            <p className="text-[13px] text-gray-400 font-medium">
                               {item.jobId ? (
                                 <>
                                   #{typeof item.jobId === 'object' ? item.jobId?.jobId : item.jobId} • 
@@ -354,10 +353,10 @@ const MySubscriptionPage = () => {
                           </div>
                         </div>
                         <div className="text-right flex flex-col items-end">
-                          <p className={`text-[17px] font-black leading-none mb-1 ${item.type === 'credit' ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
+                          <p className={`text-[14px] font-semibold leading-none mb-1 ${item.type === 'credit' ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
                             {item.type === 'credit' ? '+' : '-'}{Math.abs(item.amount)}
                           </p>
-                          <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest leading-none">CREDITS</p>
+                          <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest leading-none">CREDITS</p>
                         </div>
                       </div>
                     ))
@@ -375,7 +374,7 @@ const MySubscriptionPage = () => {
                   <div className="p-4 border-t border-gray-50 text-center">
                     <button
                       onClick={() => setShowHistoryModal(true)}
-                      className="text-primary-600 font-bold text-sm hover:underline flex items-center gap-1 mx-auto cursor-pointer"
+                      className="text-primary-600 font-semibold text-sm hover:underline flex items-center gap-1 mx-auto cursor-pointer"
                     >
                       View Full History <ChevronRight className="w-4 h-4" />
                     </button>

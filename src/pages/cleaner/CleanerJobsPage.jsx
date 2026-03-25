@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { PageHeader, PaginationRanges, Button } from '../../components';
+import { PageHeader, PaginationRanges, Button, RadioButton } from '../../components';
 import DownIcon from '../../assets/down2.svg';
 import CalendarIcon from '../../assets/Calendar.svg';
 import MapPinIcon from '../../assets/map-pin 1.png';
@@ -484,28 +484,20 @@ const CleanerJobsPage = () => {
           {/* Sub-filters for Booking Requests */}
           {activeTab === 'booking_request' && (
             <div className="px-4 sm:px-6 lg:px-8 pb-4 flex items-center gap-6">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="subFilter"
-                  value="request_sent"
-                  checked={subFilter === 'request_sent'}
-                  onChange={(e) => setSubFilter(e.target.value)}
-                  className="w-5 h-5 border-2 border-gray-300 rounded-full checked:border-primary-500 checked:bg-primary-500 transition-all cursor-pointer"
-                />
-                <span className={`text-sm font-medium ${subFilter === 'request_sent' ? 'text-primary-600' : 'text-gray-500'}`}>Request Sent</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="radio"
-                  name="subFilter"
-                  value="waitlisted"
-                  checked={subFilter === 'waitlisted'}
-                  onChange={(e) => setSubFilter(e.target.value)}
-                  className="w-5 h-5 border-2 border-gray-300 rounded-full checked:border-primary-500 checked:bg-primary-500 transition-all cursor-pointer"
-                />
-                <span className={`text-sm font-medium ${subFilter === 'waitlisted' ? 'text-primary-600' : 'text-gray-500'}`}>Waitlisted</span>
-              </label>
+              <RadioButton
+                name="subFilter"
+                value="request_sent"
+                label="Request Sent"
+                checked={subFilter === 'request_sent'}
+                onChange={(e) => setSubFilter(e.target.value)}
+              />
+              <RadioButton
+                name="subFilter"
+                value="waitlisted"
+                label="Waitlisted"
+                checked={subFilter === 'waitlisted'}
+                onChange={(e) => setSubFilter(e.target.value)}
+              />
             </div>
           )}
 
@@ -540,7 +532,7 @@ const CleanerJobsPage = () => {
                             </span>
                           )} */}
                           {activeTab === 'completed' && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-600 border border-green-200 uppercase tracking-wider">
+                            <span className="text-[12px] font-medium px-2 py-1.5 rounded-full bg-green-100 text-green-600 border border-green-200">
                               Completed
                             </span>
                           )}

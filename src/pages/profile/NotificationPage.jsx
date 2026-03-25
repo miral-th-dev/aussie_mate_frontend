@@ -85,12 +85,12 @@ const NotificationPage = () => {
           title="Notifications"
           onBack={() => navigate(-1)}
           className="mb-4 sm:mb-6"
-          titleClassName="text-xl sm:text-2xl font-bold text-gray-900"
-          rightSlot={
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <img src={SettingsIcon} alt="Settings" className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
-          }
+          titleClassName="text-xl sm:text-2xl font-semibold text-gray-900"
+          // rightSlot={
+          //   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
+          //     <img src={SettingsIcon} alt="Settings" className="w-5 h-5 sm:w-6 sm:h-6" />
+          //   </button>
+          // }
         />
 
         {/* Tab Navigation */}

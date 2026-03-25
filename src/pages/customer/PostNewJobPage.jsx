@@ -517,13 +517,12 @@ const PostNewJobPage = () => {
 
 
   const renderJobDetails = () => (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 lg:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-8 lg:py-12">
       <PageHeader
         title="Post New Job"
         onBack={() => currentStep === 1 ? navigate('/customer-dashboard') : handleBack()}
         className="mb-8"
         titleClassName="text-2xl sm:text-3xl font-semibold text-[#111827]"
-        backButtonClassName="cursor-pointer"
       />
 
       {/* Main Content */}
@@ -697,14 +696,14 @@ const PostNewJobPage = () => {
   );
 
   const renderSuccessScreen = () => (
-    <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center animate-in fade-in duration-500">
+    <div className="min-h-[80vh] flex flex-col items-center justify-center px-6 text-center animate-in fade-in duration-900">
       <div className="relative mb-8">
-        <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center overflow-hidden">
+        <div className="flex items-center justify-center overflow-hidden">
           <img src={JobLiveAnimation} alt="Job Live" className="w-full h-full object-cover" />
         </div>
       </div>
       
-      <h1 className="text-3xl font-bold text-[#111827] mb-4">Your job request is live!</h1>
+      <h1 className="text-3xl font-semibold text-[#111827] mb-4">Your job request is live!</h1>
       <p className="text-gray-500 text-lg mb-12 max-w-sm">
         Nearby cleaners will start sending quotes shortly. You'll be notified.
       </p>
@@ -713,13 +712,13 @@ const PostNewJobPage = () => {
         <Button
           onClick={() => navigate(`/customer-job-details/${createdJobId}`)}
           size="lg"
-          className="w-full py-4 rounded-full text-lg font-bold shadow-lg shadow-blue-500/20 bg-[#1A73E8] hover:bg-[#1557B0]"
+          className="w-full bg-[#1A73E8]"
         >
           View My Job
         </Button>
         <button
           onClick={() => navigate('/customer-dashboard')}
-          className="w-full py-4 text-lg font-bold text-[#111827] flex items-center justify-center gap-2 hover:opacity-70 transition-opacity"
+          className="w-full py-4 text-lg font-semibold text-[#111827] flex items-center justify-center gap-2 cursor-pointer"
         >
           <svg className="w-5 h-5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14M12 5l7 7-7 7" />
