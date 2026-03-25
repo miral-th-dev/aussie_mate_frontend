@@ -240,7 +240,7 @@ const MySubscriptionPage = () => {
               {/* Credit Usage Section - Moved to its own card as requested */}
               <div className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] p-8 shadow-sm">
                 <p className="text-2xl font-semibold text-[#111827] mb-2">Credit Usage</p>
-                
+
 
                 <div className="mb-8 relative">
                   <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
@@ -308,7 +308,7 @@ const MySubscriptionPage = () => {
               <div className="overflow-hidden">
                 <div className="p-6 pb-4 flex justify-between items-center">
                   <div className="flex items-center gap-3">
-         
+
                     <div className="flex flex-col">
                       <h3 className="text-[20px] font-semibold text-[#111827]">
                         Lead Usage History
@@ -346,7 +346,7 @@ const MySubscriptionPage = () => {
                             <p className="text-[13px] text-gray-400 font-medium">
                               {item.jobId ? (
                                 <>
-                                  #{typeof item.jobId === 'object' ? item.jobId?.jobId : item.jobId} • 
+                                  #{typeof item.jobId === 'object' ? item.jobId?.jobId : item.jobId} •
                                 </>
                               ) : null} {formatDate(item.createdAt)}
                             </p>
@@ -389,17 +389,17 @@ const MySubscriptionPage = () => {
           /* "No Subscription" Plan Selection View */
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
             {isExpired && activeSubscription && (
-               <div className="bg-amber-50 rounded-[32px] p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
-               <div className="w-20 h-20 bg-amber-100 rounded-[28px] flex items-center justify-center flex-shrink-0">
-                 <Clock className="w-10 h-10 text-amber-600" />
-               </div>
-               <div className="text-center md:text-left flex-1">
-                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Subscription Expired!</h3>
-                 <p className="text-gray-500 font-medium max-w-xl">
-                   Your subscription for <b>{activeSubscription.subscription?.planId?.name}</b> ended on <b>{formatDate(activeSubscription.subscription?.currentPeriodEnd)}</b>. To continue receiving leads, please renew your subscription or choose a new plan below.
-                 </p>
-               </div>
-             </div>
+              <div className="bg-amber-50 rounded-[32px] p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-amber-100 rounded-[28px] flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-10 h-10 text-amber-600" />
+                </div>
+                <div className="text-center md:text-left flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Subscription Expired!</h3>
+                  <p className="text-gray-500 font-medium max-w-xl">
+                    Your subscription for <b>{activeSubscription.subscription?.planId?.name}</b> ended on <b>{formatDate(activeSubscription.subscription?.currentPeriodEnd)}</b>. To continue receiving leads, please renew your subscription or choose a new plan below.
+                  </p>
+                </div>
+              </div>
             )}
             {/* Header section - split layout for desktop */}
             <div className="flex flex-col gap-5">
