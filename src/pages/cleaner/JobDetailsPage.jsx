@@ -3,7 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { PageHeader, JobOverviewCard, ConfirmationModal } from '../../components';
 import ChatIcon from '../../assets/message2.svg';
 import { jobsAPI, subscriptionsAPI } from '../../services/api';
-import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays, Trash2 } from 'lucide-react';
+import { Wallet, Clock3, Home as HomeIcon, Ruler, AlertTriangle, CalendarDays, Trash2, Info, CheckCircle2 } from 'lucide-react';
 
 const JobDetailsPage = () => {
   const navigate = useNavigate();
@@ -19,6 +19,9 @@ const JobDetailsPage = () => {
   const [modalError, setModalError] = useState('');
   const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
   const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [isWaitlisted, setIsWaitlisted] = useState(false);
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [isWaitlistLoading, setIsWaitlistLoading] = useState(false);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -45,6 +48,11 @@ const JobDetailsPage = () => {
 
           const isAssignedStatus = ['assigned', 'accepted', 'on_the_way', 'started', 'in_progress'].includes(jobData.status);
           setIsConnected(contacted || isAssignedStatus);
+          
+          const waitlisted = (jobData.waitlistedCleaners || []).some(w => 
+            (w.cleanerId?._id || w.cleanerId) === currentUserId
+          );
+          setIsWaitlisted(jobData.isWaitlisted || waitlisted || false);
         } else {
           setError('Job not found');
         }
@@ -291,6 +299,41 @@ const JobDetailsPage = () => {
     navigate(`/chat/${jobId}`);
   };
 
+  const handleJoinWaitlist = async () => {
+    try {
+      setIsWaitlistLoading(true);
+      const res = await jobsAPI.joinWaitlist(jobId);
+      if (res.success) {
+        setIsWaitlisted(true);
+        setShowWaitlistModal(false);
+      } else {
+        alert(res.message || 'Failed to join waitlist');
+      }
+    } catch (err) {
+      console.error('Error joining waitlist:', err);
+      alert('Failed to join waitlist. Please try again.');
+    } finally {
+      setIsWaitlistLoading(false);
+    }
+  };
+
+  const handleLeaveWaitlist = async () => {
+    try {
+      setIsWaitlistLoading(true);
+      const res = await jobsAPI.leaveWaitlist(jobId);
+      if (res.success) {
+        setIsWaitlisted(false);
+      } else {
+        alert(res.message || 'Failed to leave waitlist');
+      }
+    } catch (err) {
+      console.error('Error leaving waitlist:', err);
+      alert('Failed to leave waitlist. Please try again.');
+    } finally {
+      setIsWaitlistLoading(false);
+    }
+  };
+
 
   if (loading) {
     return null;
@@ -360,42 +403,99 @@ const JobDetailsPage = () => {
 
           {/* Posted By Section (from mockup) */}
           {job.customerId && (
-            <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img 
-                  src={job.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.customerId.firstName}+${job.customerId.lastName}`} 
-                  alt="Customer" 
-                  className="w-12 h-12 rounded-full border border-gray-200 object-cover" 
-                />
-                <div>
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Posted by</p>
-                  <p className="text-lg font-semibold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
+            <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img 
+                    src={job.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.customerId.firstName}+${job.customerId.lastName}`} 
+                    alt="Customer" 
+                    className="w-12 h-12 rounded-full border border-gray-200 object-cover" 
+                  />
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Posted by</p>
+                    <p className="text-lg font-semibold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleChatWithCustomer}
+                    disabled={job.contactedCount >= 3 && !isContacted}
+                    className={`flex items-center gap-3 px-4 py-2 rounded-full font-semibold text-sm border transition-colors ${
+                      (job.contactedCount >= 3 && !isContacted)
+                        ? 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                        : (isSubscriptionExpired && !isContacted)
+                          ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100 cursor-pointer'
+                          : 'bg-[#F1F6FF] text-primary-600 border-[#E0EAFF] hover:bg-blue-50 cursor-pointer'
+                    }`}
+                  >
+                    <img src={ChatIcon} alt="Chat" className={`w-4 h-4 ${(job.contactedCount >= 3 && !isContacted) ? 'grayscale opacity-50' : ''}`} />
+                     {isSubscriptionExpired && !isContacted ? 'Renew to Chat' : 'Chat'}
+                  </button>
+                  {/* Call button - only if phone is available (usually hidden until booking) */}
+                  {isConnected && job.customerId.phone && (
+                     <button
+                      onClick={() => window.open(`tel:${job.customerId.phone}`)}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
+                    >
+                      <span className="text-primary-600">📞</span>
+                      Call
+                    </button>
+                  )}
                 </div>
               </div>
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={handleChatWithCustomer}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full font-semibold text-sm border transition-colors cursor-pointer ${
-                    (isSubscriptionExpired && !isContacted)
-                      ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                      : 'bg-[#F1F6FF] text-primary-600 border-[#E0EAFF] hover:bg-blue-50'
-                  }`}
-                >
-                  <img src={ChatIcon} alt="Chat" className="w-4 h-4" />
-                   {isSubscriptionExpired && !isContacted ? 'Renew to Chat' : 'Chat'}
-                </button>
-                {/* Call button - only if phone is available (usually hidden until booking) */}
-                {isConnected && job.customerId.phone && (
-                   <button
-                    onClick={() => window.open(`tel:${job.customerId.phone}`)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
-                  >
-                    <span className="text-primary-600">📞</span>
-                    Call
-                  </button>
-                )}
-              </div>
+
+              {/* Waitlist Section */}
+              {job.contactedCount >= 3 && !isContacted && (
+                <div className="mt-6 pt-6 border-t border-gray-50">
+                   {!isWaitlisted ? (
+                    <>
+                      <div className="bg-[#F8FAFF] border border-[#E8EFFF] rounded-2xl p-5 mb-4 flex gap-4">
+                        <div className="bg-primary-50 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                          <Info className="w-5 h-5 text-primary-600" />
+                        </div>
+                        <div>
+                          <p className="text-[15px] font-bold text-gray-900 mb-1">
+                            {job.contactedCount} cleaners have already contacted the customer.
+                          </p>
+                          <p className="text-sm text-gray-500 leading-relaxed">
+                            Join the waitlist to be considered if the customer hasn't chosen anyone within 24 hours.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowWaitlistModal(true)}
+                        className="w-full py-3.5 bg-primary-500 text-white rounded-xl font-bold text-base hover:bg-primary-600 transition-all shadow-lg shadow-primary-100 cursor-pointer active:scale-[0.98]"
+                      >
+                        Join Waitlist
+                      </button>
+                    </>
+                   ) : (
+                    <>
+                      <div className="bg-[#F8FAFF] border border-[#E8EFFF] rounded-2xl p-5 mb-4 flex gap-4">
+                         <div className="bg-primary-50 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="w-5 h-5 text-primary-600" />
+                        </div>
+                        <div>
+                          <p className="text-[15px] font-bold text-gray-900 mb-1">
+                            You're on the waitlist
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            We'll notify you if the customer contacts you.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleLeaveWaitlist}
+                        disabled={isWaitlistLoading}
+                        className="w-full py-3.5 border border-gray-200 text-gray-600 rounded-xl font-bold text-base hover:bg-gray-50 transition-all cursor-pointer active:scale-[0.98]"
+                      >
+                        {isWaitlistLoading ? 'Leaving...' : 'Leave Waitlist'}
+                      </button>
+                    </>
+                   )}
+                </div>
+              )}
             </div>
           )}
 
@@ -481,6 +581,35 @@ const JobDetailsPage = () => {
           }
         }}
       />
+
+      <ConfirmationModal
+        isOpen={showWaitlistModal}
+        onClose={() => setShowWaitlistModal(false)}
+        onConfirm={handleJoinWaitlist}
+        title="Join Waitlist"
+        message="You'll be added to the waitlist for this job."
+        confirmText="Join Waitlist"
+        cancelText="Cancel"
+        confirmButtonColor="bg-primary-500 hover:bg-primary-600"
+        isLoading={isWaitlistLoading}
+        centerTitle={false}
+        centerMessage={false}
+      >
+        <div className="space-y-4 py-2">
+          {[
+            "The customer can view waitlisted cleaners after 24 hours",
+            "If no cleaner is selected, the customer may contact you",
+            "You'll be notified if the customer messages you"
+          ].map((item, idx) => (
+            <div key={idx} className="flex items-start gap-3">
+              <div className="p-0.5 rounded-full border border-gray-300 mt-0.5">
+                <CheckCircle2 className="w-4 h-4 text-primary-500" />
+              </div>
+              <p className="text-sm text-gray-500 leading-tight">{item}</p>
+            </div>
+          ))}
+        </div>
+      </ConfirmationModal>
     </>
   );
 };

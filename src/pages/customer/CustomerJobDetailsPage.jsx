@@ -184,7 +184,8 @@ const CustomerJobDetailsPage = () => {
   };
 
   const handleConnect = (cleanerId) => {
-    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
+    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId) ||
+                 waitlistedCleaners.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
     if (item) {
       setQuoteToConnect(item);
       setShowConnectModal(true);
@@ -192,7 +193,8 @@ const CustomerJobDetailsPage = () => {
   };
 
   const handleAcceptQuote = (cleanerId) => {
-    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
+    const item = cleanerQuotes.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId) ||
+                 waitlistedCleaners.find(q => (q.cleanerId?._id || q.cleanerId) === cleanerId);
     if (item) {
       setQuoteToConnect(item);
       setShowConnectModal(true);

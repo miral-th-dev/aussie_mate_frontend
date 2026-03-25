@@ -6,12 +6,15 @@ const ConfirmationModal = ({
   onConfirm, 
   title, 
   message, 
+  children,
   confirmText = "Confirm", 
   cancelText = "Cancel",
   confirmButtonColor = "bg-[#EF4444] hover:bg-red-600",
   isLoading = false,
   errorMessage,
-  autoCloseAfter = 0
+  autoCloseAfter = 0,
+  centerTitle = true,
+  centerMessage = true
 }) => {
   if (!isOpen) return null;
 
@@ -33,14 +36,21 @@ const ConfirmationModal = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Title */}
-        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 text-center">
-          {title}
-        </h3>
+        {title && (
+          <h3 className={`text-base sm:text-lg font-semibold text-gray-900 mb-2 sm:mb-3 ${centerTitle ? 'text-center' : ''}`}>
+            {title}
+          </h3>
+        )}
         
         {/* Message */}
-        <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 text-center leading-relaxed">
-          {message}
-        </p>
+        {message && (
+          <p className={`text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 ${centerMessage ? 'text-center' : ''} leading-relaxed`}>
+            {message}
+          </p>
+        )}
+
+        {children}
+
         {errorMessage && (
           <div className="mb-4 sm:mb-6 text-center">
             <span className="text-sm text-red-600 font-medium">{errorMessage}</span>
@@ -48,7 +58,7 @@ const ConfirmationModal = ({
         )}
         
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mt-4">
           <button
             onClick={onClose}
             disabled={isLoading}

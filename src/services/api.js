@@ -471,6 +471,20 @@ export const jobsAPI = {
       body: JSON.stringify({}),
     });
   },
+
+  // Join waitlist for a job (Cleaner)
+  joinWaitlist: async (jobId) => {
+    return apiRequest(`/jobs/${jobId}/waitlist`, {
+      method: 'POST',
+    });
+  },
+
+  // Leave waitlist for a job (Cleaner)
+  leaveWaitlist: async (jobId) => {
+    return apiRequest(`/jobs/${jobId}/waitlist`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 // Quotes API
