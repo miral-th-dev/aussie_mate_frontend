@@ -215,13 +215,8 @@ const CleanerJobsPage = () => {
         const jobsList = result.jobs || [];
         const allTransformed = jobsList.map(transformJobForUI);
 
-        // Client-side search and distance filtering
+        // Client-side search and other filtering
         const filteredAll = allTransformed.filter(job => {
-          // Distance filter (if job.distance is available and exceeds current radius)
-          if (activeTab === 'posted' && job.distance !== null && job.distance > distance) {
-            return false;
-          }
-
           if (searchQuery.trim() === '') return true;
           return job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             job.id?.toString().toLowerCase().includes(searchQuery.toLowerCase());
@@ -248,62 +243,6 @@ const CleanerJobsPage = () => {
     };
   }, [activeTab, subFilter, currentPage, searchQuery, distance, isUrgent, refreshTrigger, userLocation]);
 
-  // Haversine formula to calculate distance between two coordinates in kilometers
-  const getDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c; // Distance in km
-    return distance; // Return raw distance for precise formatting in transformJobForUI
-  };
-
-  const getCoordinates = (coordinates) => {
-    if (!coordinates) return null;
-
-    let lat, lng;
-
-    if (typeof coordinates === 'string') {
-      const coords = coordinates.split(',').map(coord => parseFloat(coord.trim()));
-      // Most strings are "lat, lng", but let's check
-      if (coords[0] < 40 && coords[1] > 40) {
-        lat = coords[0];
-        lng = coords[1];
-      } else {
-        lat = coords[1];
-        lng = coords[0];
-      }
-    } else if (coordinates.lat && coordinates.lng) {
-      lat = coordinates.lat;
-      lng = coordinates.lng;
-    } else if (Array.isArray(coordinates)) {
-      // GeoJSON is [lng, lat], let's be robust
-      // Melbourne is approx lat -37, lng 144
-      const first = coordinates[0];
-      const second = coordinates[1];
-
-      if (first > 100 && second < 0) { // [lng, lat]
-        lng = first;
-        lat = second;
-      } else if (first < 0 && second > 100) { // [lat, lng]
-        lat = first;
-        lng = second;
-      } else {
-        // Fallback or other regions
-        lng = first;
-        lat = second;
-      }
-    }
-
-    if (lat && lng && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-      return { lat, lng };
-    }
-    return null;
-  };
 
   // transform helper (keeps the UI shape identical to your original)
   const transformJobForUI = (job) => {
@@ -317,34 +256,8 @@ const CleanerJobsPage = () => {
       }) || null;
     }
 
-    // Calculate distance if missing
-    let jobDistance = job.distance;
-    if (jobDistance === undefined || jobDistance === null) {
-      const cleanerCoords = userLocation?.coordinates;
-      const jobCoords = getCoordinates(job.location?.coordinates);
-
-      if (cleanerCoords && jobCoords) {
-        // userLocation.coordinates can be {lat, lng} or [lng, lat]
-        let cLat, cLng;
-        if (cleanerCoords.lat !== undefined) {
-          cLat = cleanerCoords.lat;
-          cLng = cleanerCoords.lng;
-        } else if (Array.isArray(cleanerCoords)) {
-          // Robust check for cleaner coordinates too
-          if (cleanerCoords[0] > 100 && cleanerCoords[1] < 0) {
-            cLng = cleanerCoords[0];
-            cLat = cleanerCoords[1];
-          } else {
-            cLat = cleanerCoords[0];
-            cLng = cleanerCoords[1];
-          }
-        }
-
-        if (cLat !== undefined && cLng !== undefined) {
-          jobDistance = getDistance(cLat, cLng, jobCoords.lat, jobCoords.lng);
-        }
-      }
-    }
+    // Use job.distance provided by backend
+    const jobDistance = job.distance;
 
     return {
       id: job._id || job.jobId || job.id,
