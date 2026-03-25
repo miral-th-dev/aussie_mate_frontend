@@ -18,7 +18,7 @@ const HelpSupportPage = () => {
   };
 
   const handleSupportTicket = () => {
-    navigate('/my-tickets');
+    navigate('/profile');
   };
 
   const faqs = [
