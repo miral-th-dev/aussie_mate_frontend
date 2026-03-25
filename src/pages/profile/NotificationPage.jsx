@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import SettingsIcon from '../../assets/settings.svg'
+//import SettingsIcon from '../../assets/settings.svg'
 import { PageHeader } from '../../components'
 
 const NotificationPage = () => {

@@ -28,7 +28,6 @@ const MySubscriptionPage = () => {
   const [showCategoriesModal, setShowCategoriesModal] = useState(false);
   const [selectedPlanCategories, setSelectedPlanCategories] = useState([]);
   const [selectedPlanName, setSelectedPlanName] = useState('');
-  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [error, setError] = useState('');
   const [isExpired, setIsExpired] = useState(false);
@@ -373,7 +372,7 @@ const MySubscriptionPage = () => {
                 {history.length > 5 && (
                   <div className="p-4 border-t border-gray-50 text-center">
                     <button
-                      onClick={() => setShowHistoryModal(true)}
+                      onClick={() => navigate('/lead-usage-history')}
                       className="text-primary-600 font-semibold text-sm hover:underline flex items-center gap-1 mx-auto cursor-pointer"
                     >
                       View Full History <ChevronRight className="w-4 h-4" />
@@ -574,67 +573,6 @@ const MySubscriptionPage = () => {
                   className="text-gray-400 text-sm font-bold hover:text-gray-800"
                 >
                   Close Categories
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* History Modal */}
-        {showHistoryModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
-              <div className="p-6 md:p-8 flex justify-between items-center border-b border-gray-50">
-                <div>
-                  <h3 className="text-2xl font-black text-[#111111]">Lead Usage History</h3>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Full Activity Log</p>
-                </div>
-                <button
-                  onClick={() => setShowHistoryModal(false)}
-                  className="p-3 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-800"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="max-h-[60vh] overflow-y-auto">
-                <div className="divide-y divide-gray-50">
-                  {history.map((item, idx) => (
-                    <div key={item._id || idx} className="p-6 hover:bg-gray-50 transition-colors flex justify-between items-center">
-                      <div className="flex gap-4 items-center">
-                        <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-500">
-                          <Briefcase className="w-6 h-6" />
-                        </div>
-                        <div>
-                          <p className="text-base font-bold text-gray-800 mb-0.5 flex items-center flex-wrap gap-2">
-                            {item.description}
-                            {item.reason === 'bonus_lead_usage' && (
-                              <span className="px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
-                                Bonus Lead
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-sm text-gray-500 font-medium">#{typeof item.jobId === 'object' ? item.jobId?.jobId : (item.jobId || 'N/A')} • {formatDate(item.createdAt)}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-lg font-black ${item.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                          {item.type === 'credit' ? '+' : '-'}{Math.abs(item.amount)}
-                        </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">Credits</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-6 md:p-8 bg-gray-50/50 flex justify-center">
-                <Button
-                  onClick={() => setShowHistoryModal(false)}
-                  variant="primary"
-                  className="rounded-2xl px-12"
-                >
-                  Close History
                 </Button>
               </div>
             </div>
