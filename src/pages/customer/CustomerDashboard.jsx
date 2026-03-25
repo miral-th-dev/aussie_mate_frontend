@@ -264,7 +264,6 @@ const CustomerDashboard = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            
 
             {/* Content Overlay */}
             <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">

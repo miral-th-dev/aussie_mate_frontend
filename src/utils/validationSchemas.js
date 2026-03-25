@@ -54,7 +54,10 @@ export const signupSchema = yup.object().shape({
 // Login Form Validation Schema
 export const loginSchema = yup.object().shape({
   email: yup.string()
-    .email('Please enter a valid email address')
+    .test('email-or-phone', 'Please enter a valid email or phone number', (value) => {
+      if (!value) return true;
+      return emailRegex.test(value) || phoneRegex.test(value) || australianPhoneRegex.test(value);
+    })
     .required('Email or phone is required'),
   password: yup.string()
     .required('Password is required')
