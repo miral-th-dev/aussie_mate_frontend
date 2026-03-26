@@ -1,81 +1,101 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import SettingsIcon from '../../assets/settings.svg'
-import { PageHeader } from '../../components'
+import { PageHeader, Loader } from '../../components'
+import { notificationsAPI, handleAPIError } from '../../services/api'
 
 const NotificationPage = () => {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('all')
+  const [notifications, setNotifications] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const tabs = [
-    { id: 'all', label: 'All' },
-    { id: 'jobs', label: 'Jobs' },
-    { id: 'payments', label: 'Payments' },
-    { id: 'admin', label: 'Admin' },
-    { id: 'system', label: 'System' }
-  ]
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'New Bond Cleaning Job Available',
-      description: '2BHK apartment in Sydney CBD, $180 - Flexible in 2 days',
-      action: 'View Job',
-      timestamp: '2 mins ago',
-      category: 'jobs',
-      isRead: false
-    },
-    {
-      id: 2,
-      title: 'Escrow Released - $220',
-      description: 'Customer confirmed job completion, payout scheduled in 24h',
-      action: 'View Earnings',
-      timestamp: '10 mins ago',
-      category: 'payments',
-      isRead: false
-    },
-    {
-      id: 3,
-      title: 'Police Check Expiring Soon',
-      description: 'Upload new document before 30 Aug to continue receiving jobs.',
-      action: 'Update Now',
-      timestamp: 'Yesterday, 5:42 PM',
-      category: 'admin',
-      isRead: true
-    },
-    {
-      id: 4,
-      title: 'Training Video Update',
-      description: 'New NDIS training material has been added to your profile.',
-      action: 'View Training',
-      timestamp: 'Yesterday, 5:42 PM',
-      category: 'admin',
-      isRead: true
-    },
-    {
-      id: 5,
-      title: 'Almost Silver Badge!',
-      description: 'Complete 3 more jobs to reach Silver Tier & unlock perks.',
-      action: 'See Progress',
-      timestamp: '2 days ago',
-      category: 'system',
-      isRead: true
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true)
+      const response = await notificationsAPI.getNotifications()
+      if (response.success) {
+        setNotifications(response.data || [])
+      }
+    } catch (error) {
+      console.error(handleAPIError(error))
+    } finally {
+      setLoading(false)
     }
-  ]
-
-  const filteredNotifications = activeTab === 'all' 
-    ? notifications 
-    : notifications.filter(notification => notification.category === activeTab)
-
-  const handleNotificationClick = (notification) => {
-    // Handle notification click logic here
-    console.log('Notification clicked:', notification)
   }
 
-  const handleActionClick = (notification, e) => {
+  const handleNotificationClick = async (notification) => {
+    const notificationId = notification?._id || notification?.id;
+    try {
+      if (!notification.isRead && notificationId) {
+        await notificationsAPI.markAsRead(notificationId)
+        // Update local state
+        setNotifications(prev => 
+          prev.map(n => (n._id === notificationId || n.id === notificationId) ? { ...n, isRead: true } : n)
+        )
+      }
+      
+      console.log('Notification clicked:', notification)
+    } catch (error) {
+      console.error('Error marking notification as read:', error)
+    }
+  }
+
+  const getActionText = (type) => {
+    switch (type?.toLowerCase()) {
+      case 'job':
+        return 'View Job'
+      case 'payment':
+        return 'View Earnings'
+      case 'admin':
+        return 'Update Now'
+      case 'training':
+        return 'View Training'
+      default:
+        return 'View Details'
+    }
+  }
+
+  const handleActionClick = async (e, notification) => {
     e.stopPropagation()
-    // Handle action click logic here
-    console.log('Action clicked:', notification.action)
+    const notificationId = notification?._id || notification?.id
+    const actionLink = notification?.actionLink
+    
+    // Mark as read if not already read
+    if (!notification.isRead && notificationId) {
+      try {
+        await notificationsAPI.markAsRead(notificationId)
+        setNotifications(prev => 
+          prev.map(n => (n._id === notificationId || n.id === notificationId) ? { ...n, isRead: true } : n)
+        )
+      } catch (error) {
+        console.error('Error marking as read:', error)
+      }
+    }
+
+    // Redirect
+    if (actionLink) {
+      if (actionLink.startsWith('/')) {
+        navigate(actionLink)
+      } else {
+        window.open(actionLink, '_blank')
+      }
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationsAPI.markAllAsRead()
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
+    } catch (error) {
+      console.error('Error marking all as read:', error)
+    }
+  }
+
+  if (loading) {
+    return <Loader fullscreen message="Loading notifications..." />
   }
 
   return (
@@ -86,45 +106,29 @@ const NotificationPage = () => {
           onBack={() => navigate(-1)}
           className="mb-4 sm:mb-6"
           titleClassName="text-xl sm:text-2xl font-semibold text-gray-900"
-          // rightSlot={
-          //   <button className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-          //     <img src={SettingsIcon} alt="Settings" className="w-5 h-5 sm:w-6 sm:h-6" />
-          //   </button>
-          // }
+          rightSlot={
+            notifications.some(n => !n.isRead) && (
+              <button 
+                onClick={handleMarkAllAsRead}
+                className="text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
+              >
+                Mark all as read
+              </button>
+            )
+          }
         />
-
-        {/* Tab Navigation */}
-        <div className="mb-4 sm:mb-6">
-          <div className="flex overflow-x-auto scrollbar-hide">
-            <div className="flex space-x-1 sm:space-x-2 min-w-max">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-3 sm:px-4 py-2 rounded-lg! text-sm sm:text-base font-medium whitespace-nowrap transition-colors cursor-pointer ${
-                    activeTab === tab.id
-                      ? 'bg-[#EBF2FD] text-primary-600'
-                      : 'bg-white text-primary-200 font-medium border-[#F3F3F3]'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* Notifications List */}
         <div className="bg-white rounded-2xl shadow-custom overflow-hidden">
-          {filteredNotifications.length === 0 ? (
+          {notifications.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <div className="text-gray-500 text-sm sm:text-base">No notifications found</div>
             </div>
           ) : (
             <div className="space-y-3 mx-3">
-              {filteredNotifications.map((notification, index) => (
+              {notifications.map((notification) => (
                 <div
-                  key={notification.id}
+                  key={notification?._id || notification?.id}
                   onClick={() => handleNotificationClick(notification)}
                   className={"p-4 sm:p-5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-[#F3F3F3] rounded-lg "}
                 >
@@ -141,17 +145,19 @@ const NotificationPage = () => {
                         )}
                       </div>
                       <p className="text-xs sm:text-sm text-primary-200 font-medium mb-2 sm:mb-3 line-clamp-2">
-                        {notification.description}
-                      </p>
-                      <div className="flex items-center justify-end">
-                        {/* <button
-                          onClick={(e) => handleActionClick(notification, e)}
-                          className="text-primary-600 hover:text-[#0088FF] text-xs sm:text-sm font-medium cursor-pointer"
-                        >
-                          {notification.action}
-                        </button> */}
-                        <span className="text-xs text-primary-200 font-medium ml-2">
-                          {notification.timestamp}
+                        {notification.body || notification.description || notification.message}
+                      </p> 
+                      <div className="flex items-center justify-between">
+                        {/* {notification.actionLink && (
+                          <button
+                            onClick={(e) => handleActionClick(e, notification)}
+                            className="text-primary-600 hover:text-primary-700 text-xs sm:text-sm font-semibold cursor-pointer"
+                          >
+                            {getActionText(notification.type)}
+                          </button>
+                        )} */}
+                        <span className="text-xs text-primary-200 font-medium ml-auto">
+                          {notification.timestamp || (notification.createdAt ? new Date(notification.createdAt).toLocaleString() : '')}
                         </span>
                       </div>
                     </div>

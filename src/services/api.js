@@ -1155,6 +1155,35 @@ export const reviewsAPI = {
   }
 };
 
+// Notifications API
+export const notificationsAPI = {
+  // Get all notifications
+  getNotifications: async () => {
+    return apiRequest('/notifications');
+  },
+
+  // Mark a notification as read
+  markAsRead: async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}/read`, {
+      method: 'PUT'
+    });
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async () => {
+    return apiRequest('/notifications/read-all', {
+      method: 'PUT'
+    });
+  },
+
+  // Delete a notification
+  deleteNotification: async (notificationId) => {
+    return apiRequest(`/notifications/${notificationId}`, {
+      method: 'DELETE'
+    });
+  }
+};
+
 // Subscriptions API
 export const subscriptionsAPI = {
   // Get all subscription plans
@@ -1385,6 +1414,7 @@ export default {
   jobDetailsAPI,
   categoriesAPI,
   subscriptionsAPI,
+  notificationsAPI,
   uploadFile,
   uploadFileToCloudinary,
   uploadMultipleFilesToCloudinary,
