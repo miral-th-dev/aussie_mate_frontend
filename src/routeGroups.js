@@ -40,6 +40,7 @@ const HelpSupportPage = React.lazy(() => import('./pages/profile/HelpSupportPage
 const LiveChatPage = React.lazy(() => import('./pages/profile/LiveChatPage'))
 const MyTicketsPage = React.lazy(() => import('./pages/profile/MyTicketsPage'))
 const RaiseTicketPage = React.lazy(() => import('./pages/profile/RaiseTicketPage'))
+const SupportTicketDetailsPage = React.lazy(() => import('./pages/profile/SupportTicketDetailsPage'))
 const VerificationStatusPage = React.lazy(() => import('./pages/profile/cleaner/VerificationStatusPage'))
 const AvailabilityPage = React.lazy(() => import('./pages/profile/cleaner/AvailabilityPage'))
 const PaymentsPayoutsPage = React.lazy(() => import('./pages/profile/cleaner/PaymentsPayoutsPage'))
@@ -90,6 +91,7 @@ export const customerRoutes = [
   { path: '/help', component: HelpSupportPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/live-chat', component: LiveChatPage },
   { path: '/my-tickets', component: MyTicketsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
+  { path: '/my-tickets/:id', component: SupportTicketDetailsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/raise-ticket', component: RaiseTicketPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/customer-job-details/:jobId', component: CustomerJobDetailsPage },
   { path: '/job-completed/:jobId', component: JobDetailsCompletedPage },

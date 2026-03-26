@@ -1,52 +1,49 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader } from '../../components';
+import { PageHeader, Loader } from '../../components';
 import MessageIcon from '../../assets/Vector.svg';
 import RightIcon from '../../assets/right.svg';
 import QuestionMarkIcon from '../../assets/questionMark.svg';
 import HelpBG from '../../assets/helpBG.jpg';
 import SearchIcon from '../../assets/search.svg';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { faqsAPI, handleAPIError } from '../../services/api';
 
 const HelpSupportPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
+  const [faqs, setFaqs] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const handleBack = () => {
     navigate(-1);
   };
 
   const handleSupportTicket = () => {
-    navigate('/profile');
+    navigate('/my-tickets');
   };
 
-  const faqs = [
-    {
-      id: 1,
-      category: 'Getting Started',
-      questions: [
-        { id: 'q1', question: 'How do I post a job?', answer: 'Go to your dashboard and click on "Post a new job". Follow the prompts to describe your needs.' },
-        { id: 'q2', question: 'Is my data safe?', answer: 'AussieMate uses enterprise-grade security to ensure your personal and payment data is always protected.' },
-      ]
-    },
-    {
-      id: 2,
-      category: 'Bookings & Payments',
-      questions: [
-        { id: 'q3', question: 'How do I pay for a job?', answer: 'Payments are handled securely through our platform via Stripe. You pay once the job is completed or as per the agreed schedule.' },
-        { id: 'q4', question: 'Can I cancel a booking?', answer: 'Yes, you can cancel a booking from your "My Jobs" section. Please check our cancellation policy for details.' },
-      ]
-    }
-  ];
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchFaqs(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const filteredFaqs = faqs.map(cat => ({
-    ...cat,
-    questions: cat.questions.filter(q =>
-      q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      q.answer.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(cat => cat.questions.length > 0);
+  const fetchFaqs = async (search = '') => {
+    try {
+      setLoading(true);
+      const response = await faqsAPI.getAllFaqs(search);
+      if (response.success) {
+        setFaqs(response.data || []);
+      }
+    } catch (error) {
+      console.error(handleAPIError(error));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -135,45 +132,55 @@ const HelpSupportPage = () => {
           </div>
 
           <div className="space-y-8">
-            {filteredFaqs.map((cat) => (
-              <div key={cat.id} className="space-y-4">
-                <h4 className="text-[14px] font-semibold text-gray-900 px-1">{cat.category}</h4>
-                <div className="space-y-3">
-                  {cat.questions.map((q) => (
-                    <div
-                      key={q.id}
-                      className={`bg-white rounded-3xl border transition-all duration-300 ${openFaq === q.id ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
-                        }`}
-                    >
-                      <button
-                        onClick={() => setOpenFaq(openFaq === q.id ? null : q.id)}
-                        className="w-full px-7 py-4 flex items-center justify-between text-left transition-colors active:scale-[0.995] cursor-pointer"
-                      >
-                        <span className={`font-medium text-[16px] transition-colors ${openFaq === q.id ? 'text-primary-600' : 'text-gray-900'}`}>{q.question}</span>
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${openFaq === q.id ? 'bg-primary-50 text-white' : 'bg-gray-50 text-gray-300'}`}>
-                          {openFaq === q.id ? <ChevronUp className="w-5 h-5 text-primary-600" /> : <ChevronDown className="w-5 h-5" />}
-                        </div>
-                      </button>
-                      <div
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === q.id ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                          }`}
-                      >
-                        <div className="px-7 pb-6 pt-4 border-t border-gray-100">
-                          <p className="text-gray-500 text-sm leading-relaxed font-medium pr-4">
-                            {q.answer}
-                          </p>
-                        </div>
+            {loading ? (
+              <div className="flex justify-center items-center py-20">
+                <Loader message="Loading FAQs..." />
+              </div>
+            ) : (
+              <>
+                {faqs.map((cat) => (
+                  cat.faqs?.length > 0 && (
+                    <div key={cat._id || cat.id} className="space-y-4">
+                      <h4 className="text-[14px] font-semibold text-gray-900 px-1">{cat.name}</h4>
+                      <div className="space-y-3">
+                        {cat.faqs.map((q) => (
+                          <div
+                            key={q._id || q.id}
+                            className={`bg-white rounded-3xl border transition-all duration-300 ${openFaq === (q._id || q.id) ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
+                              }`}
+                          >
+                            <button
+                              onClick={() => setOpenFaq(openFaq === (q._id || q.id) ? null : (q._id || q.id))}
+                              className="w-full px-7 py-4 flex items-center justify-between text-left transition-colors active:scale-[0.995] cursor-pointer"
+                            >
+                              <span className={`font-medium text-[16px] transition-colors ${openFaq === (q._id || q.id) ? 'text-primary-600' : 'text-gray-900'}`}>{q.question}</span>
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${openFaq === (q._id || q.id) ? 'bg-primary-50 text-white' : 'bg-gray-50 text-gray-300'}`}>
+                                {openFaq === (q._id || q.id) ? <ChevronUp className="w-5 h-5 text-primary-600" /> : <ChevronDown className="w-5 h-5" />}
+                              </div>
+                            </button>
+                            <div
+                              className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === (q._id || q.id) ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                                }`}
+                            >
+                              <div className="px-7 pb-6 pt-4 border-t border-gray-100">
+                                <p className="text-gray-500 text-sm leading-relaxed font-medium pr-4">
+                                  {q.answer}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-            {filteredFaqs.length === 0 && (
-              <div className="text-center py-24 bg-white rounded-[32px] border-2 border-dashed border-gray-100">
-                <p className="text-gray-300 font-black text-xl mb-2">No Results Found</p>
-                <p className="text-gray-400 text-sm font-semibold">Try searching with different keywords</p>
-              </div>
+                  )
+                ))}
+                {faqs.every(cat => !cat.faqs || cat.faqs.length === 0) && (
+                  <div className="text-center py-24 bg-white rounded-[32px] border-2 border-dashed border-gray-100">
+                    <p className="text-gray-300 font-black text-xl mb-2">No Results Found</p>
+                    <p className="text-gray-400 text-sm font-semibold">Try searching with different keywords</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PageHeader,
@@ -8,18 +8,19 @@ import {
   FileUploadArea,
 } from "../../components";
 import { ChevronDown, CheckCircle } from "lucide-react";
+import { supportTicketsAPI, uploadFile, handleAPIError } from "../../services/api";
 
 const RaiseTicketPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     countryCode: "+61",
     phoneNumber: "",
     role: "",
     category: "",
-    projectName: "",
     description: "",
     screenshot: null,
   });
@@ -35,16 +36,24 @@ const RaiseTicketPage = () => {
     { label: "Technical Bug", value: "Technical Bug" },
     { label: "Other", value: "Other" },
   ];
-  // const projects = [
-  //   { label: "Regular Cleaning", value: "Regular Cleaning" },
-  //   { label: "Bond Cleaning", value: "Bond Cleaning" },
-  //   { label: "Oven Cleaning", value: "Oven Cleaning" },
-  //   { label: "End of Lease", value: "End of Lease" },
-  // ];
+
   const countryCodes = [
     { label: "+91", value: "+91" },
     { label: "+61", value: "+61" },
   ];
+
+  // Pre-fill user data
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        phoneNumber: user.phone || "",
+        role: user.role || (user.roles?.includes("Cleaner") ? "Cleaner" : "Customer"),
+      }));
+    }
+  }, []);
 
   const handleBack = () => {
     navigate("/my-tickets");
@@ -78,15 +87,41 @@ const RaiseTicketPage = () => {
     setFormData((prev) => ({ ...prev, [fieldName]: null }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API submission
-    setTimeout(() => {
+    setError("");
+
+    try {
+      let attachmentUrls = [];
+      if (formData.screenshot?.file) {
+        const uploadResponse = await uploadFile(formData.screenshot.file);
+        if (uploadResponse.success) {
+          attachmentUrls.push(uploadResponse.data.url || uploadResponse.data);
+        }
+      }
+
+      const ticketData = {
+        name: formData.name,
+        phone: `${formData.countryCode}${formData.phoneNumber}`,
+        role: formData.role,
+        category: formData.category,
+        description: formData.description,
+        attachments: attachmentUrls,
+      };
+
+      const response = await supportTicketsAPI.raiseTicket(ticketData);
+      if (response.success) {
+        setSuccess(true);
+        setTimeout(() => navigate("/my-tickets"), 2000);
+      } else {
+        setError(response.message || "Failed to submit ticket");
+      }
+    } catch (err) {
+      setError(handleAPIError(err));
+    } finally {
       setLoading(false);
-      setSuccess(true);
-      setTimeout(() => navigate("/my-tickets"), 2000);
-    }, 1500);
+    }
   };
 
   if (success) {
@@ -118,6 +153,12 @@ const RaiseTicketPage = () => {
         />
 
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium">
+              {error}
+            </div>
+          )}
+
           {/* Name */}
           <div className="space-y-3 mb-3">
             <label className="text-base font-medium text-gray-900">
@@ -154,13 +195,8 @@ const RaiseTicketPage = () => {
                 value={formData.phoneNumber}
                 onChange={(e) => {
                   let value = e.target.value;
-
-                  // Remove non-digit characters
                   value = value.replace(/\D/g, "");
-
-                  // Limit to 10 digits
                   if (value.length > 10) return;
-
                   handleInputChange({
                     target: {
                       name: "phoneNumber",
@@ -203,19 +239,6 @@ const RaiseTicketPage = () => {
             </div>
           </div>
 
-          {/* Project Name */}
-          {/* <div className="space-y-3 mb-3">
-            <label className="text-xs font-medium text-gray-900 px-2">
-              Project Name <span className="text-red-500">*</span>
-            </label>
-            <CustomSelect
-              options={projects}
-              value={formData.projectName}
-              onChange={(val) => handleValueChange("projectName", val)}
-              placeholder="Select Project"
-            />
-          </div> */}
-
           {/* Description */}
           <div className="space-y-3 mb-3">
             <label className="text-base font-medium text-gray-900">
@@ -241,7 +264,7 @@ const RaiseTicketPage = () => {
               onFileSelect={handleFileChange}
               selectedFile={formData.screenshot}
               onRemove={handleRemoveFile}
-                accept="image/*"
+              accept="image/*"
             />
           </div>
 
@@ -260,7 +283,10 @@ const RaiseTicketPage = () => {
               className="w-full sm:w-auto bg-primary-500 text-white px-6 py-3 rounded-xl !rounded-xl font-medium shadow-2xl shadow-gray-300 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center cursor-pointer"
             >
               {loading ? (
-                <Loader message="Submitting..." className="!p-0" />
+                <div className="flex items-center gap-2">
+                  <Loader message="" className="!p-0 !min-h-0" />
+                  <span>Submitting...</span>
+                </div>
               ) : (
                 "Submit Ticket"
               )}

@@ -1184,6 +1184,42 @@ export const notificationsAPI = {
   }
 };
 
+// FAQs API
+export const faqsAPI = {
+  // Get all FAQs grouped by category
+  getAllFaqs: async (search = '') => {
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiRequest(`/faqs${query}`);
+  },
+
+  // Search FAQs globally
+  searchFaqs: async (query) => {
+    return apiRequest(`/faqs/search?query=${encodeURIComponent(query)}`);
+  }
+};
+
+// Support Tickets API
+export const supportTicketsAPI = {
+  // Raise a new support ticket
+  raiseTicket: async (ticketData) => {
+    return apiRequest('/support-tickets', {
+      method: 'POST',
+      body: JSON.stringify(ticketData)
+    });
+  },
+
+  // Get own tickets
+  getMyTickets: async (status = '') => {
+    const query = status ? `?status=${encodeURIComponent(status)}` : '';
+    return apiRequest(`/support-tickets${query}`);
+  },
+
+  // Get specific ticket details
+  getTicketDetails: async (ticketId) => {
+    return apiRequest(`/support-tickets/${ticketId}`);
+  }
+};
+
 // Subscriptions API
 export const subscriptionsAPI = {
   // Get all subscription plans
@@ -1415,6 +1451,8 @@ export default {
   categoriesAPI,
   subscriptionsAPI,
   notificationsAPI,
+  faqsAPI,
+  supportTicketsAPI,
   uploadFile,
   uploadFileToCloudinary,
   uploadMultipleFilesToCloudinary,
