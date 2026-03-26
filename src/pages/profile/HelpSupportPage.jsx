@@ -42,8 +42,8 @@ const HelpSupportPage = () => {
 
   const filteredFaqs = faqs.map(cat => ({
     ...cat,
-    questions: cat.questions.filter(q => 
-      q.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    questions: cat.questions.filter(q =>
+      q.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       q.answer.toLowerCase().includes(searchQuery.toLowerCase())
     )
   })).filter(cat => cat.questions.length > 0);
@@ -88,13 +88,13 @@ const HelpSupportPage = () => {
         </div>
 
         {/* Support Ticket Section */}
-        <div 
+        <div
           onClick={handleSupportTicket}
           className="mb-10 bg-white rounded-2xl border border-gray-100 shadow-custom px-6 py-4 cursor-pointer hover:shadow-lg transition-all group active:scale-[0.98]"
         >
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-3xl bg-blue-50 flex items-center justify-center  border border-blue-100/30">
-               <img src={MessageIcon} alt="Tickets" className="w-8 h-8 opacity-80" />
+              <img src={MessageIcon} alt="Tickets" className="w-8 h-8 opacity-80" />
             </div>
 
             <div className="flex-1">
@@ -119,12 +119,12 @@ const HelpSupportPage = () => {
               <h2 className="text-xl font-semibold text-gray-900">FAQs</h2>
               <p className="text-gray-400 text-sm font-medium mt-1">Frequently Asked Questions</p>
             </div>
-            
+
             <div className="relative w-full sm:w-80">
               <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                 <img src={SearchIcon} alt="Search" className="w-5 h-5 opacity-30" />
+                <img src={SearchIcon} alt="Search" className="w-5 h-5 opacity-30" />
               </div>
-              <input 
+              <input
                 type="text"
                 placeholder="Search your problem..."
                 value={searchQuery}
@@ -140,13 +140,12 @@ const HelpSupportPage = () => {
                 <h4 className="text-[14px] font-semibold text-gray-900 px-1">{cat.category}</h4>
                 <div className="space-y-3">
                   {cat.questions.map((q) => (
-                    <div 
-                      key={q.id} 
-                      className={`bg-white rounded-3xl border transition-all duration-300 ${
-                        openFaq === q.id ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
-                      }`}
+                    <div
+                      key={q.id}
+                      className={`bg-white rounded-3xl border transition-all duration-300 ${openFaq === q.id ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
+                        }`}
                     >
-                      <button 
+                      <button
                         onClick={() => setOpenFaq(openFaq === q.id ? null : q.id)}
                         className="w-full px-7 py-4 flex items-center justify-between text-left transition-colors active:scale-[0.995] cursor-pointer"
                       >
@@ -155,10 +154,9 @@ const HelpSupportPage = () => {
                           {openFaq === q.id ? <ChevronUp className="w-5 h-5 text-primary-600" /> : <ChevronDown className="w-5 h-5" />}
                         </div>
                       </button>
-                      <div 
-                        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                          openFaq === q.id ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                        }`}
+                      <div
+                        className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaq === q.id ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                          }`}
                       >
                         <div className="px-7 pb-6 pt-4 border-t border-gray-100">
                           <p className="text-gray-500 text-sm leading-relaxed font-medium pr-4">
