@@ -38,6 +38,8 @@ const NotificationPage = React.lazy(() => import('./pages/profile/NotificationPa
 const NotificationSettingsPage = React.lazy(() => import('./pages/profile/NotificationSettingsPage'))
 const HelpSupportPage = React.lazy(() => import('./pages/profile/HelpSupportPage'))
 const LiveChatPage = React.lazy(() => import('./pages/profile/LiveChatPage'))
+const MyTicketsPage = React.lazy(() => import('./pages/profile/MyTicketsPage'))
+const RaiseTicketPage = React.lazy(() => import('./pages/profile/RaiseTicketPage'))
 const VerificationStatusPage = React.lazy(() => import('./pages/profile/cleaner/VerificationStatusPage'))
 const AvailabilityPage = React.lazy(() => import('./pages/profile/cleaner/AvailabilityPage'))
 const PaymentsPayoutsPage = React.lazy(() => import('./pages/profile/cleaner/PaymentsPayoutsPage'))
@@ -57,6 +59,7 @@ const MySubscriptionPage = React.lazy(() => import('./pages/cleaner/MySubscripti
 const SubscriptionSuccessPage = React.lazy(() => import('./pages/cleaner/SubscriptionSuccessPage'))
 const BuyCreditsPage = React.lazy(() => import('./pages/cleaner/BuyCreditsPage'))
 const CreditsSuccessPage = React.lazy(() => import('./pages/cleaner/CreditsSuccessPage'))
+const LeadUsageHistoryPage = React.lazy(() => import('./pages/cleaner/LeadUsageHistoryPage'))
 
 // Shared pages
 const StripeSuccessPage = React.lazy(() => import('./pages/StripeSuccessPage'))
@@ -86,6 +89,8 @@ export const customerRoutes = [
   { path: '/notifications-settings', component: NotificationSettingsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/help', component: HelpSupportPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/live-chat', component: LiveChatPage },
+  { path: '/my-tickets', component: MyTicketsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
+  { path: '/raise-ticket', component: RaiseTicketPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/customer-job-details/:jobId', component: CustomerJobDetailsPage },
   { path: '/job-completed/:jobId', component: JobDetailsCompletedPage },
   { path: '/customer-chat/:jobId', component: CustomerChatPage },
@@ -111,6 +116,7 @@ export const cleanerRoutes = [
   { path: '/chat/:jobId', component: CleanerChatPage },
   { path: '/earnings', component: EarningsPage },
   { path: '/my-subscription', component: MySubscriptionPage },
+  { path: '/lead-usage-history', component: LeadUsageHistoryPage },
   { path: '/buy-credits', component: BuyCreditsPage },
   { path: '/subscription/success', component: SubscriptionSuccessPage },
   { path: '/credits/success', component: CreditsSuccessPage },
