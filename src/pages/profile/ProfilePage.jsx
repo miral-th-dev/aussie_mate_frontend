@@ -190,7 +190,7 @@ const ProfilePage = () => {
     // Cleaner-only menu items
     ...(user?.role !== 'Customer' ? [{ icon: Crown, label: 'My Subscription', path: '/my-subscription' }] : []),
     ...(user?.role !== 'Customer' ? [{ icon: ShieldCheck, label: 'Verification & Documents', path: '/verification' }] : []),
-    ...(user?.role !== 'Customer' ? [{ icon: DollarSign, label: 'Payments & Payouts', path: '/payments' }] : []),
+    // ...(user?.role !== 'Customer' ? [{ icon: DollarSign, label: 'Payments & Payouts', path: '/payments' }] : []),
     ...(user?.role !== 'Customer' ? [{ icon: Star, label: 'Ratings & Reviews', path: '/reviews' }] : []),
     ...(user?.role !== 'Customer' ? [{ icon: MapPin, label: 'Geo-fencing', path: '/set-cleaner-location' }] : []),
 

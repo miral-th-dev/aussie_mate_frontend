@@ -97,7 +97,7 @@ const Header = () => {
 
   return (
     <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm overflow-hidden" >
-      <div className="relative z-10 max-w-7xl mx-auto lg:rounded-b-2xl overflow-hidden">
+      <div className="relative z-10 max-w-7xl mx-auto  overflow-hidden">
       {/* Decorative header backgrounds */}
       <div className="pointer-events-none select-none absolute inset-0">
         {/* Responsive sizing for decorative backgrounds */}

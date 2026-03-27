@@ -537,7 +537,7 @@ const CleanerJobsPage = () => {
                 <h2 className="text-xl font-semibold text-primary-500">Sort By</h2>
                 <button
                   onClick={() => setShowSortModal(false)}
-                  className="text-primary-200 font-medium hover:text-primary-600"
+                  className="text-primary-200 font-medium hover:text-primary-600 cursor-pointer"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -609,7 +609,7 @@ const CleanerJobsPage = () => {
                 </div>
                 <button
                   onClick={() => setIsUrgent(!isUrgent)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isUrgent ? 'bg-blue-600' : 'bg-gray-300'
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer ${isUrgent ? 'bg-blue-600' : 'bg-gray-300'
                     }`}
                 >
                   <span

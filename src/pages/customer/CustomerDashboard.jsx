@@ -22,7 +22,13 @@ import HousekeepingImage from "../../assets/Housekeeping.png";
 import PetSittingImage from "../../assets/Pet Sitting.png";
 import NDISSupportImage from "../../assets/NDIS Support.png";
 import CommercialCleaningImage from "../../assets/commercialCleaning.svg";
-
+import OtherImg from "../../assets/cleaner/Clean.svg";
+import BondImg from "../../assets/cleaner/Cleaner.svg";
+import GeneralImg from "../../assets/cleaner/Cleaning.svg";
+import CommercialImg from "../../assets/cleaner/House.svg";
+import LockImg from "../../assets/cleaner/Lock.svg";
+import VerifiedImg from "../../assets/cleaner/Paymentt.svg";
+import StarImg from "../../assets/cleaner/Star.svg";
 const CustomerDashboard = () => {
   const [ongoingJobs, setOngoingJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -287,15 +293,129 @@ const CustomerDashboard = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Coin in right bottom corner */}
-            {/* <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10">
+        {/* 3 Features Cards */}
+        <div
+          className="mb-6 sm:mb-8 p-[2px] rounded-[22px] 
+          bg-[linear-gradient(270deg,rgba(244,141,249,0.22),rgba(129,138,247,0.22))]"
+        >
+          <div className="grid grid-cols-3 bg-[#F9FAFB] rounded-[20px] py-5 px-1 sm:px-4">
+            <div className="flex flex-col items-center justify-start gap-2.5 relative">
+              <div className="w-[60px] h-[60px] flex items-center justify-center bg-white rounded-full border border-[#F0F6FB] shadow-sm">
+                <img
+                  src={VerifiedImg}
+                  alt="Verified Cleaner"
+                  className="w-[30px] h-[30px] object-contain"
+                />
+              </div>
+              <span className="text-[11.5px] sm:text-[15px] text-center font-medium text-[#111827] leading-[1.2]">
+                Verified Cleaner
+              </span>
+              <div className="absolute right-0 top-[10%] w-px h-[80%] bg-[#E8EEFF]"></div>
+            </div>
+
+            <div className="flex flex-col items-center justify-start gap-2.5 relative">
+              <div className="w-[60px] h-[60px] flex items-center justify-center bg-white rounded-full border border-[#F0F6FB] shadow-sm">
+                <img
+                  src={LockImg}
+                  alt="User's Privacy"
+                  className="w-[30px] h-[30px] object-contain"
+                />
+              </div>
+              <span className="text-[11.5px] sm:text-[15px] text-center font-medium text-[#111827] leading-[1.2]">
+                User's Privacy
+              </span>
+              <div className="absolute right-0 top-[10%] w-px h-[80%] bg-[#E8EEFF]"></div>
+            </div>
+
+            <div className="flex flex-col items-center justify-start gap-2.5">
+              <div className="w-[60px] h-[60px] flex items-center justify-center bg-white rounded-full border border-[#F0F6FB] shadow-sm">
+                <img
+                  src={StarImg}
+                  alt="Rated & Reviewed"
+                  className="w-[30px] h-[30px] object-contain"
+                />
+              </div>
+              <span className="text-[11.5px] sm:text-[15px] text-center font-medium text-[#111827] leading-[1.2]">
+                Rated & Reviewed
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Popular Services */}
+        <div className="mb-6 sm:mb-8">
+          <h3 className="text-[18px] sm:text-xl font-semibold text-[#111827] mb-4">
+            Popular Services
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div
+              onClick={() => navigate("/post-new-job")}
+              className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
+            >
+              {/* 🔵 Top-left glow */}
+              <div className="absolute -top-10 -left-10 w-[120px] h-[120px] bg-[#FFD6FF] opacity-40 blur-[40px] rounded-full"></div>
+
               <img
-                src={CoinImage}
-                alt="Coin"
-                className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24"
+                src={GeneralImg}
+                alt="General Cleaning"
+                className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] object-contain mb-3 relative z-10"
               />
-            </div> */}
+
+              <span className="text-[13px] sm:text-[15px] font-medium text-[#111827] text-center relative z-10">
+                General Cleaning
+              </span>
+            </div>
+
+            <div
+              onClick={() => navigate("/post-new-job")}
+              className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
+            >
+              {/* 🔵 Top-left glow */}
+              <div className="absolute -top-10 -left-10 w-[120px] h-[120px] bg-[#FFD6FF] opacity-40 blur-[40px] rounded-full"></div>
+              <img
+                src={CommercialImg}
+                alt="Commercial Cleaning"
+                className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] object-contain mb-3"
+              />
+              <span className="text-[13px] sm:text-[15px] font-medium text-[#111827] text-center">
+                Commercial Cleaning
+              </span>
+            </div>
+
+            <div
+              onClick={() => navigate("/post-new-job")}
+              className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
+            >
+              {/* 🔵 Top-left glow */}
+              <div className="absolute -top-10 -right-10 w-[120px] h-[120px] bg-[#FFD6FF] opacity-40 blur-[40px] rounded-full"></div>
+              <img
+                src={BondImg}
+                alt="Bond Cleaning"
+                className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] object-contain mb-3"
+              />
+              <span className="text-[13px] sm:text-[15px] font-medium text-[#111827] text-center">
+                Bond Cleaning
+              </span>
+            </div>
+
+            <div
+              onClick={() => navigate("/post-new-job")}
+              className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
+            >
+              {/* 🔵 Top-left glow */}
+              <div className="absolute -top-10 -right-10 w-[120px] h-[120px] bg-[#FFD6FF] opacity-40 blur-[40px] rounded-full"></div>
+              <img
+                src={OtherImg}
+                alt="Other Categories"
+                className="w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] object-contain mb-3"
+              />
+              <span className="text-[13px] sm:text-[15px] font-medium text-[#111827] text-center">
+                Other Categories
+              </span>
+            </div>
           </div>
         </div>
 
@@ -413,7 +533,7 @@ const CustomerDashboard = () => {
                           </div>
                           {job.status && (
                             <span
-                              className={`inline-block font-semibold text-[10px] px-2 py-0.5 rounded-full ${
+                              className={`inline-block font-medium text-[10px] px-2 py-1 rounded-full ${
                                 job.rawStatus === "quoted" ||
                                 job.rawStatus === "posted"
                                   ? "bg-[#E5F3FF] text-[#0088FF] border border-[#DDEFFF]"
