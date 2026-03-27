@@ -74,14 +74,7 @@ const ReviewsPage = () => {
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return '1 day ago';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} week${Math.ceil(diffDays / 7) > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-AU', { day: '2-digit', month: 'long', year: 'numeric' });
   };
 
   // Get customer name
@@ -195,15 +188,27 @@ const ReviewsPage = () => {
           <div className="bg-white rounded-2xl shadow-custom p-6 max-sm:p-4 max-sm:rounded-xl">
             <div className="space-y-6 max-sm:space-y-4 ">
               {reviews.map((review, index) => (
-                <div key={review._id || review.id || index} className="border-b border-[#F3F3F3] pb-4 max-sm:pb-3 last:border-b-0 last:pb-0">
+                <div key={review._id || review.id || index} className="border-b border-[#F3F3F3] pb-6 last:border-b-0 last:pb-0">
+                  {/* Job Information */}
+                  {review.job && (
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-primary-500 max-sm:text-base">
+                        {review.job.category} 
+                        <span className="text-[#6B7280] font-normal ml-2">
+                          • {review.job.serviceType}
+                        </span>
+                      </h3>
+                    </div>
+                  )}
+
                   <div className="flex items-start gap-4 max-sm:gap-3">
                     {/* Customer Avatar */}
-                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 max-sm:w-10 max-sm:h-10">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0 max-sm:w-11 max-sm:h-11">
                       {getCustomerAvatar(review) ? (
                         <img 
                           src={getCustomerAvatar(review)} 
                           alt="Customer" 
-                          className="w-12 h-12 rounded-full object-cover max-sm:w-10 max-sm:h-10"
+                          className="w-12 h-12 rounded-full object-cover max-sm:w-11 max-sm:h-11"
                         />
                       ) : (
                         <span className="text-sm font-semibold text-primary-500 max-sm:text-xs">
@@ -214,72 +219,50 @@ const ReviewsPage = () => {
 
                     {/* Review Content */}
                     <div className="flex-1">
-                      <div className="flex items-center  mb-2 max-sm:mb-1.5">
-                        <h4 className="font-medium text-primary-500 text-md max-sm:text-sm">
-                          {getCustomerName(review)}
-                        </h4>
-                      </div>
+                      <h4 className="font-semibold text-primary-500 text-lg mb-1 max-sm:text-base">
+                        {getCustomerName(review)}
+                      </h4>
 
-                      {/* Rating */}
-                      <div className="flex items-center gap-2 mb-3 max-sm:gap-1.5 max-sm:mb-2 max-sm:flex-wrap">
-                        <div className="flex items-center gap-1 max-sm:gap-0.5">
+                      {/* Rating and Date */}
+                      <div className="flex items-center gap-2 mb-4 max-sm:gap-1.5 max-sm:mb-3">
+                        <div className="flex items-center gap-1">
                           {renderStars(review.rating || 0, 'w-4 h-4 max-sm:w-3.5 max-sm:h-3.5')}
                         </div>
-                        <span className="text-base font-semibold text-primary-500 font-medium max-sm:text-xs">
+                        <span className="text-base font-semibold text-primary-500 max-sm:text-sm">
                           {review.rating || 0}
                         </span>
-                        <span className="text-sm text-primary-200 font-medium w-1 h-1 rounded-full bg-[#6B7280] max-sm:w-0.5 max-sm:h-0.5">
-                          
-                        </span>
-                        <span className="text-base text-primary-200 font-medium max-sm:text-xs">
-                          {formatDate(review.createdAt || review.timestamp)}
+                        <span className="w-1 h-1 rounded-full bg-[#6B7280]"></span>
+                        <span className="text-base text-[#6B7280] font-normal max-sm:text-sm">
+                          {formatDate(review.job?.scheduledDate || review.createdAt || review.timestamp)}
                         </span>
                       </div>
-
-                      {/* Review Text */}
-                      {review.comment && (
-                        <p className="text-primary-500 mb-3 text-base leading-relaxed max-sm:text-sm max-sm:mb-2">
-                          "{review.comment}"
-                        </p>
-                      )}
-
-                      {/* Feedback */}
+     {/* Feedback */}
                       {review.feedback && (
-                        <div className="mb-3 max-sm:mb-2">
-                          <p className="text-base text-primary-200 font-medium leading-relaxed max-sm:text-xs">
-                            "{review.feedback}"
-                          </p>
-                        </div>
+                        <p className="text-base text-[#111827] leading-relaxed max-sm:text-sm mb-3">
+                          {review.feedback}
+                        </p>
                       )}
 
                       {/* Liked Aspects */}
                       {review.likedAspects && review.likedAspects.length > 0 && (
-                        <div className="mb-3 max-sm:mb-2">
-                          <div className="flex flex-wrap gap-2 max-sm:gap-1.5">
-                            {review.likedAspects.map((aspect, aspectIndex) => (
-                              <span 
-                                key={aspectIndex}
-                                className="px-3 py-1.5 bg-[#EBF2FD] text-primary-600 text-sm font-medium rounded-full border border-[#9CC0F6] max-sm:px-2 max-sm:py-0.5 max-sm:text-[10px]"
-                              >
-                                {aspect}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Tags */}
-                      {review.tags && review.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 max-sm:gap-1.5">
-                          {review.tags.map((tag, tagIndex) => (
+                        <div className="flex flex-wrap gap-2 mb-4 max-sm:gap-1.5 max-sm:mb-3">
+                          {review.likedAspects.map((aspect, aspectIndex) => (
                             <span 
-                              key={tagIndex}
-                              className="px-3 py-1.5 bg-blue-100 text-blue-800 text-sm font-medium rounded-full max-sm:px-2 max-sm:py-0.5 max-sm:text-[10px]"
+                              key={aspectIndex}
+                              className="px-4 py-2 bg-[#E6F0FF] text-[#2563EB] text-sm font-medium rounded-full border border-[#BFDBFE] max-sm:px-3 max-sm:py-1 max-sm:text-xs"
                             >
-                              {tag}
+                              {aspect}
                             </span>
                           ))}
                         </div>
+                      )}
+
+                 
+                      {/* Backward Compatibility for comment */}
+                      {!review.feedback && review.comment && (
+                        <p className="text-base text-primary-500 leading-relaxed max-sm:text-sm">
+                          {review.comment}
+                        </p>
                       )}
                     </div>
                   </div>

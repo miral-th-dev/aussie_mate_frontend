@@ -38,7 +38,7 @@ const CustomSelect = ({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="mt-1 w-full flex items-center justify-between rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-primary-500 focus:border-primary-500 focus:outline-none cursor-pointer"
+        className="w-full h-[46px] flex items-center justify-between rounded-xl border border-gray-300 bg-white px-4 text-sm text-primary-500 focus:border-primary-500 focus:outline-none cursor-pointer"
       >
         <span className={value ? 'text-primary-500' : 'text-gray-400'}>
           {selectedOption ? selectedOption.label : placeholder}

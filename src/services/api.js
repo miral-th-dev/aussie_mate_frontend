@@ -1247,10 +1247,15 @@ export const subscriptionsAPI = {
   },
 
   // Get subscription history
-  getHistory: async (page = 1, limit = 20) => {
-    return apiRequest(`/subscriptions/history?page=${page}&limit=${limit}`, {
-      method: 'GET',
+  getHistory: async (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, value);
+      }
     });
+    const qs = query.toString();
+    return apiRequest(`/subscriptions/history${qs ? `?${qs}` : ''}`);
   },
 
   // Get credit packages

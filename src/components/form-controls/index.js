@@ -8,4 +8,5 @@ export { default as RadioCard } from './RadioCard';
 export { default as RadioButton } from './RadioButton';
 export { default as Calendar } from './Calendar';
 export { default as CustomSelect } from './CustomSelect';
+export { default as DateRangePicker } from './DateRangePicker';
 

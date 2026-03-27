@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Briefcase, History as HistoryIcon, Clock } from "lucide-react";
-import { PageHeader, PaginationRanges, Loader } from "../../components";
+import { X, History as HistoryIcon, Clock } from "lucide-react";
+import { PageHeader, PaginationRanges, Loader, Button, Calendar, CustomSelect, DateRangePicker } from "../../components";
 import { subscriptionsAPI } from "../../services/api";
+import dayjs from "dayjs";
 
 const LeadUsageHistoryPage = () => {
   const navigate = useNavigate();
@@ -11,20 +12,33 @@ const LeadUsageHistoryPage = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
   const limit = 10;
 
-  const fetchHistory = async (pageNumber) => {
+  const fetchHistory = async (pageNumber = 1, rangeOverride = null, sortOverride = null, orderOverride = null) => {
     setLoading(true);
     setError("");
+    const currentRange = rangeOverride !== null ? rangeOverride : dateRange;
+    const currentSortBy = sortOverride !== null ? sortOverride : sortBy;
+    const currentSortOrder = orderOverride !== null ? orderOverride : sortOrder;
+
     try {
-      const response = await subscriptionsAPI.getHistory(pageNumber, limit);
+      const response = await subscriptionsAPI.getHistory({ 
+        page: pageNumber, 
+        limit,
+        sortBy: currentSortBy,
+        sortOrder: currentSortOrder,
+        startDate: currentRange?.from ? dayjs(currentRange.from).format('YYYY-MM-DD') : undefined,
+        endDate: currentRange?.to ? dayjs(currentRange.to).format('YYYY-MM-DD') : undefined
+      });
+      
       if (response.success) {
         setHistory(response.data || []);
         if (response.pagination) {
           setTotalPages(response.pagination.totalPages || 1);
         } else {
-          // Fallback logic if pagination metadata is not directly available
-          // (Though our API helper suggests it should be there)
           setTotalPages(1);
         }
       } else {
@@ -63,18 +77,81 @@ const LeadUsageHistoryPage = () => {
 
         <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-50 bg-white">
-            <div className="flex flex-col">
-              <h3 className="text-lg font-medium text-gray-900">
-                Lead Usage History
-              </h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Track the credits used when you respond to customer job leads.
-              </p>
-            </div>
-            <div className="mt-4">
-              <span className="text-[14px] font-medium text-gray-300">
-                Full Activity Log
-              </span>
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              <div className="flex flex-col min-w-0">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Lead Usage History
+                </h3>
+                <p className="text-sm text-gray-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                  Track the credits used when you respond to customer job leads.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Advanced Date Range Picker */}
+                <div className="w-64">
+                  <DateRangePicker 
+                    range={dateRange}
+                    onRangeChange={setDateRange}
+                    onApply={() => fetchHistory(1)}
+                    placeholder="Select Date Range"
+                  />
+                </div>
+
+                <div className="w-36 h-[46px]">
+                  <CustomSelect 
+                    value={sortBy}
+                    onChange={(val) => {
+                      setSortBy(val);
+                      // Auto apply sorting
+                      // fetchHistory(1); // Usually sorting is auto-applied or needs a button
+                    }}
+                    placeholder="Sort By"
+                    options={[
+                      { label: 'Date', value: 'createdAt' },
+                      { label: 'Amount', value: 'amount' },
+                      { label: 'Type', value: 'type' }
+                    ]}
+                  />
+                </div>
+                
+                <div className="w-36 h-[46px]">
+                  <CustomSelect 
+                    value={sortOrder}
+                    onChange={setSortOrder}
+                    placeholder="Order"
+                    options={[
+                      { label: 'Newest First', value: 'desc' },
+                      { label: 'Oldest First', value: 'asc' }
+                    ]}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="primary" 
+                    onClick={() => fetchHistory(1)}
+                    className="px-5 h-[46px] rounded-xl text-sm"
+                  >
+                    Apply
+                  </Button>
+                  {(dateRange?.from || dateRange?.to || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
+                    <button 
+                      onClick={() => {
+                        const resetRange = { from: null, to: null };
+                        setDateRange(resetRange);
+                        setSortBy('createdAt');
+                        setSortOrder('desc');
+                        fetchHistory(1, resetRange, 'createdAt', 'desc');
+                      }}
+                      className="w-[46px] h-[46px] flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                      title="Clear Filters"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -102,25 +179,22 @@ const LeadUsageHistoryPage = () => {
                   {history.map((item, idx) => (
                     <div
                       key={item._id || idx}
-                      className="px-6 py-5 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
+                      className="px-6 py-6 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
                     >
                       <div className="flex gap-4 items-center">
-                        {/* <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-500 border border-gray-100">
-                          <Briefcase className="w-6 h-6" strokeWidth={1.5} />
-                        </div> */}
                         <div>
-                          <p className="text-[14px] font-medium text-[#111827] leading-tight mb-1 flex items-center flex-wrap gap-2">
-                            {item.type === "debit" &&
-                            item.jobId?.categoryId?.name &&
-                            item.jobId?.serviceTypeId?.name
-                              ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
-                              : item.description}
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <p className="text-[15px] font-bold text-[#111827] leading-tight">
+                              {item.type === "debit" && item.jobId
+                                ? `${(typeof item.jobId === 'object' ? (item.jobId.categoryId?.name || item.jobId.category) : '')} - ${(typeof item.jobId === 'object' ? (item.jobId.serviceTypeId?.name || item.jobId.serviceType) : '')}`
+                                : item.description}
+                            </p>
                             {item.reason === "bonus_lead_usage" && (
-                              <span className="px-2 py-0.5 text-[10px] font-medium text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100">
+                              <span className="px-2 py-0.5 text-[10px] font-medium text-[#2563EB] bg-[#EFF6FF] rounded-full border border-[#DBEAFE]">
                                 Bonus Lead
                               </span>
                             )}
-                          </p>
+                          </div>
                           <p className="text-[13px] text-gray-400 font-medium">
                             {item.jobId ? (
                               <>
@@ -128,16 +202,16 @@ const LeadUsageHistoryPage = () => {
                                 {typeof item.jobId === "object"
                                   ? item.jobId?.jobId
                                   : item.jobId}{" "}
-                                •
+                                •{" "}
                               </>
-                            ) : null}{" "}
+                            ) : null}
                             {formatDate(item.createdAt)}
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end">
                         <p
-                          className={`text-[18px] font-semibold leading-none mb-1 ${item.type === "credit" ? "text-[#10B981]" : "text-[#EF4444]"}`}
+                          className={`text-xl font-medium leading-none mb-1 ${item.type === "credit" ? "text-[#039855]" : "text-[#D92D20]"}`}
                         >
                           {item.type === "credit" ? "+" : "-"}
                           {Math.abs(item.amount)}
