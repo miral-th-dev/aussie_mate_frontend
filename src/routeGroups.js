@@ -35,7 +35,7 @@ const MatePointsPage = React.lazy(() => import('./pages/profile/customer/MatePoi
 const RewardSuccessPage = React.lazy(() => import('./pages/profile/customer/RewardSuccessPage'))
 const InvoicesPage = React.lazy(() => import('./pages/profile/customer/InvoicesPage'))
 const NotificationPage = React.lazy(() => import('./pages/profile/NotificationPage'))
-const NotificationSettingsPage = React.lazy(() => import('./pages/profile/NotificationSettingsPage'))
+
 const HelpSupportPage = React.lazy(() => import('./pages/profile/HelpSupportPage'))
 const LiveChatPage = React.lazy(() => import('./pages/profile/LiveChatPage'))
 const MyTicketsPage = React.lazy(() => import('./pages/profile/MyTicketsPage'))
