@@ -212,7 +212,7 @@ const CleanerJobCompletedPage = () => {
                 {customerReview.likedAspects?.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-2">
                     {customerReview.likedAspects.map(aspect => (
-                      <span key={aspect} className="px-5 py-2 rounded-full border border-blue-100 bg-blue-50 text-blue-600 font-semibold text-sm">
+                      <span key={aspect} className="px-5 py-2 rounded-full border border-blue-100 bg-blue-50 text-blue-600 font-medium text-sm">
                         {aspect}
                       </span>
                     ))}

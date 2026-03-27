@@ -433,7 +433,7 @@ const JobDetailsPage = () => {
                      {isSubscriptionExpired && !isContacted ? 'Renew to Chat' : 'Chat'}
                   </button>
                   {/* Call button - only if phone is available (usually hidden until booking) */}
-                  {isConnected && job.customerId.phone && (
+                  {/* {isConnected && job.customerId.phone && (
                      <button
                       onClick={() => window.open(`tel:${job.customerId.phone}`)}
                       className="flex items-center gap-2 px-4 py-2 bg-[#F1F6FF] text-primary-600 rounded-full font-semibold text-sm border border-[#E0EAFF] hover:bg-blue-50 transition-colors cursor-pointer"
@@ -441,7 +441,7 @@ const JobDetailsPage = () => {
                       <span className="text-primary-600">📞</span>
                       Call
                     </button>
-                  )}
+                  )} */}
                 </div>
               </div>
 
