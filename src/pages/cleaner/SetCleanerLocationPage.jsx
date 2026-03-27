@@ -4,7 +4,7 @@ import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import CurrentLocationIcon from '../../assets/currentLocation.svg';
 import MapPinIcon from '../../assets/map-pin 1.png';
 import { userAPI } from '../../services/api';
-import { Button, FloatingLabelInput, Loader } from '../../components';
+import { Button, FloatingLabelInput, Loader, PageHeader } from '../../components';
 
 // Map container style
 const mapContainerStyle = {
@@ -82,13 +82,13 @@ const SetCleanerLocationPage = () => {
         const lat = userData.location?.coordinates?.lat;
         const lng = userData.location?.coordinates?.lng;
         const addr = userData.address || userData.location?.address || userData.location?.fullAddress;
-        
-        
+
+
         // Check for valid coordinates (not null, not undefined, and not 0,0)
-        const hasValidCoordinates = lat != null && lng != null && 
-                                   lat !== 0 && lng !== 0 && 
-                                   !isNaN(lat) && !isNaN(lng);
-        
+        const hasValidCoordinates = lat != null && lng != null &&
+          lat !== 0 && lng !== 0 &&
+          !isNaN(lat) && !isNaN(lng);
+
         if (hasValidCoordinates && addr) {
           setSelectedLocation({
             address: addr,
@@ -111,10 +111,10 @@ const SetCleanerLocationPage = () => {
       return;
     }
 
-      setIsLoading(true);
+    setIsLoading(true);
     setError("");
 
-      navigator.geolocation.getCurrentPosition(
+    navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
@@ -123,7 +123,7 @@ const SetCleanerLocationPage = () => {
             `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
           );
           const data = await response.json();
-          
+
           if (data.status === "OK") {
             const fullAddress = data.results[0].formatted_address;
 
@@ -138,7 +138,7 @@ const SetCleanerLocationPage = () => {
             setSelectedLocation(location);
           } else {
             console.error("Geocoding error:", data.status, data.error_message);
-            
+
             let errorMessage = "Unable to get address details. ";
             switch (data.status) {
               case "REQUEST_DENIED":
@@ -158,7 +158,7 @@ const SetCleanerLocationPage = () => {
           }
         } catch (err) {
           console.error("Reverse geocoding failed:", err);
-          
+
           // Fallback: Use coordinates only if geocoding fails
           const location = {
             address: `Current Location (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`,
@@ -173,11 +173,11 @@ const SetCleanerLocationPage = () => {
         } finally {
           setIsLoading(false);
         }
-        },
+      },
       (err) => {
         console.error("Location error:", err);
-          setIsLoading(false);
-        
+        setIsLoading(false);
+
         let errorMessage = "Unable to access your location. ";
         switch (err.code) {
           case err.PERMISSION_DENIED:
@@ -207,13 +207,13 @@ const SetCleanerLocationPage = () => {
   const handleCustomRadiusChange = (e) => {
     const inputValue = e.target.value;
     setCustomRadius(inputValue);
-    
+
     // Only update searchRadius if the input is a valid number within range
     if (inputValue === "") {
       // Allow clearing the input
       return;
     }
-    
+
     const value = parseInt(inputValue);
     if (!isNaN(value) && value >= 0 && value <= 50) {
       setSearchRadius(value);
@@ -258,7 +258,7 @@ const SetCleanerLocationPage = () => {
 
     setIsLoading(true);
     setError('');
-    
+
     try {
       // Prepare location data for API
       const locationData = {
@@ -271,7 +271,7 @@ const SetCleanerLocationPage = () => {
 
       // Save location via API
       const response = await userAPI.updateLocation(locationData);
-      
+
       if (response.success) {
         // Persist search radius separately to avoid backend defaulting
         try {
@@ -279,7 +279,7 @@ const SetCleanerLocationPage = () => {
         } catch (radiusError) {
           // Don't fail the whole process if radius save fails
         }
-        
+
         // Dispatch location update event
         window.dispatchEvent(new CustomEvent('locationUpdated', {
           detail: {
@@ -288,11 +288,15 @@ const SetCleanerLocationPage = () => {
             coordinates: [selectedLocation.lng, selectedLocation.lat]
           }
         }));
-        
-        // Check if user came from Cleaner Jobs page
+
+        // Check redirection source
+        const fromEditProfile = location.state?.fromPage === 'edit-profile';
         const fromCleanerJobs = location.state?.from === 'cleaner-jobs';
-        
-        if (fromCleanerJobs) {
+
+        if (fromEditProfile) {
+          // Navigate to profile to see updated location
+          navigate('/profile');
+        } else if (fromCleanerJobs) {
           // Navigate back to Cleaner Jobs page
           navigate('/cleaner-jobs');
         } else {
@@ -312,7 +316,16 @@ const SetCleanerLocationPage = () => {
 
   return (
     <>
-      <div className="max-w-xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <PageHeader
+          title="Pick your location"
+          onBack={() => navigate(-1)}
+          className="h-14"
+          titleClassName="text-xl font-semibold text-gray-900"
+        />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 pb-6">
         {/* Google Map Section */}
         <div className="h-80 rounded-t-2xl overflow-hidden border">
           {isLoaded ? (
@@ -339,30 +352,30 @@ const SetCleanerLocationPage = () => {
         </div>
 
         {/* Location Details Section */}
-        <div className="bg-white rounded-b-2xl p-6 space-y-6">
+        <div className="rounded-b-2xl p-6 space-y-6">
           {/* Address Display */}
           {selectedLocation ? (
-          <div className="flex items-start justify-between space-x-3">
-            <div className="flex items-start space-x-3 flex-1">
-              <img src={MapPinIcon} alt="Location" className="w-5 h-5" />
-              <div className="flex-1">
-                <p className="font-semibold text-primary-500 text-sm">
+            <div className="flex items-start justify-between space-x-3">
+              <div className="flex items-start space-x-3 flex-1">
+                <img src={MapPinIcon} alt="Location" className="w-5 h-5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-primary-500 text-sm">
                     {selectedLocation.fullAddress || selectedLocation.address}
-                </p>
+                  </p>
+                </div>
               </div>
+              <Button
+                onClick={() => {
+                  setManualAddress(selectedLocation.fullAddress || selectedLocation.address || "");
+                  setShowManualInput(true);
+                }}
+                variant="link"
+                size="sm"
+                className="text-sm text-primary-600 font-semibold hover:text-blue-700"
+              >
+                Change
+              </Button>
             </div>
-            <Button
-              onClick={() => {
-                setManualAddress(selectedLocation.fullAddress || selectedLocation.address || "");
-                setShowManualInput(true);
-              }}
-              variant="link"
-              size="sm"
-              className="text-sm text-primary-600 font-semibold hover:text-blue-700"
-            >
-              Change
-            </Button>
-          </div>
           ) : (
             <div className="text-center py-4">
               <p className="text-gray-500 text-sm">
@@ -463,7 +476,7 @@ const SetCleanerLocationPage = () => {
               <span className="font-semibold text-primary-500">{searchRadius} km</span>
               <span className="text-primary-500 font-bold">50 km</span>
             </div>
-            
+
             <div className="relative">
               <input
                 type="range"
@@ -496,16 +509,16 @@ const SetCleanerLocationPage = () => {
 
           {/* Save Button */}
           <div className="flex justify-end mt-5">
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            loading={isLoading}
-            size="md"
-          >
-            Save Preferences
-          </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              loading={isLoading}
+              size="md"
+            >
+              Save Preferences
+            </Button>
+          </div>
         </div>
-      </div>
       </div>
     </>
   );

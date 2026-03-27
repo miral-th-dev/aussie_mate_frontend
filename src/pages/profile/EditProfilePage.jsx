@@ -10,6 +10,7 @@ import ProfileBG from '../../assets/CardBG7.png';
 import GoldBadgeIcon from '../../assets/goldBadge.svg';
 import SilverBadgeIcon from '../../assets/silverBadge.svg';
 import BronzeBadgeIcon from '../../assets/bronzeBadge.svg';
+import EditIcon from '../../assets/Editicon.svg';
 
 const EditProfilePage = () => {
   const { user, updateUser } = useAuth();
@@ -61,10 +62,10 @@ const EditProfilePage = () => {
       normalized === 'gold'
         ? GoldBadgeIcon
         : normalized === 'silver'
-        ? SilverBadgeIcon
-        : normalized === 'bronze'
-        ? BronzeBadgeIcon
-        : null;
+          ? SilverBadgeIcon
+          : normalized === 'bronze'
+            ? BronzeBadgeIcon
+            : null;
 
     return {
       label: baseLabel ? `${baseLabel} Tier` : '',
@@ -90,7 +91,7 @@ const EditProfilePage = () => {
 
 
   useEffect(() => {
-    if (user) {   
+    if (user) {
       setFormData({
         firstName: user.firstName || user.name || '',
         lastName: user.lastName || '',
@@ -117,7 +118,7 @@ const EditProfilePage = () => {
     const fetchUserLocation = async () => {
       try {
         const userProfile = await userAPI.getProfile();
-        
+
         const userData = userProfile.data?.user || userProfile.data || userProfile;
         const location = userData?.location;
         const apiPhoto = resolveProfilePhotoUrl(userData);
@@ -136,13 +137,13 @@ const EditProfilePage = () => {
             updateUser(mergedUser);
           }
         }
-        
+
         if (location) {
           const fullAddress = location.fullAddress || location.address || '';
           const addressParts = fullAddress.split(',');
           const address = addressParts[0]?.trim() || 'Location not set';
           const city = addressParts.length > 1 ? addressParts[addressParts.length - 2]?.trim() : (location.city || 'Please set your location');
-          
+
           setUserLocation({
             address: address,
             city: city,
@@ -231,7 +232,7 @@ const EditProfilePage = () => {
 
     // Validate file
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    const maxSize = 50 * 1024 * 1024; 
+    const maxSize = 50 * 1024 * 1024;
 
     if (!allowedTypes.includes(file.type)) {
       setPhotoError('Invalid file type. Only JPG, PNG, GIF, and WebP are allowed.');
@@ -256,15 +257,15 @@ const EditProfilePage = () => {
           profilePhoto: data.data.profilePhoto,
           profilePicture: data.data.profilePhoto?.secureUrl || data.data.profilePhoto?.url
         };
-        
+
         // Update localStorage
         localStorage.setItem('user', JSON.stringify(updatedUser));
         const newPhotoUrl = resolveProfilePhotoUrl(updatedUser);
         setProfilePhotoUrl(newPhotoUrl);
-        
+
         // Update context
         updateUser(updatedUser);
-        
+
         // Dispatch custom event to update other components
         window.dispatchEvent(new CustomEvent('userUpdated'));
 
@@ -304,14 +305,14 @@ const EditProfilePage = () => {
           profilePhoto: null,
           profilePicture: null
         };
-        
+
         // Update localStorage
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setProfilePhotoUrl('');
-        
+
         // Force update the user context immediately
         updateUser(updatedUser);
-        
+
         // Dispatch custom event to update other components
         window.dispatchEvent(new CustomEvent('userUpdated'));
 
@@ -325,20 +326,20 @@ const EditProfilePage = () => {
       // If API fails, still remove the photo locally
       if (error.message.includes('400')) {
         setPhotoError('Photo may not exist on server, removing locally...');
-        
+
         // Remove photo locally
         const updatedUser = {
           ...user,
           profilePhoto: null,
           profilePicture: null
         };
-        
+
         localStorage.setItem('user', JSON.stringify(updatedUser));
         setProfilePhotoUrl('');
         updateUser(updatedUser);
         window.dispatchEvent(new CustomEvent('userUpdated'));
         setFormData(prev => ({ ...prev }));
-        
+
         // Clear error after a moment
         setTimeout(() => setPhotoError(''), 2000);
       } else {
@@ -363,17 +364,17 @@ const EditProfilePage = () => {
       };
 
       const response = await userAPI.updateProfile(updateData);
-      
+
       if (response.success) {
         // Update user context with new data
         const updatedUser = {
           ...user,
           ...updateData
         };
-        
+
         // Update localStorage
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        
+
         // Dispatch custom event to update other components
         window.dispatchEvent(new CustomEvent('userUpdated'));
 
@@ -394,12 +395,12 @@ const EditProfilePage = () => {
   const handleChangeLocation = () => {
     const userType = user?.userType || user?.role || '';
     const isCleaner = ['Cleaner', 'cleaner'].includes(userType);
-    
-    navigate(isCleaner ? '/set-cleaner-location' : '/location', { 
-      state: { 
+
+    navigate(isCleaner ? '/set-cleaner-location' : '/location', {
+      state: {
         fromPage: 'edit-profile',
         step: 'edit-profile'
-      } 
+      }
     });
   };
 
@@ -456,17 +457,17 @@ const EditProfilePage = () => {
                   </div>
                 )}
               </div>
-              <button 
+              <button
                 onClick={handleEditPhotoClick}
                 disabled={photoLoading}
-                className="absolute bottom-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-primary-500 rounded-full shadow-custom flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-3 border-white"
+                className="absolute bottom-1 -right-1 w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed border-2 border-white"
               >
-                <Pen className="w-4 h-4 text-white" strokeWidth={2} />
+                <img src={EditIcon} alt="Edit" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              
+
               {/* Delete Photo Button - Only show if photo exists */}
               {profilePhotoUrl && (
-                <button 
+                <button
                   onClick={handleDeletePhoto}
                   disabled={photoLoading}
                   className="absolute top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 bg-[#EF4444] rounded-full shadow-md flex items-center justify-center transition-colors cursor-pointer"
@@ -483,32 +484,32 @@ const EditProfilePage = () => {
                 {`${formData.firstName || user?.firstName || user?.name || 'User'} ${formData.lastName || user?.lastName || ''}`.trim()}
               </h2>
 
-            <div className="space-y-2">
-              {user?.role?.toLowerCase() !== 'customer' && accountTypeLabel && (
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                  <div className="text-base text-primary-500 font-medium flex items-center gap-2">
-                    <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-primary-500" strokeWidth={2} />
-                    <span className=" text-base font-medium tracking-wide sm:normal-case sm:tracking-normal">Account Type :-</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <div className="text-sm sm:text-base font-medium text-primary-200">
-                      {accountTypeLabel}
+              <div className="space-y-2">
+                {user?.role?.toLowerCase() !== 'customer' && accountTypeLabel && (
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                    <div className="text-base text-primary-500 font-medium flex items-center gap-2">
+                      <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-primary-500" strokeWidth={2} />
+                      <span className=" text-base font-medium tracking-wide sm:normal-case sm:tracking-normal">Account Type :-</span>
                     </div>
-                    {tierInfo.label && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#F6F8FF] border border-[#E0E7FF] text-xs sm:text-sm font-medium text-primary-500 shadow-sm">
-                        {tierInfo.icon && (
-                          <img
-                            src={tierInfo.icon}
-                            alt={`${tierInfo.label} badge`}
-                            className="w-3.5 h-3.5 sm:w-4 sm:h-4"
-                          />
-                        )}
-                        {tierInfo.label}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <div className="text-sm sm:text-base font-medium text-primary-200">
+                        {accountTypeLabel}
+                      </div>
+                      {tierInfo.label && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[#F6F8FF] border border-[#E0E7FF] text-xs sm:text-sm font-medium text-primary-500 shadow-sm">
+                          {tierInfo.icon && (
+                            <img
+                              src={tierInfo.icon}
+                              alt={`${tierInfo.label} badge`}
+                              className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                            />
+                          )}
+                          {tierInfo.label}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
                 <div className="flex items-center gap-2 sm:gap-3">
                   <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-primary-500 flex-shrink-0" strokeWidth={2} />
@@ -526,7 +527,7 @@ const EditProfilePage = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Photo Upload Error */}
           {photoError && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">

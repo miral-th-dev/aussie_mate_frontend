@@ -133,7 +133,7 @@ const Header = () => {
         </div>
 
         {/* Right: Icons */}
-        <div className="flex-1 flex items-center justify-end space-x-2 md:space-x-3 " >
+        <div className="flex-1 flex items-center justify-end space-x-2 md:space-x-3" >
           {/* Notification Icon */}
           <button 
             onClick={() => navigate('/notifications')}
@@ -144,15 +144,15 @@ const Header = () => {
 
           {/* Profile Icon or Login/Register */}
           {user ? (
-            <div className="flex items-center space-x-2 md:space-x-3">
+            <div className="flex items-center space-x-2 md:space-x-">
               <Link 
                 to="/profile" 
-                className="p-1.5 sm:p-2 md:p-2.5 hover:bg-gray-100 rounded-lg! transition-colors"
+                className="hover:bg-gray-100 rounded-lg! transition-colors"
               >
                 <img src={ProfileIcon} alt="Profile" className="w-5 h-5 sm:w-6 sm:h-6 md:w-6 md:h-6" />
               </Link>
               <span className="hidden sm:block text-xs sm:text-sm md:text-base text-primary-200 font-medium capitalize">
-                Welcome, {user.firstName || user.name || 'User'}
+                {user.firstName || user.name || 'User'}
               </span>
             </div>
           ) : (

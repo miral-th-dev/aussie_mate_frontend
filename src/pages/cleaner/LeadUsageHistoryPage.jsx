@@ -79,10 +79,10 @@ const LeadUsageHistoryPage = () => {
           <div className="p-6 border-b border-gray-50 bg-white">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex flex-col min-w-0">
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-[20px] font-semibold text-[#111827]">
                   Lead Usage History
                 </h3>
-                <p className="text-sm text-gray-500 mt-1 whitespace-nowrap overflow-hidden text-ellipsis">
+                <p className="text-sm text-gray-500 mt-1">
                   Track the credits used when you respond to customer job leads.
                 </p>
               </div>
@@ -179,22 +179,22 @@ const LeadUsageHistoryPage = () => {
                   {history.map((item, idx) => (
                     <div
                       key={item._id || idx}
-                      className="px-6 py-6 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
+                      className="px-6 py-5 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
                     >
                       <div className="flex gap-4 items-center">
                         <div>
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <p className="text-[15px] font-bold text-[#111827] leading-tight">
-                              {item.type === "debit" && item.jobId
-                                ? `${(typeof item.jobId === 'object' ? (item.jobId.categoryId?.name || item.jobId.category) : '')} - ${(typeof item.jobId === 'object' ? (item.jobId.serviceTypeId?.name || item.jobId.serviceType) : '')}`
-                                : item.description}
-                            </p>
+                          <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
+                            {item.type === "debit" &&
+                            item.jobId?.categoryId?.name &&
+                            item.jobId?.serviceTypeId?.name
+                              ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
+                              : item.description}
                             {item.reason === "bonus_lead_usage" && (
-                              <span className="px-2 py-0.5 text-[10px] font-medium text-[#2563EB] bg-[#EFF6FF] rounded-full border border-[#DBEAFE]">
+                              <span className="ml-2 px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
                                 Bonus Lead
                               </span>
                             )}
-                          </div>
+                          </p>
                           <p className="text-[13px] text-gray-400 font-medium">
                             {item.jobId ? (
                               <>
@@ -202,22 +202,22 @@ const LeadUsageHistoryPage = () => {
                                 {typeof item.jobId === "object"
                                   ? item.jobId?.jobId
                                   : item.jobId}{" "}
-                                •{" "}
+                                •
                               </>
-                            ) : null}
+                            ) : null}{" "}
                             {formatDate(item.createdAt)}
                           </p>
                         </div>
                       </div>
                       <div className="text-right flex flex-col items-end">
                         <p
-                          className={`text-xl font-medium leading-none mb-1 ${item.type === "credit" ? "text-[#039855]" : "text-[#D92D20]"}`}
+                          className={`text-[14px] font-semibold leading-none mb-1 ${item.type === "credit" ? "text-[#10B981]" : "text-[#EF4444]"}`}
                         >
                           {item.type === "credit" ? "+" : "-"}
                           {Math.abs(item.amount)}
                         </p>
-                        <p className="text-[10px] font-medium text-gray-400 leading-none">
-                          Credits
+                        <p className="text-[10px] font-semibold text-gray-300 uppercase tracking-widest leading-none">
+                          CREDITS
                         </p>
                       </div>
                     </div>
@@ -235,13 +235,13 @@ const LeadUsageHistoryPage = () => {
               </>
             ) : (
               <div className="flex-1 p-20 text-center flex flex-col items-center justify-center">
-                <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-6 border-2 border-dashed border-gray-200">
-                  <HistoryIcon className="w-10 h-10 text-gray-300" />
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-gray-200">
+                  <HistoryIcon className="w-8 h-8 text-gray-300" />
                 </div>
-                <h4 className="text-gray-900 font-bold text-xl mb-2">
+                <h4 className="text-gray-500 font-bold text-lg">
                   No Lead Activity Found
                 </h4>
-                <p className="text-gray-400 text-sm max-w-xs mx-auto">
+                <p className="text-gray-400 text-sm max-w-xs mx-auto mt-1">
                   Your lead activity will appear here once you start responding
                   to customer jobs.
                 </p>

@@ -2,10 +2,10 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { userAPI } from '../../services/api';
-import { Button, Loader } from '../../components';
+import { Button, Loader, PageHeader } from '../../components';
 import CurrentLocationIcon from "../../assets/currentLocation.svg";
 
-  
+
 // Map container style
 const mapContainerStyle = {
   width: '100%',
@@ -34,13 +34,13 @@ const LocationPage = () => {
   const location = useLocation();
 
   // Google Maps API key
-  const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY ;
+  const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
 
   // Check if user is logged in when page loads
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
-    
+
     if (!user) {
       navigate("/login");
     }
@@ -100,13 +100,13 @@ const LocationPage = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        
+
         try {
           const response = await fetch(
             `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
           );
           const data = await response.json();
-          
+
           if (data.status === "OK") {
             const fullAddress = data.results[0].formatted_address;
 
@@ -120,7 +120,7 @@ const LocationPage = () => {
             setSelectedLocation(location);
           } else {
             console.error("Geocoding error:", data.status, data.error_message);
-            
+
             let errorMessage = "Unable to get address details. ";
             switch (data.status) {
               case "REQUEST_DENIED":
@@ -140,7 +140,7 @@ const LocationPage = () => {
           }
         } catch (err) {
           console.error("Reverse geocoding failed:", err);
-          
+
           const location = {
             fullAddress: `Current Location (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`,
             lat: latitude,
@@ -171,7 +171,7 @@ const LocationPage = () => {
         // Fallback to default coordinates if geolocation not available
         setSelectedLocation({
           fullAddress: manualAddress.trim(),
-          lat: -33.839, 
+          lat: -33.839,
           lng: 151.207,
           coordinates: "-33.839, 151.207",
         });
@@ -199,7 +199,7 @@ const LocationPage = () => {
           // Fallback to default coordinates if GPS fails
           setSelectedLocation({
             fullAddress: manualAddress.trim(),
-            lat: -33.839, 
+            lat: -33.839,
             lng: 151.207,
             coordinates: "-33.839, 151.207",
           });
@@ -225,13 +225,13 @@ const LocationPage = () => {
 
   const handleConfirmLocation = async () => {
     if (!selectedLocation) return;
-  
+
     const fullAddress = selectedLocation.fullAddress || '';
     const addressParts = fullAddress.split(',');
-    const city = addressParts.length > 1 
-      ? addressParts[addressParts.length - 2]?.trim() 
+    const city = addressParts.length > 1
+      ? addressParts[addressParts.length - 2]?.trim()
       : "Unknown";
-  
+
     const locationData = {
       address: selectedLocation.address || selectedLocation.fullAddress,
       city: city,
@@ -243,49 +243,60 @@ const LocationPage = () => {
         lng: selectedLocation.lng
       }
     };
-  
+
     try {
       // BACKEND API CALL
       await userAPI.updateLocation(locationData);
-  
+
       //  STORE IN LOCAL STORAGE
       localStorage.setItem("userLocation", JSON.stringify(locationData));
-  
+
       // FIRE FRONTEND EVENT
       window.dispatchEvent(new CustomEvent("locationUpdated"));
-  
+
     } catch (error) {
       console.error("Location update failed:", error);
     }
-  
+
     // REDIRECT LOGIC
+    const fromEditProfile = location.state?.fromPage === 'edit-profile';
+    if (fromEditProfile) {
+      return navigate("/profile");
+    }
+
     const userStr = localStorage.getItem("user");
     const user = userStr ? JSON.parse(userStr) : null;
-  
+
     if (!user) return navigate("/login");
-  
+
     const userType = user?.userType || user?.role;
     const existingLocation = localStorage.getItem("userLocation");
-  
+
     // First time user → Always go to customer dashboard
     if (!existingLocation) return navigate("/customer-dashboard");
-  
+
     if (["Customer", "customer"].includes(userType)) {
       return navigate("/customer-dashboard");
     }
-  
+
     return navigate("/cleaner-dashboard");
   };
-  
+
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="px-4 py-6">
-        <div className="max-w-md mx-auto">
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <PageHeader
+          title="Pick your location"
+          onBack={() => navigate(-1)}
+          className="h-14"
+          titleClassName="text-xl font-semibold text-gray-900"
+        />
+      </div>
+
+      <div className="px-4 pb-6">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-primary-500 mb-2">
-              Pick your location
-            </h2>
             <p className="text-primary-200 font-medium">
               Add your location so we can match you with the closest cleaners.
             </p>

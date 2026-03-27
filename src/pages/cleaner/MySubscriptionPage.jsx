@@ -16,7 +16,7 @@ import { subscriptionsAPI, categoriesAPI } from "../../services/api";
 import { Button, Loader, PageHeader } from "../../components";
 import { useAuth } from "../../contexts/AuthContext";
 import BGVector from "../../assets/BG Vectorr.svg";
-import GiftIcon from "../../assets/Group.svg";
+import GiftIcon from "../../assets/Gift.svg";
 import ClockIcon from "../../assets/Clock Circle.svg";
 import DollorIcon from "../../assets/Dollarr.svg";
 
@@ -213,7 +213,7 @@ const MySubscriptionPage = () => {
                 <div className="p-6 relative z-10 flex flex-col gap-4 text-[#111827]">
                   <div className="flex justify-between items-start">
                     <div>
-                      <span className="inline-flex items-center px-4 py-1 rounded-full border border-[#DBF9E7] bg-[#EBFBF5] text-[#10B981] text-xs font-medium mb-4">
+                      <span className="inline-flex items-center px-4 py-1 rounded-full border border-[#DBF9E7] bg-[#EBFBF5] text-[#10B981] text-xs font-medium mb-1">
                         Active
                       </span>
                       <h2 className="text-xl font-medium text-[#111827]">
@@ -222,19 +222,38 @@ const MySubscriptionPage = () => {
                     </div>
                   </div>
 
-                  {/* Credits Badge Box - Refined Figma Style */}
-                  <div className="bg-white border border-[#F3F3F3] rounded-[14px] p-2 flex flex-col gap-2 max-w-2xl">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
-                        <Coins className="w-3.5 h-3.5 text-[#1F6FEB]" />
+                  {/* Info Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Credits Badge Box - Refined Figma Style */}
+                    <div className="bg-white border border-[#F3F3F3] rounded-[20px] p-4 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
+                          <Coins className="w-3.5 h-3.5 text-[#1F6FEB]" />
+                        </div>
+                        <span className="text-[#1F6FEB] font-medium text-base">
+                          Credits
+                        </span>
                       </div>
-                      <span className="text-[#1F6FEB] font-medium text-base">
-                        Credits
-                      </span>
+                      <p className="text-xl font-semibold text-[#111827]">
+                        {activeSubscription.availableCredits} Credits
+                      </p>
                     </div>
-                    <p className="text-xl font-semibold text-[#111827]">
-                      {activeSubscription.availableCredits} Credits
-                    </p>
+
+                    {/* Bonus Leads Box - Clean White per Figma */}
+                    <div className="bg-white border border-[#F3F3F3] rounded-[20px] p-4 flex items-center gap-4">
+                      <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={GiftIcon}
+                          alt="gift"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <p className="text-lg font-medium text-[#111827]">
+                        {activeSubscription?.subscription?.planId?.bonusLeads ??
+                          0}{" "}
+                        Free Bonus Leads
+                      </p>
+                    </div>
                   </div>
 
                   <div>
@@ -248,31 +267,33 @@ const MySubscriptionPage = () => {
                       )}
                     </p>
                   </div>
-
-                  {/* Bonus Leads Box - Clean White per Figma */}
-                  <div className="bg-white border border-[#F3F3F3] rounded-[14px] p-2 flex items-center gap-4 max-w-2xl">
-                    <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-                      <span className="text-2xl">🎁</span>
-                    </div>
-                    <p className="text-lg font-medium text-[#111827]">
-                      {activeSubscription?.subscription?.planId?.bonusLeads ??
-                        0}{" "}
-                      Free Bonus Leads
-                    </p>
-                  </div>
                 </div>
               </div>
 
               {/* Credit Usage Section - Moved to its own card as requested */}
-              <div className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] p-8 shadow-sm">
-                <p className="text-2xl font-semibold text-[#111827] mb-2">
-                  Credit Usage
-                </p>
+              <div className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-2xl font-semibold text-[#111827]">
+                    Credit Usage
+                  </p>
+                  <button
+                    onClick={() => navigate("/buy-credits")}
+                    className="flex items-center gap-2 text-[#1F6FEB] font-bold text-sm hover:opacity-80 transition-opacity"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center">
+                      <Plus
+                        className="w-3.5 h-3.5 text-white"
+                        strokeWidth={3}
+                      />
+                    </div>
+                    Buy Credits
+                  </button>
+                </div>
 
-                <div className="mb-8 relative">
-                  <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
+                <div className="mb-4 relative group cursor-pointer">
+                  <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden relative">
                     <div
-                      className="h-full bg-[#22C55E] rounded-full transition-all duration-1000 relative"
+                      className="h-full bg-[#22C55E] rounded-full transition-all duration-1000 relative animate-stripes"
                       style={{
                         backgroundImage:
                           "linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)",
@@ -282,7 +303,7 @@ const MySubscriptionPage = () => {
                     />
                   </div>
                   <div
-                    className="absolute left-0 -bottom-2 transform translate-y-full"
+                    className="absolute left-0 -bottom-2 transform translate-y-full opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
                     style={{
                       left: `${Math.min(
                         90,
@@ -327,7 +348,7 @@ const MySubscriptionPage = () => {
                   </div>
                 </div>
 
-                <p className="text-base font-medium text-[#374151] mb-6">
+                <p className="text-base font-medium text-[#374151]">
                   Estimated Leads Remaining:{" "}
                   <span className="text-[#111827] ml-1 font-semibold">
                     {Math.floor(
@@ -339,20 +360,6 @@ const MySubscriptionPage = () => {
                   </span>
                 </p>
 
-                {canBuyCredits && (
-                  <button
-                    onClick={() => navigate("/buy-credits")}
-                    className="flex items-center gap-2 text-[#1F6FEB] font-black text-sm hover:opacity-80 transition-opacity"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center">
-                      <Plus
-                        className="w-3.5 h-3.5 text-white"
-                        strokeWidth={3}
-                      />
-                    </div>
-                    Buy Credits
-                  </button>
-                )}
               </div>
 
               {/* Lead Usage History */}
@@ -370,9 +377,7 @@ const MySubscriptionPage = () => {
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
-                    RECENT ACTIVITY
-                  </span>
+              
                 </div>
 
                 <div className="divide-y divide-[#F9FAFB]">
@@ -387,18 +392,19 @@ const MySubscriptionPage = () => {
                             <Briefcase className="w-6 h-6" strokeWidth={1.5} />
                           </div> */}
                           <div>
-                            <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
-                              {item.type === "debit" &&
-                              item.jobId?.categoryId?.name &&
-                              item.jobId?.serviceTypeId?.name
-                                ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
-                                : item.description}
-                              {item.reason === "bonus_lead_usage" && (
-                                <span className="px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
-                                  Bonus Lead
-                                </span>
-                              )}
-                            </p>
+                      <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
+  {item.type === "debit" &&
+  item.jobId?.categoryId?.name &&
+  item.jobId?.serviceTypeId?.name
+    ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
+    : item.description}
+
+  {item.reason === "bonus_lead_usage" && (
+    <span className="ml-2 px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
+      Bonus Lead
+    </span>
+  )}
+</p>
                             <p className="text-[13px] text-gray-400 font-medium">
                               {item.jobId ? (
                                 <>
@@ -696,6 +702,17 @@ const MySubscriptionPage = () => {
           </div>
         )}
       </div>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes stripes {
+            from { background-position: 0 0; }
+            to { background-position: 1rem 0; }
+          }
+          .animate-stripes {
+            animation: stripes 1s linear infinite;
+          }
+        `
+      }} />
     </div>
   );
 };
