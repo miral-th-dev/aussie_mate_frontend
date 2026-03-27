@@ -282,7 +282,7 @@
         const res = await userAPI.uploadDocuments(fd);
         if (!res.success) throw new Error(res.message || "Upload failed.");
     
-        navigate(userRole === "NDIS Assistant" ? "/cleaner/compliance-quiz" : "/set-cleaner-location");
+        navigate(userRole === "NDIS Assistant" ? "/cleaner/compliance-quiz" : "/location");
       } 
       catch (err) {
         setError(err.inner?.[0]?.message || err.message || "Upload failed.");

@@ -477,8 +477,8 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                       </h3>
                     </div>
 
-                    <div className="mb-8 relative">
-                      <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  mb-6 relative">
+                    <div className="mb-4 relative group cursor-pointer">
+                      <div className="w-full h-4 bg-[#E5E7EB] rounded-full overflow-hidden  relative">
                         <div
                           className="h-full bg-[#22C55E] rounded-full transition-all duration-1000 relative"
                           style={{ 
@@ -491,7 +491,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
 
                       {/* Progress Indicator Tooltip */}
                       <div
-                        className="absolute left-0 -bottom-2 transform translate-y-full"
+                        className="absolute left-0 -bottom-2 transform translate-y-full opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none"
                         style={{
                           left: `${Math.min(90, Math.max(0, ((subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits) / subscriptionStatus.subscription?.planId?.creditsPerMonth) * 100))}%`,
                         }}

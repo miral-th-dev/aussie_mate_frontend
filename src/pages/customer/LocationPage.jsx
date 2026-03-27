@@ -1,9 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { userAPI } from '../../services/api';
-import { Button, Loader, PageHeader } from '../../components';
-import CurrentLocationIcon from "../../assets/currentLocation.svg";
+import { MapPin, Navigation, ArrowLeft } from 'lucide-react';
+import { Button, Loader } from '../../components';
+import { CLEANER_ROLES } from '../../routeGroups';
+import Header from '../../components/layout/Header';
 
 
 // Map container style
@@ -25,6 +28,7 @@ const libraries = ['places'];
 const LocationPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [map, setMap] = useState(null);
@@ -32,6 +36,36 @@ const LocationPage = () => {
   const [manualAddress, setManualAddress] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const isFromApp = !!location.state?.fromPage;
+  const isCleaner = user && (
+    ['Cleaner', 'cleaner', 'CLEANER'].includes(user.role) || 
+    ['Cleaner', 'cleaner', 'CLEANER'].includes(user.userType) ||
+    CLEANER_ROLES.map(r => r.toLowerCase()).includes((user.role || '').toLowerCase()) ||
+    CLEANER_ROLES.map(r => r.toLowerCase()).includes((user.userType || '').toLowerCase())
+  );
+
+  const [searchRadius, setSearchRadius] = useState(25);
+  const [customRadius, setCustomRadius] = useState("");
+
+  // Load initial radius if cleaner
+  useEffect(() => {
+    if (isCleaner) {
+      const fetchRadius = async () => {
+        try {
+          const profileResponse = await userAPI.getProfile();
+          if (profileResponse.success) {
+            const userData = profileResponse.data?.user || profileResponse.data || profileResponse;
+            const radius = userData?.searchRadius || userData?.radius || 25;
+            setSearchRadius(radius);
+          }
+        } catch (err) {
+          console.error("Failed to fetch radius:", err);
+        }
+      };
+      fetchRadius();
+    }
+  }, [isCleaner]);
 
   // Google Maps API key
   const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
@@ -88,6 +122,47 @@ const LocationPage = () => {
   };
 
   // Get current location with Google Maps API
+  const onAutocompleteLoad = (autocompleteInstance) => {
+    setAutocomplete(autocompleteInstance);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      if (place.geometry) {
+        const location = {
+          fullAddress: place.formatted_address || place.name,
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+          coordinates: `${place.geometry.location.lat()}, ${place.geometry.location.lng()}`,
+        };
+        setSelectedLocation(location);
+        setSearchQuery(place.formatted_address || place.name);
+      }
+    }
+  };
+
+  const handleMapClick = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    
+    setIsLoading(true);
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const location = {
+          fullAddress: results[0].formatted_address,
+          lat,
+          lng,
+          coordinates: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+        };
+        setSelectedLocation(location);
+        setSearchQuery(results[0].formatted_address);
+      }
+      setIsLoading(false);
+    });
+  };
+
   const handleGetCurrentLocation = () => {
     if (!navigator.geolocation) {
       setError("Geolocation is not supported by this browser.");
@@ -102,64 +177,31 @@ const LocationPage = () => {
         const { latitude, longitude } = position.coords;
 
         try {
-          const response = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`
-          );
-          const data = await response.json();
-
-          if (data.status === "OK") {
-            const fullAddress = data.results[0].formatted_address;
-
-            const location = {
-              fullAddress: fullAddress,
-              lat: latitude,
-              lng: longitude,
-              coordinates: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-            };
-
-            setSelectedLocation(location);
-          } else {
-            console.error("Geocoding error:", data.status, data.error_message);
-
-            let errorMessage = "Unable to get address details. ";
-            switch (data.status) {
-              case "REQUEST_DENIED":
-                errorMessage += "Geocoding API is not enabled. Please enable it in Google Cloud Console.";
-                break;
-              case "OVER_QUERY_LIMIT":
-                errorMessage += "API quota exceeded. Please try again later.";
-                break;
-              case "ZERO_RESULTS":
-                errorMessage += "No results found for this location.";
-                break;
-              default:
-                errorMessage += "Please try again.";
-                break;
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const location = {
+                fullAddress: results[0].formatted_address,
+                lat: latitude,
+                lng: longitude,
+                coordinates: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+              };
+              setSelectedLocation(location);
+              setSearchQuery(results[0].formatted_address);
+            } else {
+              setError("Lookup failed: " + status);
             }
-            setError(errorMessage);
-          }
+            setIsLoading(false);
+          });
         } catch (err) {
-          console.error("Reverse geocoding failed:", err);
-
-          const location = {
-            fullAddress: `Current Location (${latitude.toFixed(6)}, ${longitude.toFixed(6)})`,
-            lat: latitude,
-            lng: longitude,
-            coordinates: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
-          };
-
-          setSelectedLocation(location);
-          setError("Address lookup failed, but location coordinates are available.");
-        } finally {
+          setError("Reverse geocoding failed");
           setIsLoading(false);
         }
       },
       (err) => {
-        console.error("Location error:", err);
         setIsLoading(false);
-        setError("Unable to access your location. Please allow GPS.");
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        setError("Unable to access location.");
+      }
     );
   };
 
@@ -223,6 +265,22 @@ const LocationPage = () => {
     setManualAddress("");
   };
 
+  const handleRadiusChange = (value) => {
+    setSearchRadius(value);
+    setCustomRadius("");
+  };
+
+  const handleCustomRadiusChange = (e) => {
+    const inputValue = e.target.value;
+    setCustomRadius(inputValue);
+    if (inputValue === "") return;
+
+    const value = parseInt(inputValue);
+    if (!isNaN(value) && value >= 0 && value <= 50) {
+      setSearchRadius(value);
+    }
+  };
+
   const handleConfirmLocation = async () => {
     if (!selectedLocation) return;
 
@@ -245,17 +303,35 @@ const LocationPage = () => {
     };
 
     try {
+      setIsLoading(true);
       // BACKEND API CALL
-      await userAPI.updateLocation(locationData);
+      const response = await userAPI.updateLocation(locationData);
+
+      if (response.success && isCleaner) {
+        // Persist search radius separately
+        try {
+          await userAPI.updateSearchRadius(searchRadius);
+        } catch (radiusError) {
+          // ignore radius save errors
+        }
+      }
 
       //  STORE IN LOCAL STORAGE
       localStorage.setItem("userLocation", JSON.stringify(locationData));
 
       // FIRE FRONTEND EVENT
-      window.dispatchEvent(new CustomEvent("locationUpdated"));
+      window.dispatchEvent(new CustomEvent("locationUpdated", {
+        detail: {
+            address: selectedLocation.address || selectedLocation.fullAddress,
+            city: city,
+            coordinates: [selectedLocation.lng, selectedLocation.lat]
+        }
+      }));
 
     } catch (error) {
       console.error("Location update failed:", error);
+    } finally {
+      setIsLoading(false);
     }
 
     // REDIRECT LOGIC
@@ -285,55 +361,63 @@ const LocationPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 pt-4">
-        <PageHeader
-          title="Pick your location"
-          onBack={() => navigate(-1)}
-          className="h-14"
-          titleClassName="text-xl font-semibold text-gray-900"
-        />
+      {isFromApp && <Header />}
+      {/* Header with Search and Descriptive Text */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="mt-1 p-2.5 -ml-3 hover:bg-gray-100 rounded-full transition-all group"
+            >
+              <ArrowLeft className="w-6 h-6 text-gray-700 group-hover:text-primary-600" />
+            </button>
+            <div className="space-y-1.5">
+              <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">Pick your location</h1>
+              <p className="text-[#6B7280] font-medium text-[15px]">
+                Add your location so we can match you with the closest cleaners.
+              </p>
+            </div>
+          </div>
+
+          {/* Search Input on the Right */}
+          <div className="w-full md:w-[460px]">
+            <form onSubmit={handleSearch}>
+              {isLoaded ? (
+                <Autocomplete
+                  onLoad={onAutocompleteLoad}
+                  onPlaceChanged={onPlaceChanged}
+                >
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search for area, street name..."
+                      className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-100/30 text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
+                    />
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
+                       <MapPin className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Autocomplete>
+              ) : (
+                <div className="w-full h-[60px] bg-gray-50 border border-gray-100 rounded-full animate-pulse" />
+              )}
+            </form>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 text-red-600 text-sm bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            {error}
+          </div>
+        )}
       </div>
 
-      <div className="px-4 pb-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-6">
-            <p className="text-primary-200 font-medium">
-              Add your location so we can match you with the closest cleaners.
-            </p>
-          </div>
-
-          {/* Search and Location Controls */}
-          <div className="mb-4 space-y-3">
-            <form onSubmit={handleSearch} className="space-y-3">
-              {/* Search Input */}
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search for area, street name..."
-                className="w-full pl-4 pr-4 py-4 border border-gray-300 rounded-xl focus:outline-none"
-              />
-
-              {/* Get Current Location */}
-              <Button
-                type="button"
-                onClick={handleGetCurrentLocation}
-                loading={isLoading}
-                variant="secondary"
-                size="md"
-                icon={CurrentLocationIcon}
-                fullWidth
-              >
-                Get current location
-              </Button>
-            </form>
-
-            {error && (
-              <div className="text-red-600 text-sm text-center bg-red-50 border border-red-200 rounded-lg p-3">
-                {error}
-              </div>
-            )}
-          </div>
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 pt-0! px-4 sm:px-6 lg:px-8 pb-10">
+        <div className="w-full">
 
           {/* Google Map */}
           <div className="rounded-xl overflow-hidden mb-4 border h-72">
@@ -345,15 +429,19 @@ const LocationPage = () => {
                     ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
                     : defaultCenter
                 }
-                zoom={15}
+                zoom={14}
                 onLoad={onLoad}
                 onUnmount={onUnmount}
+                onClick={handleMapClick}
                 options={mapOptions}
               >
-                {selectedLocation && (
+                {(selectedLocation || defaultCenter) && (
                   <Marker
-                    position={{ lat: selectedLocation.lat, lng: selectedLocation.lng }}
-                    title={selectedLocation.fullAddress}
+                    position={
+                      selectedLocation
+                        ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+                        : defaultCenter
+                    }
                   />
                 )}
               </GoogleMap>
@@ -398,37 +486,120 @@ const LocationPage = () => {
             </div>
           )}
 
-          {/* Selected Location Card */}
-          {selectedLocation && !showManualInput && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4 mb-4 shadow-sm">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="font-medium text-primary-500 mb-2">
+          {/* Selected Location Card (Figma Style) - Placed Below Map */}
+          {selectedLocation && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] space-y-8">
+              {/* Address Row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-primary-600" />
+                  </div>
+                  <div className="font-semibold text-[#111827] text-base sm:text-lg tracking-tight">
                     {selectedLocation.fullAddress}
                   </div>
-                  <div className="text-xs text-primary-200 font-medium">
-                    Coordinates: {selectedLocation.coordinates}
+                </div>
+                
+                <div className="flex items-center space-x-3 self-end sm:self-auto">
+                  <button
+                    onClick={handleGetCurrentLocation}
+                    disabled={isLoading}
+                    className="flex items-center space-x-2 px-4 py-2 border border-primary-600 rounded-full text-primary-600 text-sm font-medium hover:bg-blue-50 transition-colors"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span>Use Current Location</span>
+                  </button>
+                  <button
+                    onClick={handleChangeLocation}
+                    className="text-primary-600 hover:text-primary-700 text-sm font-semibold ml-2"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+
+              {/* Distance Slider (Cleaner Only - Figma Style) */}
+              {isCleaner && (
+                <div className="space-y-5">
+               <div className="">
+            <div className="flex justify-between text-base">
+              <span className="text-primary-200 font-medium">0 km</span>
+              <span className="font-semibold text-primary-500">{searchRadius} km</span>
+              <span className="text-primary-500 font-bold">50 km</span>
+            </div>
+ 
+            <div className="relative">
+              <input
+                type="range"
+                min="0"
+                max="50"
+                value={searchRadius}
+                onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1F6FEB] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1F6FEB] [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-sm"
+                style={{
+                  background: `linear-gradient(to right, #1F6FEB 0%, #1F6FEB ${(searchRadius / 50) * 100}%, #E5E7EB ${(searchRadius / 50) * 100}%, #E5E7EB 100%)`
+                }}
+              />
+            </div>
+          </div>
+
+                  {/* Custom Value and Save Button Row */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 relative">
+                      <input
+                        id="customRadius"
+                        type="number"
+                        value={customRadius}
+                        onChange={handleCustomRadiusChange}
+                        min="0"
+                        max="50"
+                        placeholder="Enter Custom Value"
+                        className="w-full px-6 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 text-gray-500 bg-transparent transition-all placeholder:text-gray-400 placeholder:text-sm"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleConfirmLocation}
+                      variant="primary"
+                      size="lg"
+                      loading={isLoading}
+                      disabled={isLoading || !selectedLocation}
+                      className="rounded-full px-8 whitespace-nowrap min-h-[56px]"
+                    >
+                      Save Preferences
+                    </Button>
                   </div>
                 </div>
+              )}
+
+              {/* Confirm Button for Customer */}
+              {!isCleaner && (
                 <Button
-                  onClick={handleChangeLocation}
-                  variant="link"
-                  size="sm"
+                  onClick={handleConfirmLocation}
+                  fullWidth
+                  size="lg"
+                  loading={isLoading}
+                  disabled={isLoading || !selectedLocation}
+                  className="rounded-full"
                 >
-                  Change
+                  Confirm Location
                 </Button>
-              </div>
+              )}
             </div>
           )}
 
-          {/* Confirm Button */}
-          <Button
-            onClick={handleConfirmLocation}
-            fullWidth
-            size="lg"
-          >
-            Confirm Location
-          </Button>
+          {/* Fallback Confirm Button if no selected location */}
+          {!selectedLocation && (
+            <Button
+              onClick={handleConfirmLocation}
+              fullWidth
+              size="lg"
+              loading={isLoading}
+              disabled={isLoading || !selectedLocation}
+              className="rounded-full"
+            >
+              Confirm Location
+            </Button>
+          )}
         </div>
       </div>
     </div>

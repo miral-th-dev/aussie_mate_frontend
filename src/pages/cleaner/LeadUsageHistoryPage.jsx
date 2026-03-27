@@ -93,7 +93,6 @@ const LeadUsageHistoryPage = () => {
                   <DateRangePicker 
                     range={dateRange}
                     onRangeChange={setDateRange}
-                    onApply={() => fetchHistory(1)}
                     placeholder="Select Date Range"
                   />
                 </div>

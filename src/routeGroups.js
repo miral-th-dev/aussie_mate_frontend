@@ -47,7 +47,6 @@ const PaymentsPayoutsPage = React.lazy(() => import('./pages/profile/cleaner/Pay
 const ReviewsPage = React.lazy(() => import('./pages/profile/cleaner/ReviewsPage'))
 
 // Cleaner pages
-const SetCleanerLocationPage = React.lazy(() => import('./pages/cleaner/SetCleanerLocationPage'))
 const CleanerDashboard = React.lazy(() => import('./pages/cleaner/CleanerDashboard'))
 const CleanerJobsPage = React.lazy(() => import('./pages/cleaner/CleanerJobsPage'))
 const InProgressJobDetailsPage = React.lazy(() => import('./pages/cleaner/InProgressJobDetailsPage'))
@@ -107,7 +106,6 @@ export const cleanerRoutes = [
   { path: '/availability', component: AvailabilityPage },
   { path: '/payments', component: PaymentsPayoutsPage },
   { path: '/reviews', component: ReviewsPage },
-  { path: '/set-cleaner-location', component: SetCleanerLocationPage },
   { path: '/cleaner-dashboard', component: CleanerDashboard },
   { path: '/cleaner-jobs', component: CleanerJobsPage },
   { path: '/job-details/:jobId', component: JobDetailsPage },

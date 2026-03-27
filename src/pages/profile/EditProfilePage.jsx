@@ -396,7 +396,7 @@ const EditProfilePage = () => {
     const userType = user?.userType || user?.role || '';
     const isCleaner = ['Cleaner', 'cleaner'].includes(userType);
 
-    navigate(isCleaner ? '/set-cleaner-location' : '/location', {
+    navigate(isCleaner ? '/location' : '/location', {
       state: {
         fromPage: 'edit-profile',
         step: 'edit-profile'

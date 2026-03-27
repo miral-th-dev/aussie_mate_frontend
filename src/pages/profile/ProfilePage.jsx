@@ -192,7 +192,7 @@ const ProfilePage = () => {
     ...(user?.role !== 'Customer' ? [{ icon: ShieldCheck, label: 'Verification & Documents', path: '/verification' }] : []),
     ...(user?.role !== 'Customer' ? [{ icon: DollarSign, label: 'Payments & Payouts', path: '/payments' }] : []),
     ...(user?.role !== 'Customer' ? [{ icon: Star, label: 'Ratings & Reviews', path: '/reviews' }] : []),
-    ...(user?.role !== 'Customer' ? [{ icon: MapPin, label: 'Geo-fencing', path: '/set-cleaner-location' }] : []),
+    ...(user?.role !== 'Customer' ? [{ icon: MapPin, label: 'Geo-fencing', path: '/location' }] : []),
 
     // Common menu items for all users
     { icon: BookOpen, label: 'Platform Policy', path: '/platform-policy' },

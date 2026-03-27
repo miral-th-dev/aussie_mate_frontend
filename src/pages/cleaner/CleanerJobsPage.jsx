@@ -347,7 +347,7 @@ const CleanerJobsPage = () => {
           rightSlot={
             <div
               className="flex items-center gap-2 cursor-pointer"
-              onClick={() => navigate('/set-cleaner-location', { state: { from: 'cleaner-jobs' } })}
+              onClick={() => navigate('/location', { state: { from: 'cleaner-jobs' } })}
             >
               <img src={CurrentLocationIcon} alt="Location" className="w-5 h-5" />
               <span className="text-sm text-primary-600 font-medium ">
