@@ -116,7 +116,7 @@ const SupportTicketDetailsPage = () => {
 
           {ticket.adminNote && (
             <div className="mt-8 pt-8 border-t-2 border-dashed border-gray-100">
-              <div className="bg-blue-50/50 rounded-[32px] p-6 sm:p-8 border border-blue-100/50 relative overflow-hidden">
+              <div className="bg-blue-50/50 rounded-2xl p-6 sm:p-8 border border-blue-100/50 relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-5">
                     <Inbox className="w-24 h-24 text-primary-500" />
                 </div>

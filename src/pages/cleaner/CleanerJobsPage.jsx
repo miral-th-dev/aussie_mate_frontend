@@ -373,8 +373,8 @@ const CleanerJobsPage = () => {
                 />
               </div>
 
-              <div className="relative sm:w-auto w-full">
-                <button onClick={() => setShowSortModal(true)} className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm text-primary-200 font-medium hover:bg-gray-50 transition-colors whitespace-nowrap w-full sm:w-auto cursor-pointer ">
+              <div className="relative sm:w-auto w-full ">
+                <button onClick={() => setShowSortModal(true)} className="flex items-center justify-center gap-2 px-4 py-3 bg-white border border-gray-200 rounded-full text-sm text-primary-200 font-medium hover:bg-gray-50 transition-colors whitespace-nowrap w-full sm:w-auto cursor-pointer ">
                   <span>Sort By</span>
                   <img src={DownIcon} alt="Dropdown" className="w-4 h-4" />
                 </button>

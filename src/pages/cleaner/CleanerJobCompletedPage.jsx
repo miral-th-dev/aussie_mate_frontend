@@ -109,7 +109,7 @@ const CleanerJobCompletedPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto min-h-screen bg-white px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto min-h-screen px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between py-4">
           <PageHeader
@@ -126,7 +126,7 @@ const CleanerJobCompletedPage = () => {
           {/* Left Column: Job Info */}
           <div className="space-y-6">
             {/* Job Summary Card */}
-            <div className="bg-[linear-gradient(129.21deg,_#E9EEFC_-1.01%,_#FFFFFF_100.1%)] rounded-[32px] p-6 border border-[#D5DEFA]">
+            <div className="bg-[linear-gradient(129.21deg,_#E9EEFC_-1.01%,_#FFFFFF_100.1%)] rounded-2xl p-6 border border-[#D5DEFA]">
               <p className="text-sm font-medium text-gray-400 mb-1 tracking-tight">
                 {jobData.serviceType}
               </p>
@@ -158,9 +158,9 @@ const CleanerJobCompletedPage = () => {
             {/* Assigned By Section */}
             <div className="space-y-3">
               <h3 className="text-[#111827] font-medium text-lg px-1">Assigned By</h3>
-              <div className="bg-white rounded-[24px] p-4 border border-gray-100 shadow-sm flex items-center justify-between">
+              <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100">
                     {jobData.customer.photo ? (
                       <img src={resolveImageSrc(jobData.customer.photo)} alt="avatar" className="w-full h-full object-cover" />
                     ) : (
@@ -193,7 +193,7 @@ const CleanerJobCompletedPage = () => {
           <div className="space-y-6 pt-6">
             {/* Customer Review Section */}
             {customerReview ? (
-              <div className="bg-white rounded-[24px] p-6 border border-gray-100 shadow-sm text-center">
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center">
                 <div className="flex justify-center gap-1.5 mb-4">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <img
@@ -220,7 +220,7 @@ const CleanerJobCompletedPage = () => {
                 )}
               </div>
             ) : (
-              <div className="bg-gray-50 rounded-[24px] p-8 border border-dashed border-gray-200 text-center">
+              <div className="bg-gray-50 rounded-2xl p-8 border border-dashed border-gray-200 text-center">
                 <p className="text-gray-400 font-medium">No review received yet</p>
               </div>
             )}

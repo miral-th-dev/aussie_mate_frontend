@@ -175,7 +175,7 @@ const HelpSupportPage = () => {
                   )
                 ))}
                 {faqs.every(cat => !cat.faqs || cat.faqs.length === 0) && (
-                  <div className="text-center py-24 bg-white rounded-[32px] border-2 border-dashed border-gray-100">
+                  <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-100">
                     <p className="text-gray-300 font-black text-xl mb-2">No Results Found</p>
                     <p className="text-gray-400 text-sm font-semibold">Try searching with different keywords</p>
                   </div>

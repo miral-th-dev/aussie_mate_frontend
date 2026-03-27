@@ -476,7 +476,7 @@ const JobDetailsCompletedPage = () => {
 
         {/* Cleaner Info Card - Redesigned */}
         <div className="px-4 mt-4">
-          <div className="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative overflow-hidden group hover:border-blue-100 transition-colors">
+          <div className="bg-white rounded-2xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 relative overflow-hidden group hover:border-blue-100 transition-colors">
             <div className="flex items-start justify-between ">
               <div className="flex items-start gap-4 flex-1">
                 {/* Avatar */}
@@ -577,7 +577,7 @@ const JobDetailsCompletedPage = () => {
             <div className="">
               <div className="grid grid-cols-2 gap-2 mb-6 max-w-lg">
                 {overviewPhotos.slice(0, 4).map((img, idx) => (
-                  <div key={idx} className="relative rounded-[24px] overflow-hidden group cursor-pointer border border-gray-100">
+                  <div key={idx} className="relative rounded-2xl overflow-hidden group cursor-pointer border border-gray-100">
                     <img 
                       src={img} 
                       alt={`Job detail ${idx + 1}`} 
@@ -601,7 +601,7 @@ const JobDetailsCompletedPage = () => {
         {/* Completion Status Bar or Complete Button */}
         {jobData.status?.toLowerCase() === 'completed' || jobData.status === 'Completed' ? (
           <div className="px-4 inline-block">
-            <div className="bg-[#E9FBF0] rounded-2xl py-3 px-5 flex items-center gap-3 border border-[#DBF9E7]">
+            <div className="bg-[#E9FBF0] rounded-xl py-3 px-5 flex items-center gap-3 border border-[#DBF9E7]">
               <div className="w-2.5 h-2.5 rounded-full bg-[#1EB154]" />
               <span className="text-[#1EB154] font-medium text-sm">
                 Completed on {jobData.completedAt ? new Date(jobData.completedAt).toLocaleDateString('en-US', {
@@ -633,7 +633,7 @@ const JobDetailsCompletedPage = () => {
               className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity animate-in fade-in" 
               onClick={() => setShowCompleteModal(false)}
             ></div>
-            <div className="relative bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="relative bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
               <div className="p-8 text-center">
                 <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-500">
                   <Check className="w-8 h-8" strokeWidth={2.5} />

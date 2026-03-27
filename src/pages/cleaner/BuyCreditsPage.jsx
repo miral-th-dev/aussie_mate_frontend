@@ -112,7 +112,7 @@ const BuyCreditsPage = () => {
             <div 
               key={pkg._id}
               onClick={() => handlePackageSelect(pkg)}
-              className={`relative bg-[#F8FAFF] rounded-[24px] p-6 border transition-all cursor-pointer ${
+              className={`relative bg-[#F8FAFF] rounded-2xl p-6 border transition-all cursor-pointer ${
                 selectedPackage?._id === pkg._id 
                 ? 'border-blue-500 bg-white ring-1 ring-blue-500 shadow-lg shadow-blue-50' 
                 : 'border-blue-50 hover:border-blue-200'

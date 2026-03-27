@@ -75,7 +75,7 @@ const LeadUsageHistoryPage = () => {
           className="mb-6"
         />
 
-        <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-50 bg-white">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               <div className="flex flex-col min-w-0">

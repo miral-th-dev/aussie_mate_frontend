@@ -785,7 +785,7 @@ const CompleteJobPage = () => {
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
                 onClick={() => setShowCompleteModal(false)}
               ></div>
-              <div className="relative bg-white rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
+              <div className="relative bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300">
                 <div className="p-8 text-center">
                   <h3 className="text-2xl font-semibold text-primary-500 mb-3">Complete Job?</h3>
                   <p className="text-gray-500 text-sm leading-relaxed mb-8">
