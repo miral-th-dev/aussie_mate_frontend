@@ -13,12 +13,13 @@ import {
   Coins,
 } from "lucide-react";
 import { subscriptionsAPI, categoriesAPI } from "../../services/api";
-import { Button, Loader, PageHeader } from "../../components";
+import { Button, Loader, PageHeader, ConfirmationModal } from "../../components";
 import { useAuth } from "../../contexts/AuthContext";
 import BGVector from "../../assets/BG Vectorr.svg";
 import GiftIcon from "../../assets/Gift.svg";
 import ClockIcon from "../../assets/Clock Circle.svg";
 import DollorIcon from "../../assets/Dollarr.svg";
+import TrueIcon from '../../assets/true.svg';
 
 const MySubscriptionPage = () => {
   const navigate = useNavigate();
@@ -33,6 +34,8 @@ const MySubscriptionPage = () => {
   const [modalLoading, setModalLoading] = useState(false);
   const [error, setError] = useState("");
   const [isExpired, setIsExpired] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState(null);
 
   const canBuyCredits = useMemo(() => {
     if (!activeSubscription) return false;
@@ -278,9 +281,9 @@ const MySubscriptionPage = () => {
                   </p>
                   <button
                     onClick={() => navigate("/buy-credits")}
-                    className="flex items-center gap-2 text-[#1F6FEB] font-bold text-sm hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-2 text-[#1F6FEB] cursor-pointer font-bold text-sm hover:opacity-80 transition-opacity"
                   >
-                    <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-[#1F6FEB] flex items-center justify-center ">
                       <Plus
                         className="w-3.5 h-3.5 text-white"
                         strokeWidth={3}
@@ -364,7 +367,7 @@ const MySubscriptionPage = () => {
 
               {/* Lead Usage History */}
               <div className="overflow-hidden">
-                <div className="p-6 pb-4 flex justify-between items-center">
+                <div className="px-6 pb-4 flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <div className="flex flex-col">
                       <h3 className="text-[20px] font-semibold text-[#111827]">
@@ -514,7 +517,7 @@ const MySubscriptionPage = () => {
                   ].map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-4">
                       <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center bg-white shadow-sm">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary-500" />
+                        <img src={TrueIcon} alt="Check" className="w-3.5 h-3.5" />
                       </div>
                       <p className="text-base font-medium text-gray-700">
                         {feature}
@@ -557,7 +560,10 @@ const MySubscriptionPage = () => {
                         <Button
                           variant="primary"
                           className="h-10 rounded-full font-medium text-sm bg-[#1F6FEB]  whitespace-nowrap"
-                          onClick={() => handleSubscribe(plan._id)}
+                          onClick={() => {
+                            setPendingPlan(plan);
+                            setShowConfirmModal(true);
+                          }}
                         >
                           Subscribe to {plan.name.split(/[\s/-]/)[0]} Plan
                         </Button>
@@ -648,39 +654,33 @@ const MySubscriptionPage = () => {
 
         {/* Categories Modal */}
         {showCategoriesModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300 border border-gray-100">
-              <div className="p-4 md:p-6 flex justify-between items-center border-b border-gray-50">
-                <div>
-                  <h3 className="text-lg font-medium text-[#111111]">
-                    {selectedPlanName}
-                  </h3>
-                  <p className="text-[12px] font-medium text-gray-400 mt-0.5">
-                    Included Services
-                  </p>
-                </div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="p-6 flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-[#111827]">{selectedPlanName}</h3>
                 <button
                   onClick={() => setShowCategoriesModal(false)}
-                  className="p-2 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-800 cursor-pointer"
+                  className="text-gray-900 hover:opacity-70 transition-opacity cursor-pointer p-1"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-7 h-7" strokeWidth={1.5} />
                 </button>
               </div>
 
-              <div className="p-4 md:p-6 max-h-[50vh] overflow-y-auto">
+              <div className="px-5 pb-8">
                 {modalLoading ? (
-                  <div className="py-10 flex justify-center">
-                    <Loader message="Loading service types..." />
+                  <div className="py-20 flex justify-center">
+                    <Loader message="Loading services..." />
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-2">
+                  <div className="flex flex-col max-h-[60vh] overflow-y-auto">
                     {selectedPlanCategories.map((type, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center p-3.5 bg-gray-50 rounded-xl border border-gray-100 hover:bg-primary-50 hover:border-primary-100 transition-all group"
+                        className={`px-5 py-4 rounded-2xl transition-all cursor-default group ${
+                          idx === 0 ? 'bg-[#F9FAFB]' : 'hover:bg-[#F9FAFB]'
+                        }`}
                       >
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary-600 group-hover:bg-primary-500 mr-3 transition-colors" />
-                        <span className="text-gray-800 font-medium text-base">
+                        <span className=" font-medium text-[#111827] group-hover:text-black">
                           {type.name}
                         </span>
                       </div>
@@ -688,19 +688,26 @@ const MySubscriptionPage = () => {
                   </div>
                 )}
               </div>
-
-              <div className="p-4 md:p-6 bg-gray-50/50 flex justify-center">
-                <Button
-                  onClick={() => setShowCategoriesModal(false)}
-                  variant="ghost"
-                  className="text-gray-400 text-sm font-bold hover:text-gray-800"
-                >
-                  Close Categories
-                </Button>
-              </div>
             </div>
           </div>
         )}
+
+        <ConfirmationModal
+          isOpen={showConfirmModal}
+          onClose={() => {
+            setShowConfirmModal(false);
+            setPendingPlan(null);
+          }}
+          onConfirm={() => {
+            if (pendingPlan) handleSubscribe(pendingPlan._id);
+            setShowConfirmModal(false);
+          }}
+          title="Confirm Subscription"
+          message={`Are you sure you want to subscribe to the ${pendingPlan?.name} plan? You will be redirected to the secure payment page.`}
+          confirmText="Confirm & Pay"
+          cancelText="Cancel"
+          confirmButtonColor="bg-[#1F6FEB] hover:bg-blue-700"
+        />
       </div>
       <style dangerouslySetInnerHTML={{
         __html: `
