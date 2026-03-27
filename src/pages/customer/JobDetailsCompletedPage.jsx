@@ -123,11 +123,13 @@ const JobDetailsCompletedPage = () => {
           // Transform job data to match expected format
           const acceptedQuote = job.quotes?.find(q => q.status === 'accepted');
           // Use completedBy if it's an object, otherwise try acceptedQuote cleanerId
-          const cleaner = (job.completedBy && typeof job.completedBy === 'object')
-            ? job.completedBy
-            : (acceptedQuote?.cleanerId && typeof acceptedQuote.cleanerId === 'object')
-              ? acceptedQuote.cleanerId
-              : null;
+          const cleaner = (job.cleaner && typeof job.cleaner === 'object')
+            ? job.cleaner
+            : (job.completedBy && typeof job.completedBy === 'object')
+              ? job.completedBy
+              : (acceptedQuote?.cleanerId && typeof acceptedQuote.cleanerId === 'object')
+                ? acceptedQuote.cleanerId
+                : null;
 
           // Get photos from multiple possible sources with better handling
           const beforeImages = photosData.beforePhotos || job.beforePhotos || [];
@@ -142,20 +144,21 @@ const JobDetailsCompletedPage = () => {
           const transformedData = {
             jobId: job.jobId || job._id,
             title: job.title || job.serviceTypeDisplay || job.serviceType,
-            serviceType: job.serviceTypeDisplay || job.serviceType || job.category || job.service || '',
-            serviceDetail: job.serviceDetail || job.selectedServiceDetail || job.serviceName || job.title || '',
+            serviceType: job.categoryName || job.serviceTypeDisplay || job.serviceType || job.category || job.service || '',
+            serviceDetail: job.serviceTypeDisplay || job.serviceDetail || job.selectedServiceDetail || job.serviceName || job.title || '',
             instructions: job.specialInstructions || job.instructions || job.additionalNotes || '',
             frequency: job.frequency || job.recurringFrequency || job.schedule?.frequency || '',
-            status: job.status || 'Completed',
+            status: job.statusDisplay || job.status || 'Completed',
             completedAt: job.completedAt || null, // Store as raw date string
             scheduledDate: job.scheduledDate || null, 
             location: job.location?.address || job.location?.fullAddress || 'Location',
             photos: jobPhotos,
             cleaner: {
               id: cleaner?._id || cleaner?.id || 'N/A',
-              name: cleaner ? `${cleaner.firstName || ''} ${cleaner.lastName || ''}`.trim() : 'Cleaner',
+              name: cleaner ? `${cleaner.firstName || ''} ${cleaner.lastName || ''}`.trim() : (cleaner?.name || 'Cleaner'),
               rating: cleaner?.averageRating !== undefined ? cleaner.averageRating : (cleaner?.rating || 0),
-              tier: cleaner?.tier || 'none'
+              tier: cleaner?.tier || 'none',
+              photo: cleaner?.profilePhoto || cleaner?.photo || null
             },
             payment: {
               totalPaid: acceptedQuote?.price || job.estimatedPrice || 0,
@@ -496,16 +499,6 @@ const JobDetailsCompletedPage = () => {
                 <div className="flex flex-col gap-2">
                   <h3 className="text-[22px] font-semibold text-[#111827] leading-none">{jobData.cleaner.name || "John Doe"}</h3>
                   
-                    {/* <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-gray-400">
-                        <Phone className="w-4 h-4" />
-                        <span className="text-base font-bold text-gray-700">07 3803 6136</span>
-                      </div>
-                      <p className="text-sm text-gray-400 font-bold tracking-tight">
-                        2.4 km away — En route
-                      </p>
-                    </div> */}
-                  
                   {/* Tier Badge */}
                   <div className="mt-2 flex items-center gap-2">
                     <div className="flex items-center gap-1 px-3 py-2 rounded-full bg-[#FFF2DE]">
@@ -532,27 +525,14 @@ const JobDetailsCompletedPage = () => {
                   {jobData.status === 'Completed' || jobData.status?.toLowerCase() === 'completed' ? 'Completed' : 'In Progress'}
                 </span>
 
-                {/* <div className="flex gap-2">
-                  <button 
-                    onClick={() => {}}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
-                  >
-                    <MessageSquare className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                  </button>
-                  <button 
-                    onClick={() => {}}
-                    className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-[#BFDBFE] text-[#2563EB] hover:bg-blue-50 transition-all shadow-sm group"
-                  >
-                    <Phone className="w-6 h-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                  </button>
-                </div> */}
+      
               </div>
             </div>
           </div>
         </div>
 
         {/* Job Content Redesign */}
-        <div className="px-6 mt-8 space-y-6">
+        <div className="px-6 mt-8 space-y-2">
           <div>
             <p className="text-sm font-semibold text-gray-400 tracking-[0.1em] mb-1">
               {jobData.serviceType || "Domestic / General Cleaning"}
@@ -566,12 +546,10 @@ const JobDetailsCompletedPage = () => {
             {jobData.instructions || "Make sure you come prepared with all the equipment you'll need so we can get everything done smoothly."}
           </p>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 group">
-              <div className="w-10 h-10 rounded-xl text-[#6B7280]  flex items-center justify-center group-hover:scale-110 transition-transform">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2.5 group">
+              <div className="w-7 h-7 rounded-lg text-[#6B7280] flex items-center justify-center">
                 <CalendarDays className="w-5 h-5" strokeWidth={2.5} />  
-
-                {/* flex items-center text-gray-700 font-medium */}
               </div>
               <div>
                 <p className="text-[15px] font-medium text-[#6B7280]">
@@ -580,14 +558,12 @@ const JobDetailsCompletedPage = () => {
                     day: 'numeric',
                     year: 'numeric'
                   }) : "Pending Completion"}
-                  <span className="mx-2 text-gray-300">•</span>
-                  <span className="text-gray-500 font-medium lowercase">One-time</span>
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 group">
-              <div className="w-10 h-10 rounded-xl text-gray-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <div className="flex items-center gap-2.5 group">
+              <div className="w-7 h-7 rounded-lg text-gray-700 flex items-center justify-center">
                 <MapPin className="w-5 h-5" strokeWidth={2.5} />
               </div>
               <p className="text-base font-medium text-[#6B7280] leading-snug">

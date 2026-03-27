@@ -430,7 +430,7 @@ const MyJobsPage = () => {
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600' : 'bg-[#F9FAFB] text-gray-600 border border-gray-200  focus:outline-none'
+              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-[8px]! text-sm font-medium whitespace-nowrap cursor-pointer ${activeTab === t.id ? 'bg-[#EBF2FD] text-primary-600 font-semibold' : 'bg-[#F9FAFB] text-gray-600 border border-gray-200  focus:outline-none'
                 }`}
             >
               {t.label}
@@ -472,7 +472,7 @@ const MyJobsPage = () => {
 
             
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[12px] font-medium text-gray-500 uppercase tracking-wide">
+                <span className="text-[12px] font-medium text-gray-500 tracking-wide capitalize">
                   {job?.category}
                 </span>
                 {(() => {

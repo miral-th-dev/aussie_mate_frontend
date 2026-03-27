@@ -440,7 +440,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
     <div className="pb-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Top Greeting + Availability */}
-        <div className="flex flex-col mt-5 sm:mt-6 bg-white rounded-4xl border border-gray-100 p-5 sm:p-6">
+        <div className="flex flex-col mt-5 sm:mt-6 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 leading-tight">
             Hi, {greetingName}
           </h2>
@@ -458,7 +458,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
           <div className="mt-4 sm:mt-5 transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
             {subscriptionStatus ? (
               <>
-                <div className="rounded-[32px] p-5 sm:p-6 overflow-hidden relative">
+                <div className="rounded-2xl p-5 sm:p-6 shadow-sm overflow-hidden relative">
                   {/* Background Image */}
                   <div className="absolute inset-0">
                     <img
@@ -529,9 +529,9 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                     {canBuyCredits && (
                       <button 
                         onClick={() => navigate('/buy-credits')}
-                        className="flex items-center gap-2 text-primary-500 font-black text-sm hover:translate-x-1 transition-transform cursor-pointer"
+                        className="flex items-center gap-2 cursor-pointer text-primary-500 cursor-pointer font-black text-sm hover:translate-x-1 transition-transform cursor-pointer"
                       >
-                        <span className="flex items-center justify-center w-4 h-4 bg-[#1F6FEB] rounded-full font-medium">
+                        <span className="flex items-center justify-center w-4 h-4 bg-[#1F6FEB] rounded-full font-medium ">
                           <Plus className="w-3 h-3 text-white stroke-[3]" />
                         </span>
                         Buy Credits
@@ -610,9 +610,9 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
           </div>
         )}
         {subscriptionStatus && (
-          <div className="mt-6 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center shadow-sm">
+          <div className="mt-6 bg-white rounded-xl border border-gray-100 p-4 sm:p-5 flex justify-between items-center shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
                 <img
                   src={BoldJobIcon}
                   alt="jobs"
@@ -634,7 +634,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
         {/* Active Jobs - Only if Subscribed */}
         {subscriptionStatus && (
           <div className="mt-6 mb-12">
-            <div className="flex items-center justify-between mb-4 bg-white rounded-2xl border border-gray-100 p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-5">
               <h3 className="text-xl font-semibold text-gray-900">
                 Your Assigned Jobs
               </h3>
