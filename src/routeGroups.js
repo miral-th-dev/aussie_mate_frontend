@@ -86,7 +86,7 @@ export const customerRoutes = [
   { path: '/reward-success', component: RewardSuccessPage },
   { path: '/invoices', component: InvoicesPage },
   { path: '/notifications', component: NotificationPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
-  { path: '/notifications-settings', component: NotificationSettingsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
+
   { path: '/help', component: HelpSupportPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
   { path: '/live-chat', component: LiveChatPage },
   { path: '/my-tickets', component: MyTicketsPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },

@@ -196,7 +196,7 @@ const ProfilePage = () => {
 
     // Common menu items for all users
     { icon: BookOpen, label: 'Platform Policy', path: '/platform-policy' },
-    { icon: Bell, label: 'Notifications Settings', path: '/notifications-settings' },
+
     { icon: HelpCircle, label: 'Help & Support', path: '/help' },
   ];
 

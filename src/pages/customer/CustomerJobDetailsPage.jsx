@@ -797,7 +797,7 @@ const CustomerJobDetailsPage = () => {
                     {/* Message Bubble */}
                     <div className="bg-[#EBF2FD] rounded-[24px] p-5 mb-4 inline-block">
                       <p className="text-gray-900 text-sm font-medium leading-relaxed">
-                        Hello,<br />
+                        {/* Hello,<br /> */}
                         {cleaner.message}
                       </p>
                     </div>

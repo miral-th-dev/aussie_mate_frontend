@@ -131,7 +131,7 @@ const RaiseTicketPage = () => {
           <div className="w-24 h-24 bg-green-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 border border-green-100 shadow-sm">
             <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
-          <h3 className="text-3xl font-black text-gray-900 mb-3 uppercase tracking-tighter">
+          <h3 className="text-xl font-semibold text-[#111827] mb-3">
             SUCCESS!
           </h3>
           <p className="text-gray-400 font-bold text-sm leading-relaxed">
@@ -280,11 +280,11 @@ const RaiseTicketPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full sm:w-auto bg-primary-500 text-white px-6 py-3 rounded-xl !rounded-xl font-medium shadow-2xl shadow-gray-300 transition-all active:scale-95 disabled:opacity-70 disabled:pointer-events-none flex items-center justify-center cursor-pointer"
+              className="w-full sm:w-auto bg-primary-500 text-white px-6 py-3 rounded-xl !rounded-xl font-medium flex items-center justify-center cursor-pointer"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <Loader message="" className="!p-0 !min-h-0" />
+                  {/* <Loader message="" /> */}
                   <span>Submitting...</span>
                 </div>
               ) : (
