@@ -32,19 +32,20 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            // Handle Emotion/MUI first to prevent cn initialization issues
-            if (id.includes("@emotion") || id.includes("@mui")) {
+            // Handle Emotion/MUI first (heavy libraries)
+            if (id.includes("@emotion") || id.innpmcludes("@mui")) {
               return "vendor-mui";
             }
             
-            // React core
-            if (id.includes("react") && !id.includes("@emotion") && !id.includes("@mui")) {
-              return "vendor-react";
-            }
-            
-            // React DOM
-            if (id.includes("react-dom")) {
-              return "vendor-react-dom";
+            // React Core (React 19 needs these together to share internal state)
+            if (
+              id.includes("/node_modules/react/") ||
+              id.includes("/node_modules/react-dom/") ||
+              id.includes("/node_modules/scheduler/") ||
+              id.includes("/node_modules/@react-is/") ||
+              id.includes("/node_modules/react-is/")
+            ) {
+              return "vendor-react-core";
             }
             
             // React Router
@@ -81,6 +82,10 @@ export default defineConfig({
             
             if (id.includes("swiper")) {
               return "vendor-swiper";
+            }
+
+            if (id.includes("react-i18next") || id.includes("i18next")) {
+              return "vendor-i18n";
             }
             
             // Everything else
