@@ -15,7 +15,7 @@ export default defineConfig({
     tailwindcss()
   ],
   resolve: {
-    dedupe: ["react", "react-dom"], // 👈 Add this
+    dedupe: ["react", "react-dom"],
   },
   server: {
     host: true,
@@ -30,7 +30,7 @@ export default defineConfig({
     }
   },
   build: {
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks(id) {
