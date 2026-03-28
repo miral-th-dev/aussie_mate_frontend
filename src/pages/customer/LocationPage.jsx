@@ -394,7 +394,7 @@ const LocationPage = () => {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search for area, street name..."
-                      className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 focus:ring-4 focus:ring-primary-100/30 text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
+                      className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600  text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
                     />
                     <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
                        <MapPin className="w-5 h-5" />
@@ -572,7 +572,7 @@ const LocationPage = () => {
               )}
 
               {/* Confirm Button for Customer */}
-              {!isCleaner && (
+              {/* {!isCleaner && (
                 <Button
                   onClick={handleConfirmLocation}
                   fullWidth
@@ -583,12 +583,12 @@ const LocationPage = () => {
                 >
                   Confirm Location
                 </Button>
-              )}
+              )} */}
             </div>
           )}
 
           {/* Fallback Confirm Button if no selected location */}
-          {!selectedLocation && (
+          {/* {!selectedLocation && (
             <Button
               onClick={handleConfirmLocation}
               fullWidth
@@ -599,7 +599,7 @@ const LocationPage = () => {
             >
               Confirm Location
             </Button>
-          )}
+          )} */}
         </div>
       </div>
     </div>

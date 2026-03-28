@@ -499,7 +499,6 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                         <div className="relative bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm whitespace-nowrap">
                           {/* Triangle decorator */}
                           <div className="absolute -top-1 left-4 w-2 h-2 bg-white border-t border-l border-gray-200 rotate-45" />
-
                           <p className="text-sm font-bold text-gray-900">
                             {subscriptionStatus.subscription?.planId?.creditsPerMonth - subscriptionStatus.availableCredits} <span className="text-gray-400 font-medium">of</span> {subscriptionStatus.subscription?.planId?.creditsPerMonth} <span className="text-gray-400 font-normal">Credits Used</span>
                           </p>
@@ -507,7 +506,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                       </div>
                     </div>
 
-                    <div className="flex justify-between items-center mt-12 mb-4 px-1">
+                    <div className="flex justify-between items-center mb-4 px-1">
                       <p className="text-xs sm:text-sm font-medium text-gray-500">
                         Remaining Credits:{" "}
                         <span className="text-black font-semibold">
