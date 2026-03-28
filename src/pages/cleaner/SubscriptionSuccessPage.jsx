@@ -67,7 +67,7 @@ const SubscriptionSuccessPage = () => {
       </div>
 
       <div className="max-w-md w-full relative z-10 animate-in fade-in zoom-in-95 duration-700">
-        <div className="bg-white rounded-[40px] shadow-[0_30px_70px_rgba(0,0,0,0.06)] border border-gray-100 p-8 md:p-10 text-center relative">
+        <div className="bg-white rounded-2xl shadow-[0_30px_70px_rgba(0,0,0,0.06)] border border-gray-100 p-8 md:p-10 text-center relative">
           
           {/* Success Ring Animation */}
           <div className="relative flex justify-center mb-6">
@@ -87,8 +87,8 @@ const SubscriptionSuccessPage = () => {
           </div>
 
           {subscription && (
-            <div className="bg-[#F8FAFC] border border-gray-100 rounded-[32px] p-1 mb-8 overflow-hidden">
-              <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-50 m-1">
+            <div className="bg-[#F8FAFC] border border-gray-100 rounded-2xl p-1 mb-8 overflow-hidden">
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-50 m-1">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">

@@ -540,7 +540,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                 </div>
 
                 {isExpired && (
-                  <div className="mt-4 bg-amber-50 rounded-[24px] p-6 border border-amber-100 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in">
+                  <div className="mt-4 bg-amber-50 rounded-2xl p-6 border border-amber-100 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in">
                     <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <TrendingUp className="w-6 h-6 text-amber-600" />
                     </div>
@@ -561,7 +561,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
               </>
             ) : (
               /* Start Getting Cleaning Leads (Not Subscribed) */
-              <div className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden">
+              <div className="rounded-2xl p-6 sm:p-8 relative overflow-hidden">
                 {/* Background Image */}
                 <div className="absolute inset-0">
                   <img
@@ -725,7 +725,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
               {swiperJobs.map((job, index) => (
                 <SwiperSlide key={`job-${job.id || index}`}>
                   <div
-                    className="bg-white rounded-[24px] border border-[#F3F3F3] p-5 sm:p-6 shadow-sm min-h-[160px] cursor-pointer transition-all duration-300"
+                    className="bg-white rounded-2xl border border-[#F3F3F3] p-5 sm:p-6 shadow-sm min-h-[160px] cursor-pointer transition-all duration-300"
                     onClick={() => handleJobClick(job)}
                   >
                       <div className="flex flex-col h-full relative">

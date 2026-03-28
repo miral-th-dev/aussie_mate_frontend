@@ -743,7 +743,7 @@ const CustomerJobDetailsPage = () => {
                 const cleaner = formatCleanerData(item);
 
                 return (
-                  <div key={item._id || item.id || `contacted-${index}`} className="bg-white rounded-[24px] border border-gray-100 p-5 shadow-sm">
+                  <div key={item._id || item.id || `contacted-${index}`} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                     {/* Header: Avatar, Info, and Tier */}
                     <div className="flex items-start justify-between mb-5">
                       <div className="flex gap-4">
@@ -795,7 +795,7 @@ const CustomerJobDetailsPage = () => {
                     </div>
 
                     {/* Message Bubble */}
-                    <div className="bg-[#EBF2FD] rounded-[24px] p-5 mb-4 inline-block">
+                    <div className="bg-[#EBF2FD] rounded-2xl p-5 mb-4 inline-block">
                       <p className="text-gray-900 text-sm font-medium leading-relaxed">
                         {/* Hello,<br /> */}
                         {cleaner.message}
@@ -833,7 +833,7 @@ const CustomerJobDetailsPage = () => {
                   const cleaner = formatCleanerData(item);
 
                   return (
-                    <div key={`waitlisted-${index}`} className="bg-white rounded-[24px] border border-gray-100 p-4 sm:p-5 shadow-sm opacity-95">
+                    <div key={`waitlisted-${index}`} className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-sm opacity-95">
                       {/* Upper Header: Avatar, Name, Phone, and Tier Badge */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex gap-3 sm:gap-4">

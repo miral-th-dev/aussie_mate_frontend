@@ -26,7 +26,7 @@ const HomePage = () => {
      
 
           {/* Content Overlay */}
-          <div className="absolute bottom-0 left-0 right-0  rounded-t-3xl p-6">
+          <div className="absolute bottom-0 left-0 right-0  rounded-t-2xl p-6">
             {/* Content */}
             <div className="relative z-10 py-6 max-w-xl">
               <h2 className="text-4xl font-bold text-black mb-4">
@@ -62,9 +62,9 @@ const HomePage = () => {
           </video>
 
             {/* Mobile Content Card with Glass Effect */}
-            <div className="absolute bottom-0 left-0 right-0 backdrop-blur-lg bg-white/60 rounded-t-3xl p-4">
+            <div className="absolute bottom-0 left-0 right-0 backdrop-blur-lg bg-white/60 rounded-t-2xl p-4">
               {/* Rectangle 516 Image */}
-              <div className="absolute inset-0 rounded-t-3xl overflow-hidden">
+              <div className="absolute inset-0 rounded-t-2xl overflow-hidden">
                 <img 
                   src={rectangleImage} 
                   alt="Background" 

@@ -23,7 +23,7 @@ const ContactCustomerModal = ({
       style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
     >
       <div 
-        className="bg-white rounded-[32px] p-6 w-full max-w-sm shadow-xl"
+        className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-bold text-primary-500 mb-2 text-center">

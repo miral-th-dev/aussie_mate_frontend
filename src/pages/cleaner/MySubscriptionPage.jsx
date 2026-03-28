@@ -173,8 +173,8 @@ const MySubscriptionPage = () => {
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Out of Credits Alert - Web optimized centering */}
             {activeSubscription.availableCredits === 0 && (
-              <div className="bg-white rounded-[32px] p-10 shadow-sm border border-red-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-red-50 rounded-[28px] flex items-center justify-center flex-shrink-0">
+              <div className="bg-white rounded-2xl p-10 shadow-sm border border-red-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <AlertTriangle className="w-10 h-10 text-red-500" />
                 </div>
                 <div className="text-center md:text-left flex-1">
@@ -200,7 +200,7 @@ const MySubscriptionPage = () => {
             {/* Main Content - Single Vertical Stack for Full Width */}
             <div className="flex flex-col gap-8 w-full">
               {/* Active Plan Card */}
-              <div className="relative bg-white rounded-[40px] overflow-hidden border border-gray-100">
+              <div className="relative bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
                 {/* SVG Background Layer - Soft, Prominent Glow from Figma */}
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none z-0 overflow-visible">
                   {/* SVG Vector */}
@@ -228,7 +228,7 @@ const MySubscriptionPage = () => {
                   {/* Info Cards Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Credits Badge Box - Refined Figma Style */}
-                    <div className="bg-white border border-[#F3F3F3] rounded-[20px] p-4 flex flex-col gap-2">
+                    <div className="bg-white border border-[#F3F3F3] rounded-xl p-4 flex flex-col gap-2">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
                           <Coins className="w-3.5 h-3.5 text-[#1F6FEB]" />
@@ -243,7 +243,7 @@ const MySubscriptionPage = () => {
                     </div>
 
                     {/* Bonus Leads Box - Clean White per Figma */}
-                    <div className="bg-white border border-[#F3F3F3] rounded-[20px] p-4 flex items-center gap-4">
+                    <div className="bg-white border border-[#F3F3F3] rounded-xl p-4 flex items-center gap-4">
                       <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
                         <img
                           src={GiftIcon}
@@ -274,7 +274,7 @@ const MySubscriptionPage = () => {
               </div>
 
               {/* Credit Usage Section - Moved to its own card as requested */}
-              <div className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] p-6">
+              <div className="bg-[#F9FAFB] rounded-2xl shadow-sm border border-[#F3F3F3] p-6">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-2xl font-semibold text-[#111827]">
                     Credit Usage
@@ -469,8 +469,8 @@ const MySubscriptionPage = () => {
           /* "No Subscription" Plan Selection View */
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
             {isExpired && activeSubscription && (
-              <div className="bg-amber-50 rounded-[32px] p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-amber-100 rounded-[28px] flex items-center justify-center flex-shrink-0">
+              <div className="bg-amber-50 rounded-2xl p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
+                <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0">
                   <Clock className="w-10 h-10 text-amber-600" />
                 </div>
                 <div className="text-center md:text-left flex-1">
@@ -533,7 +533,7 @@ const MySubscriptionPage = () => {
               {plans.map((plan) => (
                 <div
                   key={plan._id}
-                  className="bg-[#F9FAFB] rounded-[32px] border border-[#F3F3F3] transition-all duration-300 relative overflow-hidden flex flex-col group"
+                  className="bg-[#F9FAFB] rounded-2xl border border-[#F3F3F3] transition-all duration-300 relative overflow-hidden flex flex-col group"
                 >
                   {/* SVG Background Layer - Soft, Prominent Glow from Figma */}
                   <div className="absolute top-0 right-0 w-[600px] h-[600px] pointer-events-none z-0 overflow-visible">

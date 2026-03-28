@@ -127,8 +127,8 @@ const RaiseTicketPage = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="bg-white rounded-[48px] p-12 border border-gray-100 max-w-sm w-full text-center">
-          <div className="w-24 h-24 bg-green-50 rounded-[32px] flex items-center justify-center mx-auto mb-8 border border-green-100 shadow-sm">
+        <div className="bg-white rounded-4xl p-12 shadow-2xl shadow-primary-500/10 border border-gray-100 max-w-sm w-full text-center">
+          <div className="w-24 h-24 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-green-100 shadow-sm">
             <CheckCircle className="w-12 h-12 text-green-500" />
           </div>
           <h3 className="text-xl font-semibold text-[#111827] mb-3">
