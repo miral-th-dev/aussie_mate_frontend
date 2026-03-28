@@ -14,6 +14,9 @@ export default defineConfig({
     }),
     tailwindcss()
   ],
+  resolve: {
+    dedupe: ["react", "react-dom"], // 👈 Add this
+  },
   server: {
     host: true,
     port: 5173,
@@ -32,19 +35,15 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            // Handle Emotion/MUI first to prevent cn initialization issues
-            if (id.includes("@emotion") || id.innpmcludes("@mui")) {
-              return "vendor-mui";
-            }
 
-            // React core
-            if (id.includes("react") && !id.includes("@emotion") && !id.includes("@mui")) {
+            // ✅ React core + DOM - SATHE rakhva (split na karva!)
+            if (id.includes("react-dom") || (id.includes("react") && !id.includes("@emotion") && !id.includes("@mui") && !id.includes("react-router") && !id.includes("react-leaflet") && !id.includes("react-i18next") && !id.includes("react-day-picker") && !id.includes("react-apple"))) {
               return "vendor-react";
             }
 
-            // React DOM
-            if (id.includes("react-dom")) {
-              return "vendor-react-dom";
+            // ✅ Typo fix - "includes" correct karyu
+            if (id.includes("@emotion") || id.includes("@mui")) {
+              return "vendor-mui";
             }
 
             // React Router
@@ -62,8 +61,8 @@ export default defineConfig({
               return "vendor-stripe";
             }
 
-            // Other major libraries
-            if (id.includes("socket.io") || id.includes("socket.io-client")) {
+            // Socket
+            if (id.includes("socket.io")) {
               return "vendor-socket";
             }
 
@@ -83,7 +82,6 @@ export default defineConfig({
               return "vendor-swiper";
             }
 
-            // Everything else
             return "vendor-others";
           }
         },
