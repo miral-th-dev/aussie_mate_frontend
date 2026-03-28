@@ -137,7 +137,7 @@ const Header = () => {
           {/* Notification Icon */}
           <button 
             onClick={() => navigate('/notifications')}
-            className="relative p-0.5 sm:p-1 md:p-1 hover:bg-gray-100 rounded-lg! transition-colors cursor-pointer"
+            className="relative  hover:bg-gray-100 rounded-lg! transition-colors cursor-pointer"
           >
             <img src={NotificationIcon} alt="Notifications" className="w-7 h-7 sm:w-7 sm:h-7 md:w-9 md:h-9" />
           </button>
@@ -147,7 +147,7 @@ const Header = () => {
             <div className="flex items-center space-x-2 md:space-x-">
               <Link 
                 to="/profile" 
-                className="hover:bg-gray-100 rounded-lg! transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-lg! transition-colors"
               >
                 <img src={ProfileIcon} alt="Profile" className="w-5 h-5 sm:w-6 sm:h-6 md:w-6 md:h-6" />
               </Link>
