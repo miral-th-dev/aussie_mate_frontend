@@ -12,7 +12,8 @@ const CleaningJobDetailsForm = ({
   onFileInputChange,
   onRemoveFile,
   isBondCleaning = false,
-  onBondCleaningToggle
+  onBondCleaningToggle,
+  prefilledCategory
 }) => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isServiceOpen, setIsServiceOpen] = useState(false);
@@ -70,6 +71,39 @@ const CleaningJobDetailsForm = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Handle prefilled category from dashboard
+  useEffect(() => {
+    if (prefilledCategory && categories.length > 0 && !formData.categoryId) {
+      // Normalize strings by removing special characters and extra spaces
+      const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const normPrefill = normalize(prefilledCategory);
+
+      const found = categories.find((c) => {
+        const normName = normalize(c.name);
+        // Direct include match
+        if (normName.includes(normPrefill) || normPrefill.includes(normName)) return true;
+        
+        // Specific checks for common categories
+        if (normPrefill.includes('bond') && normName.includes('bond')) return true;
+        if (normPrefill.includes('commercial') && normName.includes('commercial')) return true;
+        if (normPrefill.includes('general') && normName.includes('general')) return true;
+        
+        return false;
+      });
+      
+      if (found) {
+        onInputChange('categoryId', found._id);
+        onInputChange('propertyType', found.name);
+        
+        // If it's bond cleaning, ensure the toggle is on
+        const isBond = found.name.toLowerCase().includes('bond');
+        if (isBond && !isBondCleaning && onBondCleaningToggle) {
+          onBondCleaningToggle();
+        }
+      }
+    }
+  }, [categories, prefilledCategory, formData.categoryId, onInputChange, isBondCleaning, onBondCleaningToggle]);
 
   const getCategoryName = () => {
     const category = categories.find(c => c._id === formData.categoryId);

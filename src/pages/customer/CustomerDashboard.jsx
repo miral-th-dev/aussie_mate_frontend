@@ -352,7 +352,7 @@ const CustomerDashboard = () => {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
             <div
-              onClick={() => navigate("/post-new-job")}
+              onClick={() => navigate("/post-new-job", { state: { prefilledCategory: "Domestic / General Cleaning" } })}
               className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
             >
               {/* 🔵 Top-left glow */}
@@ -370,7 +370,7 @@ const CustomerDashboard = () => {
             </div>
 
             <div
-              onClick={() => navigate("/post-new-job")}
+              onClick={() => navigate("/post-new-job", { state: { prefilledCategory: "Commercial Cleaning" } })}
               className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
             >
               {/* 🔵 Top-left glow */}
@@ -386,7 +386,7 @@ const CustomerDashboard = () => {
             </div>
 
             <div
-              onClick={() => navigate("/post-new-job")}
+              onClick={() => navigate("/post-new-job", { state: { prefilledCategory: "Bond / End-of-Lease Cleaning" } })}
               className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
             >
               {/* 🔵 Top-left glow */}
@@ -402,7 +402,7 @@ const CustomerDashboard = () => {
             </div>
 
             <div
-              onClick={() => navigate("/post-new-job")}
+              onClick={() => navigate("/post-new-job", { state: { prefilledCategory: "Other Categories" } })}
               className="relative overflow-hidden bg-[#FCFCFF] rounded-[16px] border-1 border-[#E8EEFF] p-4 sm:p-6 flex flex-col items-center justify-center cursor-pointer shadow-sm"
             >
               {/* 🔵 Top-left glow */}
