@@ -44,7 +44,7 @@ const MyTicketsPage = () => {
   };
 
   const handleBack = () => {
-    navigate("/help");
+    navigate("/help", { replace: true });
   };
 
   const handleRaiseTicket = () => {

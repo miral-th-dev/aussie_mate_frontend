@@ -17,7 +17,7 @@ const HelpSupportPage = () => {
   const [loading, setLoading] = useState(true);
 
   const handleBack = () => {
-    navigate(-1);
+    navigate("/profile", { replace: true });
   };
 
   const handleSupportTicket = () => {

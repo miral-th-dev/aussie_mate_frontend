@@ -13,7 +13,7 @@ const CleaningJobDetailsForm = ({
   onRemoveFile,
   isBondCleaning = false,
   onBondCleaningToggle,
-  defaultCategoryName
+  prefilledCategory
 }) => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isServiceOpen, setIsServiceOpen] = useState(false);
@@ -65,11 +65,11 @@ const CleaningJobDetailsForm = ({
 
   // Set default category from dashboard if provided
   useEffect(() => {
-    if (defaultCategoryName && categories.length > 0) {
+    if (prefilledCategory && categories.length > 0) {
       const match = categories.find(
         (c) => 
-          c.name.toLowerCase() === defaultCategoryName.toLowerCase() ||
-          c.name.toLowerCase().includes(defaultCategoryName.toLowerCase().split(' ')[0])
+          c.name.toLowerCase() === prefilledCategory.toLowerCase() ||
+          c.name.toLowerCase().includes(prefilledCategory.toLowerCase().split(' ')[0])
       );
       
       if (match && match._id !== formData.categoryId) {
@@ -79,7 +79,7 @@ const CleaningJobDetailsForm = ({
         onInputChange('serviceDetail', '');
       }
     }
-  }, [categories, defaultCategoryName, formData.categoryId, onInputChange]);
+  }, [categories, prefilledCategory, formData.categoryId, onInputChange]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

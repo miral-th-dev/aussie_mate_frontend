@@ -209,7 +209,7 @@ const ProfilePage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <PageHeader
           title="My Profile"
-          onBack={() => navigate(-1)}
+          onBack={() => navigate(user?.role === 'Customer' ? '/customer-dashboard' : '/cleaner-dashboard', { replace: true })}
           className="h-16"
           titleClassName="text-xl font-semibold text-gray-900"
         />
