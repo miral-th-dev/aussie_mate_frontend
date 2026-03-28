@@ -12,35 +12,23 @@ const LeadUsageHistoryPage = () => {
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const limit = 10;
 
-  const fetchHistory = async (pageNumber = 1, rangeOverride = null, sortOverride = null, orderOverride = null) => {
+  const fetchHistory = async () => {
     setLoading(true);
     setError("");
-    const currentRange = rangeOverride !== null ? rangeOverride : dateRange;
-    const currentSortBy = sortOverride !== null ? sortOverride : sortBy;
-    const currentSortOrder = orderOverride !== null ? orderOverride : sortOrder;
-
     try {
+      // Fetch all items (or a large enough limit) to filter locally as requested
       const response = await subscriptionsAPI.getHistory({ 
-        page: pageNumber, 
-        limit,
-        sortBy: currentSortBy,
-        sortOrder: currentSortOrder,
-        startDate: currentRange?.from ? dayjs(currentRange.from).format('YYYY-MM-DD') : undefined,
-        endDate: currentRange?.to ? dayjs(currentRange.to).format('YYYY-MM-DD') : undefined
+        limit: 1000, 
       });
       
       if (response.success) {
         setHistory(response.data || []);
-        if (response.pagination) {
-          setTotalPages(response.pagination.totalPages || 1);
-        } else {
-          setTotalPages(1);
-        }
       } else {
         setError("Failed to fetch history");
       }
@@ -53,8 +41,55 @@ const LeadUsageHistoryPage = () => {
   };
 
   useEffect(() => {
-    fetchHistory(page);
-  }, [page]);
+    fetchHistory();
+  }, []);
+
+  const filteredHistory = React.useMemo(() => {
+    let result = [...history];
+
+    // Filter by Date Range
+    if (dateRange?.from || dateRange?.to) {
+      result = result.filter(item => {
+        const itemDate = dayjs(item.createdAt);
+        const fromDate = dateRange.from ? dayjs(dateRange.from).startOf('day') : null;
+        const toDate = dateRange.to ? dayjs(dateRange.to).endOf('day') : null;
+
+        if (fromDate && itemDate.isBefore(fromDate)) return false;
+        if (toDate && itemDate.isAfter(toDate)) return false;
+        return true;
+      });
+    }
+
+    // Sorting
+    result.sort((a, b) => {
+      let valA, valB;
+      
+      if (sortBy === 'createdAt') {
+        valA = new Date(a.createdAt).getTime();
+        valB = new Date(b.createdAt).getTime();
+      } else if (sortBy === 'amount') {
+        valA = Math.abs(a.amount);
+        valB = Math.abs(b.amount);
+      } else if (sortBy === 'type') {
+        valA = a.type || '';
+        valB = b.type || '';
+      }
+
+      if (sortOrder === 'desc') {
+        return valA < valB ? 1 : -1;
+      } else {
+        return valA > valB ? 1 : -1;
+      }
+    });
+
+    return result;
+  }, [history, dateRange, sortBy, sortOrder]);
+
+  // Handle local pagination of filtered results
+  const itemsPerPage = limit;
+  const totalItems = filteredHistory.length;
+  const currentTotalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+  const paginatedHistory = filteredHistory.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -102,8 +137,7 @@ const LeadUsageHistoryPage = () => {
                     value={sortBy}
                     onChange={(val) => {
                       setSortBy(val);
-                      // Auto apply sorting
-                      // fetchHistory(1); // Usually sorting is auto-applied or needs a button
+                      setPage(1);
                     }}
                     placeholder="Sort By"
                     options={[
@@ -117,7 +151,10 @@ const LeadUsageHistoryPage = () => {
                 <div className="w-36 h-[46px]">
                   <CustomSelect 
                     value={sortOrder}
-                    onChange={setSortOrder}
+                    onChange={(val) => {
+                      setSortOrder(val);
+                      setPage(1);
+                    }}
                     placeholder="Order"
                     options={[
                       { label: 'Newest First', value: 'desc' },
@@ -129,7 +166,7 @@ const LeadUsageHistoryPage = () => {
                 <div className="flex items-center gap-2">
                   <Button 
                     variant="primary" 
-                    onClick={() => fetchHistory(1)}
+                    onClick={() => setPage(1)}
                     className="px-5 h-[46px] rounded-xl text-sm"
                   >
                     Apply
@@ -137,13 +174,12 @@ const LeadUsageHistoryPage = () => {
                   {(dateRange?.from || dateRange?.to || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
                     <button 
                       onClick={() => {
-                        const resetRange = { from: null, to: null };
-                        setDateRange(resetRange);
+                        setDateRange({ from: null, to: null });
                         setSortBy('createdAt');
                         setSortOrder('desc');
-                        fetchHistory(1, resetRange, 'createdAt', 'desc');
+                        setPage(1);
                       }}
-                      className="w-[46px] h-[46px] flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                      className="w-[46px] h-[46px] cursor-pointer flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
                       title="Clear Filters"
                     >
                       <X className="w-5 h-5" />
@@ -155,7 +191,7 @@ const LeadUsageHistoryPage = () => {
           </div>
 
           <div className="min-h-[400px] flex flex-col">
-            {loading && history.length === 0 ? (
+            {loading ? (
               <div className="flex-1 flex items-center justify-center py-10">
                 <Loader message="Loading history details..." />
               </div>
@@ -166,16 +202,16 @@ const LeadUsageHistoryPage = () => {
                 </div>
                 <p className="text-red-600 font-semibold">{error}</p>
                 <button
-                  onClick={() => fetchHistory(page)}
+                  onClick={() => fetchHistory()}
                   className="mt-4 text-primary-600 font-bold hover:underline"
                 >
                   Try Again
                 </button>
               </div>
-            ) : history.length > 0 ? (
+            ) : paginatedHistory.length > 0 ? (
               <>
                 <div className="divide-y divide-[#F9FAFB]">
-                  {history.map((item, idx) => (
+                  {paginatedHistory.map((item, idx) => (
                     <div
                       key={item._id || idx}
                       className="px-6 py-5 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
@@ -225,7 +261,7 @@ const LeadUsageHistoryPage = () => {
 
                 <div className="p-8 border-t border-gray-50 mt-auto bg-gray-50/30">
                   <PaginationRanges
-                    count={totalPages}
+                    count={currentTotalPages}
                     page={page}
                     onChange={(_, value) => setPage(value)}
                     hideIfSinglePage={false}

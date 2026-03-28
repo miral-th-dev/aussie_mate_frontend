@@ -67,7 +67,7 @@ const MyTicketsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="bg-gray-50 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <PageHeader title="My Tickets" onBack={handleBack} className="mb-0" />
@@ -121,15 +121,15 @@ const MyTicketsPage = () => {
               {tickets.map((ticket) => (
                 <div
                   key={ticket._id || ticket.id}
-                  className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm cursor-pointer"
                   onClick={() => navigate(`/my-tickets/${ticket._id || ticket.id}`)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 block">
+                      <span className="text-sm text-[#374151] font-medium block">
                         #{ticket.ticketId}
                       </span>
-                      <h4 className="text-lg font-bold text-gray-900 leading-tight">
+                      <h4 className="text-lg font-semibold text-gray-900 leading-tight">
                         {ticket.category}
                       </h4>
                     </div>
@@ -141,10 +141,10 @@ const MyTicketsPage = () => {
                       {ticket.status}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4 font-medium">
+                  <p className="text-sm text-gray-500 line-clamp-2 mb-2 font-medium">
                     {ticket.description}
                   </p>
-                  <div className="flex items-center justify-between text-[12px] text-gray-400 font-bold border-t border-gray-50 pt-3">
+                  <div className="flex items-center justify-between text-[12px] text-[#374151] font-medium border-t border-gray-50 pt-3">
                     <span>
                       {new Date(ticket.createdAt).toLocaleDateString()}
                     </span>

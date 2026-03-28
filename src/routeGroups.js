@@ -122,6 +122,6 @@ export const cleanerRoutes = [
   { path: '/credits/success', component: CreditsSuccessPage, showHeader: false },
   { path: '/cleaner/stripe/success', component: StripeSuccessPage },
   { path: '/platform-policy', component: PlatformPolicyPage },
-  { path: '/location', component: LocationPage, allowedRoles: ['Customer', ...CLEANER_ROLES], showHeader: false },
+  { path: '/location', component: LocationPage, allowedRoles: ['Customer', ...CLEANER_ROLES] },
 ]
 

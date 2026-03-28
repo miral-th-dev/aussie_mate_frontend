@@ -546,6 +546,7 @@ const PostNewJobPage = () => {
             dropdownRef={dropdownRef}
             isBondCleaning={isBondCleaning}
             onBondCleaningToggle={handleBondCleaningToggle}
+            defaultCategoryName={location.state?.categoryName}
           />
 
           {/* Continue Button */}

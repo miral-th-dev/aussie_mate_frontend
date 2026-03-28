@@ -4,9 +4,8 @@ import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-m
 import { useAuth } from '../../contexts/AuthContext';
 import { userAPI } from '../../services/api';
 import { MapPin, Navigation, ArrowLeft } from 'lucide-react';
-import { Button, Loader } from '../../components';
+import { Button, Loader, PageHeader } from '../../components';
 import { CLEANER_ROLES } from '../../routeGroups';
-import Header from '../../components/layout/Header';
 
 
 // Map container style
@@ -79,13 +78,53 @@ const LocationPage = () => {
       navigate("/login");
     }
   }, [navigate]);
-
   // Load Google Maps
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: apiKey,
     libraries: libraries
   });
+  
+  // Load saved location on mount
+  useEffect(() => {
+    const loadSavedLocation = async () => {
+      try {
+        const savedLocation = localStorage.getItem("userLocation");
+        if (savedLocation) {
+          const parsed = JSON.parse(savedLocation);
+          setSelectedLocation(parsed);
+          setSearchQuery(parsed.fullAddress || "");
+        } else if (user) {
+          const profileResponse = await userAPI.getProfile();
+          if (profileResponse.success) {
+            const userData = profileResponse.data?.user || profileResponse.data || profileResponse;
+            const location = userData?.location;
+            if (location) {
+              const fullAddress = location.fullAddress || location.address || '';
+              const lat = location.coordinates?.[1] || location.lat || -33.839;
+              const lng = location.coordinates?.[0] || location.lng || 151.207;
+              
+              const initialLocation = {
+                fullAddress,
+                lat,
+                lng,
+                coordinates: `${lat}, ${lng}`
+              };
+              setSelectedLocation(initialLocation);
+              setSearchQuery(fullAddress);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load saved location:", err);
+      }
+    };
+
+    if (isLoaded) {
+      loadSavedLocation();
+    }
+  }, [isLoaded, user]);
+
 
   // Map options
   const mapOptions = {
@@ -175,6 +214,7 @@ const LocationPage = () => {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
+        console.log(`Current position: ${latitude}, ${longitude}`);
 
         try {
           const geocoder = new window.google.maps.Geocoder();
@@ -188,8 +228,13 @@ const LocationPage = () => {
               };
               setSelectedLocation(location);
               setSearchQuery(results[0].formatted_address);
+              
+              // Pan map if it's available
+              if (map) {
+                map.panTo({ lat: latitude, lng: longitude });
+              }
             } else {
-              setError("Lookup failed: " + status);
+              setError("Google Maps couldn't find an address for this location.");
             }
             setIsLoading(false);
           });
@@ -200,8 +245,21 @@ const LocationPage = () => {
       },
       (err) => {
         setIsLoading(false);
-        setError("Unable to access location.");
-      }
+        switch(err.code) {
+          case err.PERMISSION_DENIED:
+            setError("Location access was denied. Please allow it in settings.");
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setError("Location info is unavailable.");
+            break;
+          case err.TIMEOUT:
+            setError("Request to get location timed out.");
+            break;
+          default:
+            setError("Unable to access location.");
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -360,64 +418,61 @@ const LocationPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-white">
-      {isFromApp && <Header />}
-      {/* Header with Search and Descriptive Text */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-start gap-4">
-            <button 
-              onClick={() => navigate(-1)} 
-              className="mt-1 p-2.5 -ml-3 hover:bg-gray-100 rounded-full transition-all group"
-            >
-              <ArrowLeft className="w-6 h-6 text-gray-700 group-hover:text-primary-600" />
-            </button>
-            <div className="space-y-1.5">
-              <h1 className="text-2xl font-semibold text-[#111827] tracking-tight">Pick your location</h1>
+    <>
+      <div className="py-3 sm:py-8 px-4 sm:px-8">
+        <PageHeader
+          title="Pick your location"
+          onBack={() => navigate(-1)}
+          className="mb-6"
+          titleClassName="text-xl sm:text-2xl font-semibold text-[#111827]"
+          backButtonClassName="cursor-pointer"
+        />
+
+        {/* Search Bar Section */}
+        <div className="bg-white rounded-2xl p-4 sm:p-6 mb-6 shadow-sm border border-gray-100">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-1.5 flex-1">
               <p className="text-[#6B7280] font-medium text-[15px]">
                 Add your location so we can match you with the closest cleaners.
               </p>
             </div>
+
+            <div className="w-full md:w-[460px]">
+              <form onSubmit={handleSearch}>
+                {isLoaded ? (
+                  <Autocomplete
+                    onLoad={onAutocompleteLoad}
+                    onPlaceChanged={onPlaceChanged}
+                  >
+                    <div className="relative group">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search for area, street name..."
+                        className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
+                      />
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </Autocomplete>
+                ) : (
+                  <div className="w-full h-[60px] bg-gray-50 border border-gray-100 rounded-full animate-pulse" />
+                )}
+              </form>
+            </div>
           </div>
 
-          {/* Search Input on the Right */}
-          <div className="w-full md:w-[460px]">
-            <form onSubmit={handleSearch}>
-              {isLoaded ? (
-                <Autocomplete
-                  onLoad={onAutocompleteLoad}
-                  onPlaceChanged={onPlaceChanged}
-                >
-                  <div className="relative group">
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search for area, street name..."
-                      className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600  text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
-                    />
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
-                       <MapPin className="w-5 h-5" />
-                    </div>
-                  </div>
-                </Autocomplete>
-              ) : (
-                <div className="w-full h-[60px] bg-gray-50 border border-gray-100 rounded-full animate-pulse" />
-              )}
-            </form>
-          </div>
+          {error && (
+            <div className="mt-4 text-red-600 text-sm bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              {error}
+            </div>
+          )}
         </div>
 
-        {error && (
-          <div className="mt-4 text-red-600 text-sm bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            {error}
-          </div>
-        )}
-      </div>
-
-      <div className="max-w-7xl mx-auto py-4 sm:py-6 lg:py-8 pt-0! px-4 sm:px-6 lg:px-8 pb-10">
-        <div className="w-full">
+        <div className="grid grid-cols-1 gap-6 pb-10">
 
           {/* Google Map */}
           <div className="rounded-xl overflow-hidden mb-4 border h-72">
@@ -602,7 +657,7 @@ const LocationPage = () => {
           )} */}
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

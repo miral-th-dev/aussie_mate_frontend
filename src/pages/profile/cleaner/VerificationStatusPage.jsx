@@ -235,7 +235,7 @@ const VerificationStatusPage = () => {
                                             setTempAbn(documents?.documents?.abnNumber || '');
                                             setIsEditingAbn(true);
                                         }}
-                                        className="text-xs font-medium text-primary-600 underline"
+                                        className="text-xs cursor-pointer font-medium text-primary-600 underline"
                                     >
                                         Edit
                                     </button>
@@ -247,19 +247,19 @@ const VerificationStatusPage = () => {
                                         type="text"
                                         value={tempAbn}
                                         onChange={(e) => setTempAbn(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                        className="w-full p-2 border border-gray-300 rounded text-sm"
                                         placeholder="Enter ABN Number"
                                     />
                                     <div className="flex gap-2 justify-end">
                                         <button
                                             onClick={() => setIsEditingAbn(false)}
-                                            className="px-3 py-1 text-xs font-medium text-gray-500 border border-gray-300 rounded-full"
+                                            className="px-3 py-1 text-xs cursor-pointer font-medium text-gray-500 border border-gray-300 rounded-xl"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleSaveAbn}
-                                            className="px-3 py-1 text-xs font-medium text-white bg-primary-500 rounded-full"
+                                            className="px-3 py-1 text-xs cursor-pointer font-medium text-white bg-primary-500 rounded-xl"
                                         >
                                             Save
                                         </button>
@@ -286,7 +286,7 @@ const VerificationStatusPage = () => {
                                             setTempBio(documents?.documents?.bio || '');
                                             setIsEditingBio(true);
                                         }}
-                                        className="text-xs font-medium text-primary-600 underline"
+                                        className="text-xs cursor-pointer font-medium text-primary-600 underline"
                                     >
                                         Edit
                                     </button>
@@ -297,19 +297,19 @@ const VerificationStatusPage = () => {
                                     <textarea
                                         value={tempBio}
                                         onChange={(e) => setTempBio(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-lg text-sm min-h-[100px]"
+                                        className="w-full p-2 border border-gray-300 !rounded-xl text-sm min-h-[100px]"
                                         placeholder="Enter your Bio"
                                     />
                                     <div className="flex gap-2 justify-end">
                                         <button
                                             onClick={() => setIsEditingBio(false)}
-                                            className="px-3 py-1 text-xs font-medium text-gray-500 border border-gray-300 rounded-full"
+                                            className="px-3 py-1 text-xs font-medium text-gray-500 border border-gray-300 rounded-xl"
                                         >
                                             Cancel
                                         </button>
                                         <button
                                             onClick={handleSaveBio}
-                                            className="px-3 py-1 text-xs font-medium text-white bg-primary-500 rounded-full"
+                                            className="px-3 py-1 text-xs font-medium text-white bg-primary-500 rounded-xl"
                                         >
                                             Save
                                         </button>

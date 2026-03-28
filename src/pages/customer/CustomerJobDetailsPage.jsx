@@ -704,9 +704,9 @@ const CustomerJobDetailsPage = () => {
 
           {/* Photo Grid */}
           {jobPhotos.length > 0 && (
-            <div className="grid grid-cols-2 gap-2 mb-8 max-w-lg">
+            <div className="grid grid-cols-4 gap-2 mb-8 max-w-md">
               {jobPhotos.slice(0, 4).map((photo, index) => (
-                <div key={index} className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 group">
+                <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
                   <img
                     src={photo}
                     alt={`Job ${index + 1}`}
@@ -714,7 +714,7 @@ const CustomerJobDetailsPage = () => {
                   />
                   {index === 3 && jobPhotos.length > 4 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="text-white text-2xl font-bold">+{jobPhotos.length - 3}</span>
+                      <span className="text-white text-xl font-bold">+{jobPhotos.length - 3}</span>
                     </div>
                   )}
                 </div>

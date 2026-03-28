@@ -150,7 +150,7 @@ const ReviewsPage = () => {
               {renderStars(overallRating, 'w-6 h-6 max-sm:w-5 max-sm:h-5')}
             </div>
             <div>
-              <div className="text-3xl font-bold text-primary-500 max-sm:text-2xl">{overallRating}</div>
+              <div className="text-2xl font-medium text-primary-500 max-sm:text-2xl">{overallRating}</div>
             </div>
           </div>
         </div>
@@ -188,13 +188,13 @@ const ReviewsPage = () => {
           <div className="bg-white rounded-2xl shadow-custom p-6 max-sm:p-4 max-sm:rounded-xl">
             <div className="space-y-6 max-sm:space-y-4 ">
               {reviews.map((review, index) => (
-                <div key={review._id || review.id || index} className="border-b border-[#F3F3F3] pb-6 last:border-b-0 last:pb-0">
+                <div key={review._id || review.id || index} className="border-b border-[#F3F3F3] last:border-b-0 last:pb-0">
                   {/* Job Information */}
                   {review.job && (
                     <div className="mb-4">
-                      <h3 className="text-lg font-bold text-primary-500 max-sm:text-base">
+                      <h3 className="text-lg font-medium text-primary max-sm:text-base">
                         {review.job.category} 
-                        <span className="text-[#6B7280] font-normal ml-2">
+                        <span className="text-[#6B7280] font-normal ml-2 text-sm">
                           • {review.job.serviceType}
                         </span>
                       </h3>
@@ -219,12 +219,12 @@ const ReviewsPage = () => {
 
                     {/* Review Content */}
                     <div className="flex-1">
-                      <h4 className="font-semibold text-primary-500 text-lg mb-1 max-sm:text-base">
+                      <h4 className="font-semibold text-primary-500 mb-1 max-sm:text-base">
                         {getCustomerName(review)}
                       </h4>
 
                       {/* Rating and Date */}
-                      <div className="flex items-center gap-2 mb-4 max-sm:gap-1.5 max-sm:mb-3">
+                      <div className="flex items-center gap-2 max-sm:gap-1.5 max-sm:mb-3">
                         <div className="flex items-center gap-1">
                           {renderStars(review.rating || 0, 'w-4 h-4 max-sm:w-3.5 max-sm:h-3.5')}
                         </div>
