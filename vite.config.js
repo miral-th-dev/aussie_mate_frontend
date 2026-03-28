@@ -32,62 +32,57 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            // Handle Emotion/MUI first (heavy libraries)
+            // Handle Emotion/MUI first to prevent cn initialization issues
             if (id.includes("@emotion") || id.innpmcludes("@mui")) {
               return "vendor-mui";
             }
-            
-            // React Core (React 19 needs these together to share internal state)
-            if (
-              id.includes("/node_modules/react/") ||
-              id.includes("/node_modules/react-dom/") ||
-              id.includes("/node_modules/scheduler/") ||
-              id.includes("/node_modules/@react-is/") ||
-              id.includes("/node_modules/react-is/")
-            ) {
-              return "vendor-react-core";
+
+            // React core
+            if (id.includes("react") && !id.includes("@emotion") && !id.includes("@mui")) {
+              return "vendor-react";
             }
-            
+
+            // React DOM
+            if (id.includes("react-dom")) {
+              return "vendor-react-dom";
+            }
+
             // React Router
             if (id.includes("react-router")) {
               return "vendor-router";
             }
-            
+
             // Maps
             if (id.includes("leaflet") || id.includes("react-leaflet") || id.includes("@react-google-maps")) {
               return "vendor-maps";
             }
-            
+
             // Stripe
             if (id.includes("@stripe")) {
               return "vendor-stripe";
             }
-            
+
             // Other major libraries
             if (id.includes("socket.io") || id.includes("socket.io-client")) {
               return "vendor-socket";
             }
-            
+
             if (id.includes("lucide-react")) {
               return "vendor-icons";
             }
-            
+
             if (id.includes("date-fns") || id.includes("dayjs")) {
               return "vendor-date";
             }
-            
+
             if (id.includes("yup")) {
               return "vendor-validation";
             }
-            
+
             if (id.includes("swiper")) {
               return "vendor-swiper";
             }
 
-            if (id.includes("react-i18next") || id.includes("i18next")) {
-              return "vendor-i18n";
-            }
-            
             // Everything else
             return "vendor-others";
           }
