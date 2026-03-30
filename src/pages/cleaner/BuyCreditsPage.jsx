@@ -93,7 +93,7 @@ const BuyCreditsPage = () => {
           className="py-4"
         />
 
-        <div className="mt-8 mb-10 text-center sm:text-left">
+        <div className="mb-10 text-center sm:text-left">
           <h1 className="text-xl font-semibold text-[#1F2937] mb-3 tracking-tight">Purchase More Credits</h1>
           <p className="text-[#6B7280] text-lg  leading-relaxed max-w-lg">
             Continue responding to cleaning job leads by purchasing additional credits.
@@ -129,7 +129,7 @@ const BuyCreditsPage = () => {
                   <p className="text-sm font-medium text-[#6B7280]">
                     {pkg.credits} Credits
                   </p>
-                  <h3 className="text-3xl font-bold text-[#111827]">
+                  <h3 className="text-2xl font-medium text-[#111827]">
                     {formatCurrency(pkg.price)}
                   </h3>
                   <p className="text-sm font-medium text-[#6B7280]">
@@ -140,7 +140,7 @@ const BuyCreditsPage = () => {
                 {/* Vertical Divider */}
                 <div className="w-px h-16 bg-[#F3F3F3] mx-8 hidden sm:block" />
 
-                <div className="flex items-center gap-2 text-[#1F6FEB] font-bold text-sm">
+                <div className="flex items-center gap-2 text-[#1F6FEB] font-medium text-sm">
                   <div className="w-5 h-5 rounded-full bg-[#1F6FEB] flex items-center justify-center transition-transform group-hover:scale-110">
                     <Plus className="w-4 h-4 text-white" strokeWidth={3} />
                   </div>
@@ -154,7 +154,7 @@ const BuyCreditsPage = () => {
 
       {/* Optimized Bottom Bar for Web */}
       {selectedPackage && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#F9FAFB] border-t border-[#E5E7EB] rounded-t-[36px] px-8 py-6 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+        <div className="max-w-7xl mx-auto fixed bottom-0 left-0 right-0 bg-[#F9FAFB] border-t border-[#E5E7EB] rounded-t-[36px] px-8 py-6 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="text-center sm:text-left">
               <p className=" font-medium text-[#6B7280]">

@@ -276,7 +276,8 @@ const CleanerJobsPage = () => {
       isWaitlisted: job.isWaitlisted || false,
       distance: (jobDistance !== undefined && jobDistance !== null) ? parseFloat(jobDistance).toFixed(3) : null,
       isUrgent: job.isUrgent || false,
-      category: job.categoryId?.name || 'Cleaning'
+      category: job.categoryId?.name || 'Cleaning',
+      customer: job.customerId || null
     };
   };
 
@@ -450,7 +451,7 @@ const CleanerJobsPage = () => {
                             </span>
                           )}
                           {activeTab === 'assigned' && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-100 text-primary-600 border border-primary-200 uppercase tracking-wider">
+                            <span className="text-[12px] font-medium px-2 py-1.5 rounded-full bg-[#EBF2FD] text-[#1F6FEB] border border-[#dae6fa] capitalize">
                               Assigned
                             </span>
                           )}
@@ -483,16 +484,25 @@ const CleanerJobsPage = () => {
 
 
 
-                      {/* Assigned By (Simple) */}
-                      {activeTab === 'assigned' && job.originalJob?.customerId && (
-                        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-50">
+                      {/* Customer Info (Assigned By / Posted By) */}
+                      {job.customer && (
+                        <div className="flex items-center gap-2 border-t border-gray-50">
                           <img
-                            src={job.originalJob.customerId.profileImage || `https://ui-avatars.com/api/?name=${job.originalJob.customerId.firstName}+${job.originalJob.customerId.lastName}&background=random`}
+                            src={(() => {
+                              const img = job.customer.profilePhoto || job.customer.profileImage;
+                              if (!img) return `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                              if (typeof img === 'string') return img;
+                              return img.url || img.path || img.secureUrl || `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                            })()}
                             alt="Customer"
-                            className="w-6 h-6 rounded-full object-cover"
+                            className="w-6 h-6 rounded-full object-cover border border-gray-100"
+                            onError={(e) => {
+                              e.target.src = `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                            }}
                           />
                           <p className="text-xs text-gray-400">
-                            Assigned by <span className="font-bold text-gray-700">{job.originalJob.customerId.firstName}</span>
+                            {activeTab === 'assigned' ? 'Assigned by' : 'Posted by'}{' '}
+                            <span className="font-semibold text-gray-700 capitalize">{job.customer.firstName}</span>
                           </p>
                         </div>
                       )}

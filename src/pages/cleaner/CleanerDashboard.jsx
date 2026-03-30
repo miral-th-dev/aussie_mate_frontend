@@ -273,6 +273,7 @@ const CleanerDashboard = () => {
             note: getJobNote(job),
             category: job.categoryId?.name || "Cleaning",
             distance: job.distance !== undefined ? job.distance : null,
+            customer: job.customerId || null,
           };
         });
 console.log("formattedActiveJobs =",formattedActiveJobs);
@@ -314,6 +315,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
             statusRaw: "completed",
             category: job.categoryId?.name || "Cleaning",
             distance: job.distance !== undefined ? job.distance : null,
+            customer: job.customerId || null,
           }));
 
         setCompletedJobs(formattedCompletedJobs);
@@ -338,6 +340,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
             date: getJobDate(job),
             note: getJobNote(job),
             category: job.categoryId?.name || "Cleaning",
+            customer: job.customerId || null,
           };
         });
 
@@ -725,7 +728,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
               {swiperJobs.map((job, index) => (
                 <SwiperSlide key={`job-${job.id || index}`}>
                   <div
-                    className="bg-white rounded-2xl border border-[#F3F3F3] p-5 sm:p-6 shadow-sm min-h-[160px] cursor-pointer transition-all duration-300"
+                    className="bg-white rounded-2xl border border-[#F3F3F3] p-5 sm:p-6 shadow-sm h-[210px] cursor-pointer transition-all duration-300"
                     onClick={() => handleJobClick(job)}
                   >
                       <div className="flex flex-col h-full relative">
@@ -736,11 +739,11 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                             <span className="text-[13px] font-medium text-gray-400">
                               {job.category}
                             </span>
-                            <div className="text-[#111827] font-semibold text-[17px] leading-tight capitalize">
+                            <div className="text-[#111827] font-semibold text-[17px] leading-tight capitalize line-clamp-2">
                               {job.title}
                             </div>
                           </div>
-
+ 
                           <div className="space-y-2.5">
                             <div className="flex items-center text-gray-500 font-medium text-[14px]">
                               <Calendar
@@ -750,7 +753,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                               <span>{job.date || "Date not specified"}</span>
                             </div>
                             
-                            <div className="flex items-start text-gray-500 font-medium text-[14px]">
+                            <div className="flex items-center text-gray-500 font-medium text-[14px]">
                               <MapPin
                                 className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5 text-gray-400"
                                 strokeWidth={1.5}
@@ -761,6 +764,28 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                             </div>
                           </div>
                         </div>
+
+                        {/* Customer Info */}
+                        {job.customer && (
+                          <div className="flex items-center gap-2 mt-2 border-t border-gray-50">
+                            <img
+                              src={(() => {
+                                const img = job.customer.profilePhoto || job.customer.profileImage;
+                                if (!img) return `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                                if (typeof img === 'string') return img;
+                                return img.url || img.path || img.secureUrl || `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                              })()}
+                              alt="Customer"
+                              className="w-6 h-6 rounded-full object-cover border border-gray-100"
+                              onError={(e) => {
+                                e.target.src = `https://ui-avatars.com/api/?name=${job.customer.firstName}+${job.customer.lastName}&background=random`;
+                              }}
+                            />
+                            <p className="text-xs text-gray-400">
+                              Posted by <span className="font-semibold text-gray-700 capitalize">{job.customer.firstName}</span>
+                            </p>
+                          </div>
+                        )}
                       </div>
                   </div>
                 </SwiperSlide>
