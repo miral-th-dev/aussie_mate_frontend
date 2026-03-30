@@ -549,7 +549,7 @@ const JobDetailsCompletedPage = () => {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2.5 group">
               <div className="w-7 h-7 rounded-lg text-[#6B7280] flex items-center justify-center">
-                <CalendarDays className="w-5 h-5" strokeWidth={2.5} />  
+                <CalendarDays className="w-5 h-5" />  
               </div>
               <div>
                 <p className="text-[15px] font-medium text-[#6B7280]">
@@ -563,8 +563,8 @@ const JobDetailsCompletedPage = () => {
             </div>
 
             <div className="flex items-center gap-2.5 group">
-              <div className="w-7 h-7 rounded-lg text-gray-700 flex items-center justify-center">
-                <MapPin className="w-5 h-5" strokeWidth={2.5} />
+              <div className="w-7 h-7 rounded-lg text-[#6B7280] flex items-center justify-center">
+                <MapPin className="w-5 h-5" />
               </div>
               <p className="text-base font-medium text-[#6B7280] leading-snug">
                 {jobData.location || "12 King Street, Sydney NSW"}

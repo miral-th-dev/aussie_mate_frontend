@@ -771,6 +771,7 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
               No active jobs right now. Explore live jobs to get started.
             </div>
           )}
+          
         </div>
       )}
     </div>

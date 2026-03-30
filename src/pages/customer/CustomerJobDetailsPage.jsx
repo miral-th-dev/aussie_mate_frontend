@@ -669,7 +669,7 @@ const CustomerJobDetailsPage = () => {
           <div className="mb-4">
             <div className="inline-flex items-center gap-1.5 bg-[#DDEFFF] px-3 py-1.5 rounded-full">
               <div className="w-2 h-2 bg-[#0088FF] rounded-full"></div>
-              <span className="text-xs font-semibold text-[#0088FF]">
+              <span className="text-xs font-medium text-[#0088FF]">
                 {cleanerQuotes.length} Quotes Received
               </span>
             </div>
@@ -677,13 +677,13 @@ const CustomerJobDetailsPage = () => {
 
           {/* Job Header */}
           <div className="mb-6">
-            <p className="text-md font-semibold text-gray-500 mb-1 leading-tight">
+            <p className="text-md font-medium text-gray-500 mb-1 leading-tight">
               {job.categoryId?.name || 'Cleaning'}
             </p>
-            <h1 className="text-lg sm:text-xl font-medium text-[#111827] mb-2 leading-tight">
+            <h1 className="text-lg font-medium text-[#111827] mb-2 leading-tight">
               {serviceDetail || job.title}
             </h1>
-            <p className="text-sm sm:text-base font-medium text-gray-500 leading-relaxed mb-3">
+            <p className="text-sm font-medium text-gray-500 leading-relaxed mb-3">
               {job.instructions || 'No description provided.'}
             </p>
 
@@ -691,11 +691,11 @@ const CustomerJobDetailsPage = () => {
             <div className="flex flex-col gap-3 mb-6">
               <div className="flex items-center text-[#6B7280] font-medium">
                 <CalendarDays className="w-5 h-5 mr-3 text-[#111827]" strokeWidth={1.5} />
-                <span className="text-sm sm:text-base">{scheduledDateLabel}</span>
+                <span className="text-sm">{scheduledDateLabel}</span>
               </div>
               <div className="flex items-start text-[#6B7280] font-medium">
                 <MapPin className="w-5 h-5 mr-3 mt-0.5 text-[#111827] flex-shrink-0" strokeWidth={1.5} />
-                <span className="text-sm sm:text-base leading-snug">{job.location?.address || job.address || 'Location not specified'}</span>
+                <span className="text-sm leading-snug">{job.location?.address || job.address || 'Location not specified'}</span>
               </div>
 
             </div>

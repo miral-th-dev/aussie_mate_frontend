@@ -10,11 +10,11 @@ const JobSuccessPage = () => {
   const navigate = useNavigate();
 
   const handleViewMyJob = () => {
-    navigate('/my-jobs');
+    navigate('/my-jobs', { replace: true });
   };
 
   const handleReturnHome = () => {
-    navigate('/customer-dashboard');
+    navigate('/customer-dashboard', { replace: true });
   };
 
   return (
