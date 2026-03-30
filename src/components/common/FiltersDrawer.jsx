@@ -119,16 +119,25 @@ const FiltersDrawer = ({
 
           <div>
             <p className="text-sm font-medium text-gray-900 mb-3">Date</p>
-            <div className="rounded-2xl bg-gray-50 p-3">
+            <div className="rounded-full border border-gray-300 px-3">
               <Calendar
                 value={draftDate}
                 onChange={handleDateChange}
                 disablePast={false}
+                label=""
+                className="w-full"
                 slotProps={{
                   textField: {
+                    fullWidth: true,
                     placeholder: 'Select date',
-                    InputProps: {
-                      className: 'rounded-2xl bg-white',
+                    sx: {
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '1rem', // rounded-xl
+                        backgroundColor: '#ffffff',
+                        '& fieldset': {
+                          border: 'gray',
+                        },
+                      },
                     },
                   },
                 }}

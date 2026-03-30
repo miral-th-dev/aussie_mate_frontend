@@ -263,11 +263,11 @@ const JobBookedSuccessfullyPage = () => {
   };
 
   const handleViewBooking = () => {
-    navigate('/my-jobs');
+    navigate('/my-jobs', { replace: true });
   };
 
   const handleReturnHome = () => {
-    navigate('/customer-dashboard');
+    navigate('/customer-dashboard', { replace: true });
   };
 
   if (loading) {

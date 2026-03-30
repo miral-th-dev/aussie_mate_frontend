@@ -709,14 +709,14 @@ const PostNewJobPage = () => {
 
       <div className="w-full max-w-sm space-y-4">
         <Button
-          onClick={() => navigate(`/customer-job-details/${createdJobId}`)}
+          onClick={() => navigate(`/customer-job-details/${createdJobId}`, { replace: true })}
           size="lg"
           className="w-full bg-[#1A73E8]"
         >
           View My Job
         </Button>
         <button
-          onClick={() => navigate('/customer-dashboard')}
+          onClick={() => navigate('/customer-dashboard', { replace: true })}
           className="w-full py-4 text-lg font-semibold text-[#111827] flex items-center justify-center gap-2 cursor-pointer"
         >
           <svg className="w-5 h-5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

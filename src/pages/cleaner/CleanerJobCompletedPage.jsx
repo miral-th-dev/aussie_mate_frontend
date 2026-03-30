@@ -136,7 +136,7 @@ const CleanerJobCompletedPage = () => {
 
               <div className="space-y-4 pt-1">
                 <div className="flex items-center gap-2.5 text-[#6B7280]">
-                  <CalendarDays className="w-5 h-5 text-[#111827]"/>
+                  <CalendarDays className="w-5 h-5 "/>
                   <span className="text-[14px] font-medium">
                     {jobData.scheduledDate ? new Date(jobData.scheduledDate).toLocaleDateString('en-US', {
                       month: 'short',
@@ -147,7 +147,7 @@ const CleanerJobCompletedPage = () => {
                 </div>
 
                 <div className="flex items-start gap-2.5 text-[#6B7280]">
-                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 text-[#111827]"/>
+                  <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5 "/>
                   <span className="text-[15px] font-medium leading-snug">
                     {jobData.location}
                   </span>
