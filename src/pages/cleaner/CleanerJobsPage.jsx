@@ -360,7 +360,7 @@ const CleanerJobsPage = () => {
         {/* Flat container (no extra rounded background behind tabs/cards) to match Figma */}
         <div className="bg-transparent rounded-none p-0 shadow-none">
           {/* Search & Sort */}
-          <div className="px-4 sm:px-6 lg:px-8 py-3">
+          <div className="px-4 sm:px-6 lg:px-8 pb-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <img src={SearchIcon} alt="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 " />

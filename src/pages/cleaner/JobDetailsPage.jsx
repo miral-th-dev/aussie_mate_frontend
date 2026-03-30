@@ -368,8 +368,7 @@ const JobDetailsPage = () => {
             const savedTab = localStorage.getItem('cleanerActiveTab');
             navigate('/cleaner-jobs', { state: { tab: savedTab || 'live-jobs' }, replace: true });
           }}
-          className="px-4 sm:px-6 lg:px-8 py-2 sm:py-4"
-          titleClassName="text-lg sm:text-xl font-semibold text-primary-500 truncate"
+          className="px-4 sm:px-6 lg:px-8 py-4"
         />
 
         <div className="px-4 sm:px-6 lg:px-8 pb-6">

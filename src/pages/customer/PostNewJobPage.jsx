@@ -517,12 +517,11 @@ const PostNewJobPage = () => {
 
 
   const renderJobDetails = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-8 lg:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 ">
       <PageHeader
         title="Post New Job"
         onBack={() => currentStep === 1 ? navigate('/customer-dashboard') : handleBack()}
-        className="mb-8"
-        titleClassName="text-2xl sm:text-3xl font-semibold text-[#111827]"
+        className="mb-4"
       />
 
       {/* Main Content */}
@@ -564,12 +563,11 @@ const PostNewJobPage = () => {
   );
 
   const renderFinalDetails = () => (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 sm:py-8 lg:py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4">
       <PageHeader
         title="Post New Job"
         onBack={handleBack}
-        className="mb-8"
-        titleClassName="text-2xl sm:text-3xl font-semibold text-[#111827]"
+        className="mb-4"
         backButtonClassName="cursor-pointer"
       />
 
@@ -672,9 +670,9 @@ const PostNewJobPage = () => {
             </div>
             <Button
               onClick={handleChangeLocation}
-              variant={(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'warning' : 'outline'}
+              variant={(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'warning' : 'secondary'}
               size="sm"
-              className="rounded-[8px] border-gray-200 text-[#111827] font-bold"
+              className="rounded-xl border-gray-200 text-[#1F6FEB]"
             >
               {(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'Set Address' : 'Change'}
             </Button>
@@ -682,7 +680,7 @@ const PostNewJobPage = () => {
         </div>
 
         {/* Post Job Action */}
-        <div className="pt-8 flex justify-end">
+        <div className="pt-4 flex justify-end">
           <Button
             onClick={handlePostJob}
             disabled={isLoading || !formData.categoryId || !formData.serviceTypeId || (!selectedLocation.address || selectedLocation.address === 'Location not set')}
