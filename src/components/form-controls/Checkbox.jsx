@@ -12,7 +12,7 @@ import checkboxIcon from '../../assets/checkbox.svg';
  * @param {string} checkboxSize - Size of checkbox (default: "w-5 h-5")
  * @param {string} labelClassName - Additional CSS classes for the label
  */
-const Checkbox = ({ 
+const Checkbox = ({
   name,
   label,
   checked = false,
@@ -23,8 +23,8 @@ const Checkbox = ({
   required = false
 }) => {
   return (
-    <div className={`flex items-start ${className}`}>
-      <div className="relative flex-shrink-0 mt-1">
+    <div className={`flex items-center ${className}`}>
+      <div className="relative flex-shrink-0">
         <input
           type="checkbox"
           name={name}

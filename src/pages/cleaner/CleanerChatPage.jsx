@@ -677,14 +677,7 @@ const CleanerChatPage = () => {
                 )}
 
                 {/* Safety Banner */}
-                <div className="bg-[#F9FAFB] px-4 py-3 sm:px-6 rounded-xl border border-primary-200 max-w-lg mx-auto mt-4 flex-shrink-0">
-                    <div className="flex items-center space-x-2">
-                        <img src={InfoIcon} alt="Info" className="w-4 h-4 flex-shrink-0" />
-                        <p className="text-xs text-primary-200 font-medium">
-                            For safety, phone numbers and emails are hidden until booking. Please chat only through Aussie Mate.
-                        </p>
-                    </div>
-                </div>
+              
 
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
