@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { AlertTriangle, UserRound, X, CalendarDays, Clock3, CheckCircle, Circle, Calendar, Phone, Check } from 'lucide-react';
+import { AlertTriangle, UserRound, X, CalendarDays, Clock3, CheckCircle, Circle, Calendar, Phone, Check, MapPin } from 'lucide-react';
 
 import { Button, MapWithPolyline, PageHeader } from '../../components';
 
@@ -638,7 +638,8 @@ const InProgressJobDetailsPage = () => {
                         <div className="space-y-3">
                             {/* Distance */}
                             <div className="flex items-center text-[#6B7280]">
-                                <img src={MapPinIcon1} alt="Location" className="w-4 h-4 mr-3 opacity-60" />
+                                    <MapPin className="w-4 h-4 mr-3 opacity-60 text-black" strokeWidth={2.5} />
+
                                 <span className="text-sm font-medium">
                                     Approx. {job.distance || '4.2 km'} away, {job.location?.city || 'VIC'}
                                 </span>
@@ -646,7 +647,7 @@ const InProgressJobDetailsPage = () => {
 
                             {/* Date & Time */}
                             <div className="flex items-center text-[#6B7280]">
-                                <Calendar className="w-4 h-4 mr-3 opacity-60" strokeWidth={2.5} />
+                                <Calendar className="w-4 h-4 mr-3 opacity-60 text-black" strokeWidth={2.5} />
                                 <span className="text-sm font-medium">
                                     {job.scheduledDate ? formatDate(job.scheduledDate) : 'Date not specified'}
                                 </span>
@@ -723,7 +724,7 @@ const InProgressJobDetailsPage = () => {
 
                     {/* Assigned By Section */}
                     <div className="mb-6">
-                        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3 ml-1">Assigned By</h3>
+                        <h3 className="text-sm font-semibold text-[#111827] mb-3 ml-1">Assigned By</h3>
                         <div className="bg-white rounded-3xl p-4 border border-[#F1F5F9] shadow-sm">
                             <div className="flex items-center justify-between mb-5">
                                 <div className="flex items-center gap-3">
