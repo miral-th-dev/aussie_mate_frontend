@@ -377,10 +377,7 @@ const JobDetailsPage = () => {
             <JobOverviewCard
               jobId={job?.jobId || job?.referenceId || job?._id?.slice(-6)}
               // Figma: show Category / ServiceType on top line, and ServiceType as title
-              propertyType={[
-                job?.categoryId?.name,
-                job?.serviceTypeId?.name
-              ].filter(Boolean).join(' / ')}
+              propertyType={job?.categoryId?.name || job?.category || 'Cleaning'}
               title={job?.serviceTypeId?.name || getJobTitle(job)}
               showQuotePill={false}
               serviceType={job?.categoryId?.name || job?.category || ''}

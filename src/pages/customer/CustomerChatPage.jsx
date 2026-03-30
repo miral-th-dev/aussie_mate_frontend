@@ -370,15 +370,7 @@ const CustomerChatPage = () => {
           </div>
         )}
 
-        {/* Safety Banner */}
-        <div className="bg-[#F9FAFB] px-3 sm:px-4 py-2 sm:py-3 mt-3 sm:mt-4 rounded-2xl shadow-custom border border-primary-200 md:max-w-lg mx-3 md:mx-auto flex-shrink-0">
-          <div className="flex items-start space-x-2 sm:space-x-3">
-            <img src={InfoIcon} alt="Info" className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
-            <p className="text-xs sm:text-sm text-primary-200 font-medium leading-relaxed">
-              For safety, phone numbers and emails are hidden until booking. Please chat only through Aussie Mate.
-            </p>
-          </div>
-        </div>
+ 
 
         {/* Chat Messages */}
         <div className="flex-1 px-3 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto">

@@ -595,16 +595,9 @@ const InProgressJobDetailsPage = () => {
     };
 
     const getJobCategory = (job) => {
-        return [
-            job?.categoryId?.name,
-            job?.serviceTypeId?.name
-        ].filter(Boolean).join(' / ') || 'General Cleaning';
+        return job?.categoryId?.name || 'General Cleaning';
     };
 
-    const getJobFrequencyLabel = (job) => {
-        if (!job) return 'One-time';
-        return job.frequency || job.serviceFrequency || job.schedule?.frequency || 'One-time';
-    };
 
     const headerTitle = getJobTitle(job);
 
@@ -638,7 +631,7 @@ const InProgressJobDetailsPage = () => {
                         <div className="space-y-3">
                             {/* Distance */}
                             <div className="flex items-center text-[#6B7280]">
-                                    <MapPin className="w-4 h-4 mr-3 opacity-60 text-black" strokeWidth={2.5} />
+                                <MapPin className="w-4 h-4 mr-3 opacity-60 text-black" strokeWidth={2.5} />
 
                                 <span className="text-sm font-medium">
                                     Approx. {job.distance || '4.2 km'} away, {job.location?.city || 'VIC'}
