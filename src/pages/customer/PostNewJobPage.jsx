@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Button,
   PageHeader,
-  CleaningJobDetailsForm
+  CleaningJobDetailsForm,
+  Loader
 } from '../../components';
 import MapPinIcon from '../../assets/map-pin 1.png';
 import { jobsAPI, userAPI } from '../../services/api';
@@ -11,6 +10,26 @@ import { format } from 'date-fns';
 import Calendar from '../../components/form-controls/Calendar';
 import CalendarIcon from '../../assets/Calendar.svg';
 import JobLiveAnimation from '../../assets/joblive.gif';
+import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
+import { MapPin, Navigation } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+
+// Map container style
+const mapContainerStyle = {
+  width: '100%',
+  height: '300px',
+  borderRadius: '12px'
+};
+
+// Default center
+const defaultCenter = {
+  lat: -33.839,
+  lng: 151.207
+};
+
+// Google Maps libraries
+const libraries = ['places'];
 
 const PostNewJobPage = () => {
   const navigate = useNavigate();
@@ -43,7 +62,7 @@ const PostNewJobPage = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [finalInstructions, setFinalInstructions] = useState('');
   const [isUrgent, setIsUrgent] = useState(true);
-  
+
   const [selectedLocation, setSelectedLocation] = useState({
     address: 'Location not set',
     city: 'Please set your location'
@@ -57,7 +76,23 @@ const PostNewJobPage = () => {
   // UI states
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isBondCleaning, setIsBondCleaning] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [map, setMap] = useState(null);
+  const [autocomplete, setAutocomplete] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isLoadingPicker, setIsLoadingPicker] = useState(false);
+  const [pickerError, setPickerError] = useState('');
   const dropdownRef = useRef(null);
+
+  // Google Maps API key
+  const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
+
+  // Load Google Maps
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: apiKey,
+    libraries: libraries
+  });
 
   const propertyTypes = [
     { value: 'house', label: 'House' },
@@ -85,23 +120,23 @@ const PostNewJobPage = () => {
     if (location.state?.step) {
       setCurrentStep(location.state.step);
     }
-    
+
     // Always check for saved form state on component mount
     const savedFormState = localStorage.getItem('postJobFormState');
     if (savedFormState) {
       try {
         const formState = JSON.parse(savedFormState);
-        
+
         // Restore form data
         if (formState.formData) {
           setFormData(formState.formData);
         }
-        
+
         // Restore selected service
         if (formState.selectedService) {
           setSelectedService(formState.selectedService);
         }
-        
+
         // Restore final details
         if (formState.selectedDate) {
           const storedDate = formState.selectedDate;
@@ -120,7 +155,7 @@ const PostNewJobPage = () => {
         if (formState.isUrgent !== undefined) {
           setIsUrgent(formState.isUrgent);
         }
-        
+
       } catch (error) {
         console.error('Error restoring form state:', error);
       }
@@ -139,33 +174,33 @@ const PostNewJobPage = () => {
   }, []);
 
   // Load user location from profile (same as Header)
-  useEffect(() => {
-    const updateLocation = async () => {
-      try {
-        const userProfile = await userAPI.getProfile();
-        
-        // Check different possible locations for user data (same as Header)
-        const userData = userProfile.data?.user || userProfile.data || userProfile;
-        const location = userData?.location;
-        
-        if (location) {
-          const fullAddress = location.fullAddress || location.address || '';
-          const addressParts = fullAddress.split(',');
-          const address = addressParts[0]?.trim() || 'Location not set';
-          const city = addressParts.length > 1 ? addressParts[addressParts.length - 2]?.trim() : (location.city || 'Please set your location');
-          
-          setSelectedLocation({
-            address: address,
-            city: city,
-            fullAddress: fullAddress,
-            coordinates: location.coordinates
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching location from profile:', error);
-      }
-    };
+  const updateLocation = async () => {
+    try {
+      const userProfile = await userAPI.getProfile();
 
+      // Check different possible locations for user data (same as Header)
+      const userData = userProfile.data?.user || userProfile.data || userProfile;
+      const userLocation = userData?.location;
+
+      if (userLocation) {
+        const fullAddress = userLocation.fullAddress || userLocation.address || '';
+        const addressParts = fullAddress.split(',');
+        const address = addressParts[0]?.trim() || 'Location not set';
+        const city = addressParts.length > 1 ? addressParts[addressParts.length - 2]?.trim() : (userLocation.city || 'Please set your location');
+
+        setSelectedLocation({
+          address: address,
+          city: city,
+          fullAddress: fullAddress,
+          coordinates: userLocation.coordinates
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching location from profile:', error);
+    }
+  };
+
+  useEffect(() => {
     // Initial load
     updateLocation();
 
@@ -180,6 +215,13 @@ const PostNewJobPage = () => {
       window.removeEventListener('locationUpdated', handleLocationUpdate);
     };
   }, []);
+
+  // Update location whenever returning from location page
+  useEffect(() => {
+    if (location.state?.from === '/location' || localStorage.getItem('navigatingToLocation') === 'true') {
+      updateLocation();
+    }
+  }, [location.state]);
 
 
 
@@ -299,28 +341,106 @@ const PostNewJobPage = () => {
     setIsBondCleaning(!isBondCleaning);
   };
 
+  const handlePickerConfirm = () => {
+    setIsPickerOpen(false);
+  };
+
+  const onAutocompleteLoad = (autocompleteInstance) => {
+    setAutocomplete(autocompleteInstance);
+  };
+
+  const onPlaceChanged = () => {
+    if (autocomplete !== null) {
+      const place = autocomplete.getPlace();
+      if (place.geometry) {
+        const newLocation = {
+          fullAddress: place.formatted_address || place.name,
+          address: place.formatted_address || place.name,
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+          coordinates: [place.geometry.location.lng(), place.geometry.location.lat()],
+        };
+        setSelectedLocation(newLocation);
+        setSearchQuery(place.formatted_address || place.name);
+
+        if (map) {
+          map.panTo({ lat: newLocation.lat, lng: newLocation.lng });
+        }
+      }
+    }
+  };
+
+  const handleMapClick = (e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+
+    setIsLoadingPicker(true);
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        const newLocation = {
+          fullAddress: results[0].formatted_address,
+          address: results[0].formatted_address,
+          lat,
+          lng,
+          coordinates: [lng, lat],
+        };
+        setSelectedLocation(newLocation);
+        setSearchQuery(results[0].formatted_address);
+      }
+      setIsLoadingPicker(false);
+    });
+  };
+
+  const handleGetCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      setPickerError("Geolocation is not supported by this browser.");
+      return;
+    }
+
+    setIsLoadingPicker(true);
+    setPickerError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ location: { lat: latitude, lng: longitude } }, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const newLocation = {
+                fullAddress: results[0].formatted_address,
+                address: results[0].formatted_address,
+                lat: latitude,
+                lng: longitude,
+                coordinates: [longitude, latitude],
+              };
+              setSelectedLocation(newLocation);
+              setSearchQuery(results[0].formatted_address);
+
+              if (map) {
+                map.panTo({ lat: latitude, lng: longitude });
+              }
+            }
+            setIsLoadingPicker(false);
+          });
+        } catch (err) {
+          setPickerError("Reverse geocoding failed");
+          setIsLoadingPicker(false);
+        }
+      },
+      (err) => {
+        setIsLoadingPicker(false);
+        setPickerError("Unable to access location.");
+      }
+    );
+  };
+
   const handleChangeLocation = () => {
-    // Save current form data to localStorage before navigating
-    const formState = {
-      formData,
-      selectedFiles: selectedFiles.map(file => ({
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified
-      })),
-      selectedDate,
-      finalInstructions,
-      isUrgent,
-      selectedService
-    };
-    
-    localStorage.setItem('postJobFormState', JSON.stringify(formState));
-    
-    // Add a flag to indicate we're going to location page
-    localStorage.setItem('navigatingToLocation', 'true');
-    
-    navigate('/location', { state: { from: '/post-new-job', step: currentStep } });
+    setIsPickerOpen(!isPickerOpen);
+    if (!searchQuery && selectedLocation.fullAddress) {
+      setSearchQuery(selectedLocation.fullAddress);
+    }
   };
 
   const handleGoToProfile = () => {
@@ -338,12 +458,12 @@ const PostNewJobPage = () => {
       isUrgent,
       selectedService
     };
-    
+
     localStorage.setItem('postJobFormState', JSON.stringify(formState));
-    
+
     // Add a flag to indicate we're going to location page
     localStorage.setItem('navigatingToLocation', 'true');
-    
+
     navigate('/location', { state: { from: '/post-new-job', step: currentStep } });
   };
 
@@ -402,7 +522,7 @@ const PostNewJobPage = () => {
         const shouldUseStored =
           !effectiveLocation?.address ||
           effectiveLocation.address === 'Location not set' ||
-          (effectiveLocation.address && effectiveLocation.address.length < 10); 
+          (effectiveLocation.address && effectiveLocation.address.length < 10);
 
         if (shouldUseStored) {
           let parsedCoordinates = undefined;
@@ -417,6 +537,13 @@ const PostNewJobPage = () => {
             }
           } else if (Array.isArray(storedLocation.coordinates)) {
             parsedCoordinates = storedLocation.coordinates;
+          } else if (storedLocation.coordinates && typeof storedLocation.coordinates === 'object') {
+            // Handle {lat, lng} object format from LocationPage
+            const lat = storedLocation.coordinates.lat || storedLocation.lat;
+            const lng = storedLocation.coordinates.lng || storedLocation.lng;
+            if (lat !== undefined && lng !== undefined) {
+              parsedCoordinates = [Number(lng), Number(lat)];
+            }
           }
 
           effectiveLocation = {
@@ -435,7 +562,7 @@ const PostNewJobPage = () => {
       return;
     }
 
-    try { 
+    try {
       const scheduledDate = selectedDate
         ? new Date(`${selectedDate}T00:00:00`).toISOString()
         : null;
@@ -455,9 +582,12 @@ const PostNewJobPage = () => {
         isUrgent,
         bondCleaning: isBondCleaning,
         location: {
-          address: effectiveLocation.address,
+          address: effectiveLocation.fullAddress || effectiveLocation.address,
           city: effectiveLocation.city,
-          coordinates: effectiveLocation.coordinates || [0, 0], // Default if not found
+          coordinates: {
+            lat: effectiveLocation.lat || (Array.isArray(effectiveLocation.coordinates) ? effectiveLocation.coordinates[1] : (typeof effectiveLocation.coordinates === 'object' ? effectiveLocation.coordinates.lat : 0)),
+            lng: effectiveLocation.lng || (Array.isArray(effectiveLocation.coordinates) ? effectiveLocation.coordinates[0] : (typeof effectiveLocation.coordinates === 'object' ? effectiveLocation.coordinates.lng : 0))
+          }
         },
         customerId,
       };
@@ -466,36 +596,36 @@ const PostNewJobPage = () => {
         photos: selectedFiles,
         videos: []
       };
-      
+
       const response = await jobsAPI.createJobWithFiles(jobData, files);
-      
+
       if (response.success) {
         localStorage.removeItem('postJobFormState');
-        
+
         setCreatedJobId(response.data._id);
         setCurrentStep(3);
-      } else {  
+      } else {
         setError(response.message || 'Failed to post job');
       }
     } catch (error) {
       console.error('Error posting job:', error);
-      
+
       let errorMessage = 'Failed to post job';
-      
+
       if (error.message) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.errors) {
-        const validationErrors = error.response.data.errors.map(err => 
+        const validationErrors = error.response.data.errors.map(err =>
           typeof err === 'string' ? err : err.msg || err.message
         ).join(', ');
         errorMessage = validationErrors;
       }
-      
+
       setError(errorMessage);
     } finally {
-      
+
       setIsLoading(false);
     }
   };
@@ -528,7 +658,7 @@ const PostNewJobPage = () => {
       <div className="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 shadow-custom">
         <form onSubmit={(e) => { e.preventDefault(); handleContinue(); }}>
           {/* Using CleaningJobDetailsForm as the unified form */}
-          <CleaningJobDetailsForm 
+          <CleaningJobDetailsForm
             formData={formData}
             onInputChange={handleInputChange}
             onPropertyTypeSelect={handlePropertyTypeSelect}
@@ -593,10 +723,10 @@ const PostNewJobPage = () => {
               format="MMM DD, YYYY"
               textFieldProps={{
                 fullWidth: true,
-                sx: { 
-                  '& .MuiInputBase-root': { 
-                    borderRadius: '24px', 
-                    border: 'none', 
+                sx: {
+                  '& .MuiInputBase-root': {
+                    borderRadius: '24px',
+                    border: 'none',
                     backgroundColor: '#F9FAFB',
                     paddingRight: '16px'
                   },
@@ -641,12 +771,12 @@ const PostNewJobPage = () => {
           )}
 
           <div className={`rounded-lg py-2 flex items-center ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
-              ? 'bg-yellow-50 border border-yellow-200'
-              : 'bg-white'
+            ? 'bg-yellow-50 border border-yellow-200'
+            : 'bg-white'
             }`}>
             <div className={`mr-3 rounded-[8px] p-3 border ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
-                ? 'border-yellow-300 bg-yellow-100'
-                : 'border-primary-200 bg-white'
+              ? 'border-yellow-300 bg-yellow-100'
+              : 'border-primary-200 bg-white'
               }`}>
               <img
                 src={MapPinIcon}
@@ -656,14 +786,14 @@ const PostNewJobPage = () => {
             </div>
             <div className="flex-1 min-w-0">
               <div className={`font-medium text-sm truncate ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
-                  ? 'text-yellow-800'
-                  : 'text-gray-900'
+                ? 'text-yellow-800'
+                : 'text-gray-900'
                 }`}>
                 {selectedLocation.fullAddress || selectedLocation.address}
               </div>
               <div className={`text-xs truncate ${(!selectedLocation.address || selectedLocation.address === 'Location not set')
-                  ? 'text-yellow-600'
-                  : 'text-gray-600'
+                ? 'text-yellow-600'
+                : 'text-gray-600'
                 }`}>
                 {selectedLocation.city}
               </div>
@@ -674,9 +804,89 @@ const PostNewJobPage = () => {
               size="sm"
               className="rounded-xl border-gray-200 text-[#1F6FEB]"
             >
-              {(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'Set Address' : 'Change'}
+              {(!selectedLocation.address || selectedLocation.address === 'Location not set') ? 'Set Address' : (isPickerOpen ? 'Hide' : 'Change')}
             </Button>
           </div>
+
+          {/* Inline Location Picker */}
+          {isPickerOpen && (
+            <div className="mt-4 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="relative group">
+                {isLoaded ? (
+                  <Autocomplete
+                    onLoad={onAutocompleteLoad}
+                    onPlaceChanged={onPlaceChanged}
+                  >
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search for area, street name..."
+                        className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 text-gray-800 bg-[#F9FAFB] transition-all"
+                      />
+                      <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </Autocomplete>
+                ) : (
+                  <div className="w-full h-[60px] bg-gray-50 border border-gray-100 rounded-full animate-pulse" />
+                )}
+              </div>
+
+              {pickerError && <p className="text-red-500 text-sm px-2">{pickerError}</p>}
+
+              <div className="rounded-2xl overflow-hidden border border-gray-100 h-[300px] relative">
+                {isLoaded ? (
+                  <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={
+                      selectedLocation.lat
+                        ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+                        : defaultCenter
+                    }
+                    zoom={14}
+                    onLoad={(m) => setMap(m)}
+                    onClick={handleMapClick}
+                    options={{
+                      disableDefaultUI: false,
+                      zoomControl: true,
+                      streetViewControl: false,
+                      mapTypeControl: false,
+                      fullscreenControl: false
+                    }}
+                  >
+                    {selectedLocation.lat && (
+                      <Marker position={{ lat: selectedLocation.lat, lng: selectedLocation.lng }} />
+                    )}
+                  </GoogleMap>
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-gray-50">
+                    <Loader message="Loading map..." />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <button
+                  onClick={handleGetCurrentLocation}
+                  disabled={isLoadingPicker}
+                  className="flex items-center space-x-2 px-6 py-3 border border-primary-600 rounded-full text-primary-600 text-sm font-medium hover:bg-blue-50 transition-colors"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>{isLoadingPicker ? 'Getting location...' : 'Use Current Location'}</span>
+                </button>
+
+                <Button
+                  onClick={handlePickerConfirm}
+                  className="rounded-full px-8 bg-[#1A73E8]"
+                >
+                  Confirm Location
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Post Job Action */}
@@ -701,7 +911,7 @@ const PostNewJobPage = () => {
           <img src={JobLiveAnimation} alt="Job Live" className="w-full h-full object-cover" />
         </div>
       </div>
-      
+
       <h1 className="text-3xl font-semibold text-[#111827] mb-4">Your job request is live!</h1>
       <p className="text-gray-500 text-lg mb-12 max-w-sm">
         Nearby cleaners will start sending quotes shortly. You'll be notified.

@@ -255,6 +255,8 @@ const InProgressJobDetailsPage = () => {
         }
         if (job?.status === 'on_the_way') {
             setShowMap(true);
+        } else if (job?.status === 'started' || job?.status === 'pending_customer_confirmation') {
+            setShowMap(false);
         }
     }, [job?.status, jobId, navigate]);
 
@@ -440,6 +442,7 @@ const InProgressJobDetailsPage = () => {
                 const progressResponse = await jobsAPI.getCleanerProgress(jobId);
                 if (progressResponse.success) {
                     setJob(progressResponse.data.job);
+                    setShowMap(false);
                 }
             } else {
                 alert(response.message || 'Failed to update status');
@@ -652,18 +655,7 @@ const InProgressJobDetailsPage = () => {
                     </div>
 
 
-                    {/* Location Tracking Status */}
-                    {isTrackingLocation && (
-                        <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-4 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                                <div className="flex-1">
-                                    <p className="text-sm font-semibold text-green-800">Live Location Tracking</p>
-                                    <p className="text-xs text-green-600">Your location is being shared with the customer in real-time</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                    {/* Location Tracking Status removed as per user request */}
 
                     {/* Location Error */}
                     {locationError && (

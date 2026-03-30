@@ -5,6 +5,7 @@ import {
   Marker,
   DirectionsRenderer,
   Polyline,
+  Circle,
 } from "@react-google-maps/api";
 import { Clock, MapPin } from "lucide-react";
 import Marker1Icon from "../../assets/marker1.svg";
@@ -267,47 +268,7 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
   return (
     <div className="w-full h-96 rounded-3xl relative overflow-hidden border border-gray-100 shadow-xl transition-all duration-500">
       {/* Route Information Overlay */}
-      {!hasArrived && (liveDistance || routeInfo) && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl px-6 py-3 border border-blue-50 flex items-center gap-6 transition-all duration-300 transform hover:scale-105">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shadow-inner group transition-colors hover:bg-blue-100">
-              <Clock className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-medium text-blue-400 leading-none mb-1">Time</p>
-              <p className="text-xs font-medium text-gray-900 leading-tight">
-                {liveTime ? `${liveTime} min` : routeInfo?.duration}
-              </p>
-            </div>
-          </div>
-
-          <div className="w-px h-8 bg-gray-100"></div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shadow-inner group transition-colors hover:bg-indigo-100">
-              <MapPin className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-wider font-medium text-indigo-400 leading-none mb-1">Distance</p>
-              <p className="text-xs font-medium text-gray-900 leading-tight">
-                {liveDistance ? `${liveDistance} km` : routeInfo?.distance}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Live Status Indicator - Much more visible */}
-      <div className="absolute bottom-6 left-6 z-10 bg-white/90 backdrop-blur-md shadow-2xl rounded-2xl p-4 border border-green-100 flex items-center gap-4 transition-all hover:bg-white duration-300">
-        <div className="relative">
-          <div className="w-4 h-4 bg-green-500 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.5)]"></div>
-          <div className="absolute inset-0 w-4 h-4 bg-green-500 rounded-full animate-ping opacity-75"></div>
-        </div>
-        <div>
-          <p className="text-[10px] font-black text-green-600 uppercase tracking-[0.2em] leading-none mb-1">Cleaner Location</p>
-          <p className="text-sm font-bold text-gray-800">Live tracking active</p>
-        </div>
-      </div>
+      {/* No longer showing overlay cards as per user's request */}
 
       <GoogleMap
         mapContainerStyle={containerStyle}
@@ -319,11 +280,24 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
           fullscreenControl: false,
           gestureHandling: "greedy",
           styles: [
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }],
-            },
+            { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+            { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#f5f5f5" }] },
+            { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#bdbdbd" }] },
+            { featureType: "poi", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+            { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+            { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+            { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
+            { featureType: "road.arterial", elementType: "labels.text.fill", stylers: [{ color: "#757575" }] },
+            { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#dadada" }] },
+            { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#616161" }] },
+            { featureType: "road.local", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
+            { featureType: "transit.line", elementType: "geometry", stylers: [{ color: "#e5e5e5" }] },
+            { featureType: "transit.station", elementType: "geometry", stylers: [{ color: "#eeeeee" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9c9c9" }] },
+            { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#9e9e9e" }] },
           ],
         }}
       >
@@ -364,6 +338,24 @@ const MapWithRealtimeTracking = ({ customerLocation, cleanerLocation: externalCl
             anchor: new window.google.maps.Point(25, 50), // Anchor at the bottom for pin
           }}
           zIndex={5}
+        />
+
+        {/* Destination Reach Circle (Figma Style) */}
+        <Circle
+          center={customerLocation}
+          radius={120} // ~120 meter radius
+          options={{
+            strokeColor: "#3B82F6",
+            strokeOpacity: 0.8,
+            strokeWeight: 1,
+            fillColor: "#3B82F6",
+            fillOpacity: 0.1,
+            clickable: false,
+            draggable: false,
+            editable: false,
+            visible: true,
+            zIndex: 1
+          }}
         />
       </GoogleMap>
     </div>

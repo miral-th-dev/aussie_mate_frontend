@@ -100,24 +100,7 @@ const CleanerChatPage = () => {
         });
         socketService.on('chatNotFound', (data) => {
             // Silently handle chat room join failure - room might not exist yet for first contact
-            if (messages.length === 0) {
-                setMessages([
-                    {
-                        _id: 'demo_welcome',
-                        id: 1,
-                        senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
-                        content: "Hi! I'm ready to discuss this cleaning job with you.",
-                        message: "Hi! I'm ready to discuss this cleaning job with you.",
-                        messageType: 'text',
-                        createdAt: new Date(Date.now() - 60000).toISOString(),
-                        time: new Date(Date.now() - 60000).toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }).toLowerCase()
-                    }
-                ]);
-            }
+            setMessages([]);
         });
         socketService.on('chatHistory', (historyMessages) => {
             setIsLoadingMessages(false);
@@ -132,18 +115,7 @@ const CleanerChatPage = () => {
                 );
                 setMessages(uniqueMessages);
             } else {
-                // Add some demo messages if no history
-                setMessages([
-                    {
-                        id: 1,
-                        senderId: { _id: 'cleaner_demo' },
-                        content: "Hi! I'm ready to help with your cleaning job.",
-                        message: "Hi! I'm ready to help with your cleaning job.",
-                        messageType: 'text',
-                        createdAt: new Date(Date.now() - 3600000).toISOString(),
-                        time: '9:00 am'
-                    }
-                ]);
+                setMessages([]);
             }
         });
         socketService.on('newMessage', (message) => {
@@ -367,25 +339,8 @@ const CleanerChatPage = () => {
                 socketService.joinChat(jobId, effectiveCleanerId);
             }
         } else if (!effectiveCleanerId) {
-            // If no effectiveCleanerId, initialize demo mode immediately
-            if (messages.length === 0) {
-                setMessages([
-                    {
-                        _id: 'demo_welcome',
-                        id: 1,
-                        senderId: { _id: currentUser?.id || currentUser?._id || 'cleaner_demo' },
-                        content: "Hello! I'm here to help with your cleaning needs.",
-                        message: "Hello! I'm here to help with your cleaning needs.",
-                        messageType: 'text',
-                        createdAt: new Date().toISOString(),
-                        time: new Date().toLocaleTimeString('en-US', {
-                            hour: 'numeric',
-                            minute: '2-digit',
-                            hour12: true
-                        }).toLowerCase()
-                    }
-                ]);
-            }
+            // If no effectiveCleanerId, initialize as empty
+            setMessages([]);
         }
     }, [jobId, effectiveCleanerId, isConnected]);
 

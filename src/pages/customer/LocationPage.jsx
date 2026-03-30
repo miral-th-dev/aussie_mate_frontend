@@ -393,6 +393,10 @@ const LocationPage = () => {
     }
 
     // REDIRECT LOGIC
+    if (location.state?.from) {
+      return navigate(location.state.from, { state: { ...location.state } });
+    }
+
     const fromEditProfile = location.state?.fromPage === 'edit-profile';
     if (fromEditProfile) {
       return navigate("/profile");
