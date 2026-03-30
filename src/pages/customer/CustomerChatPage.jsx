@@ -335,8 +335,8 @@ const CustomerChatPage = () => {
 
 
   return (
-    <div className='px-4 md:px-8'>
-      <div className="max-w-7xl mx-auto py-4">
+    <div className='px-4 md:px-8 h-[calc(100dvh-90px)] flex flex-col overflow-hidden'>
+      <div className="max-w-7xl w-full mx-auto py-2 flex-shrink-0 capitalize">
         <PageHeader
           title={cleanerName || `Cleaner #${cleanerId?.slice(-4) || '1047'}`}
           onBack={() => navigate(-1)}
@@ -345,10 +345,10 @@ const CustomerChatPage = () => {
         />
       </div>
 
-      <div className="bg-white rounded-xl shadow-custom pt-1 overflow-x-hidden  ">
+      <div className="bg-white rounded-xl shadow-custom flex flex-col flex-1 overflow-hidden mb-2">
         {/* Error Message */}
         {error && (
-          <div className="px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mb-4">
+          <div className="px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mt-4">
             <div className="flex items-center justify-between">
               <span>{error}</span>
               <Button
@@ -371,7 +371,7 @@ const CustomerChatPage = () => {
         )}
 
         {/* Safety Banner */}
-        <div className="bg-[#F9FAFB] px-3 sm:px-4 py-2 sm:py-3 mt-3 sm:mt-4 rounded-2xl shadow-custom border border-primary-200 md:max-w-lg mx-3 md:mx-auto">
+        <div className="bg-[#F9FAFB] px-3 sm:px-4 py-2 sm:py-3 mt-3 sm:mt-4 rounded-2xl shadow-custom border border-primary-200 md:max-w-lg mx-3 md:mx-auto flex-shrink-0">
           <div className="flex items-start space-x-2 sm:space-x-3">
             <img src={InfoIcon} alt="Info" className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0" />
             <p className="text-xs sm:text-sm text-primary-200 font-medium leading-relaxed">
@@ -392,7 +392,6 @@ const CustomerChatPage = () => {
               }).toLowerCase() :
               msg.timestamp || '';
 
-            // Create unique key combining multiple identifiers
             const uniqueKey = msg._id || msg.id || `msg-${index}-${msg.content?.slice(0, 10) || 'empty'}`;
 
             return (
@@ -475,7 +474,7 @@ const CustomerChatPage = () => {
         </div>
 
         {/* Message Input */}
-        <div className="bg-white py-2 sm:py-3 px-3 sm:px-6 mb-4">
+        <div className="bg-white py-2 sm:py-3 px-3 sm:px-6 flex-shrink-0">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <input
               type="text"
@@ -497,7 +496,7 @@ const CustomerChatPage = () => {
         </div>
 
         {/* Sticky Action Footer */}
-        <div className="px-5 sm:px-8 py-4 sm:py-6 border-t border-gray-100 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-[32px] mt-auto">
+        <div className="px-5 sm:px-8 py-4 sm:py-6 border-t border-gray-100 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-[32px] flex-shrink-0">
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={handleRejectQuote}

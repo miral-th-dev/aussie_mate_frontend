@@ -625,14 +625,13 @@ const CustomerJobDetailsPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto py-3 sm:py-8 px-3 sm:px-8">
+      <div className="max-w-7xl mx-auto py-3  px-3 sm:px-8">
         <PageHeader
           title={serviceDetail || `Job Details - ${job.serviceType || 'Cleaning'}`}
           onBack={() => {
             const savedTab = localStorage.getItem('customerActiveTab');
             navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
           }}
-          titleClassName="text-sm sm:text-base md:text-lg font-semibold text-primary-500 truncate"
           backButtonClassName="cursor-pointer"
           rightSlot={
             <div className="relative" ref={dropdownRef}>
@@ -665,7 +664,7 @@ const CustomerJobDetailsPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-8">
-        <div>
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
           {/* Status Badge */}
           <div className="mb-4">
             <div className="inline-flex items-center gap-1.5 bg-[#DDEFFF] px-3 py-1.5 rounded-full">
@@ -727,10 +726,10 @@ const CustomerJobDetailsPage = () => {
 
 
         {/* Service Provider Quotes Section */}
-        <div className="py-8">
+        <div className="py-4">
           <div className="mb-6">
-            <h3 className="text-lg sm:text-xl font-medium text-gray-900 mb-2">
-              Cleaner Quotes <span className="font-semibold">({cleanerQuotes.length})</span>
+            <h3 className="text-lg  font-medium text-gray-900">
+              Cleaner Quotes <span className="font-medium">({cleanerQuotes.length})</span>
             </h3>
             <p className="text-sm text-gray-500 font-medium leading-relaxed">
               Cleaners nearby have sent their offers. Review and chat before choosing.
@@ -757,7 +756,7 @@ const CustomerJobDetailsPage = () => {
                           )}
                         </div>
                         <div>
-                          <h4 className="text-xl font-semibold text-gray-900 mb-1">
+                          <h4 className="text-lg font-medium text-gray-900 mb-1 capitalize">
                             {cleaner.name}
                           </h4>
 
