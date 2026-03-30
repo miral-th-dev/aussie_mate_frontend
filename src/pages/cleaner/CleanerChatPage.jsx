@@ -625,6 +625,14 @@ const CleanerChatPage = () => {
 
     const getJobTitle = (job) => {
         if (!job) return 'Job Chat';
+        
+        if (job.customerId) {
+            const firstName = job.customerId.firstName || '';
+            const lastName = job.customerId.lastName || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+            if (fullName) return fullName;
+        }
+
         const serviceType = job.serviceTypeDisplay || (job.serviceType?.charAt(0).toUpperCase() + job.serviceType?.slice(1)) || 'Service';
         return `${serviceType}`;
     };
@@ -655,21 +663,21 @@ const CleanerChatPage = () => {
     }
 
     return (
-        <div className='px-3 md:px-4'>
-            <div className="max-w-6xl mx-auto py-4 px-1">
+        <div className="flex flex-col h-[calc(100dvh-90px)] px-3 md:px-4 overflow-hidden">
+            <div className="max-w-6xl w-full mx-auto py-2 flex-shrink-0 px-1 capitalize">
                 <PageHeader title={getJobTitle(job)} onBack={() => navigate(-1)} />
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 bg-white rounded-2xl shadow-custom py-4">
-            {/* Error Message */}
+            <div className="max-w-6xl w-full mx-auto flex flex-col flex-1 bg-white rounded-2xl shadow-custom overflow-hidden mb-2">
+                {/* Error Message */}
                 {error && (
-                    <div className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mb-4">
+                    <div className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mt-4 flex-shrink-0">
                         {error}
                     </div>
                 )}
 
                 {/* Safety Banner */}
-                <div className="bg-[#F9FAFB] px-4 py-3 sm:px-6 rounded-xl border border-primary-200 max-w-lg mx-auto">
+                <div className="bg-[#F9FAFB] px-4 py-3 sm:px-6 rounded-xl border border-primary-200 max-w-lg mx-auto mt-4 flex-shrink-0">
                     <div className="flex items-center space-x-2">
                         <img src={InfoIcon} alt="Info" className="w-4 h-4 flex-shrink-0" />
                         <p className="text-xs text-primary-200 font-medium">
@@ -679,7 +687,7 @@ const CleanerChatPage = () => {
                 </div>
 
                 {/* Messages Area */}
-                <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 h-[50vh]">
+                <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
                     <div className="space-y-4">
                         {isLoadingMessages && (
                             <div className="py-4">
@@ -696,12 +704,9 @@ const CleanerChatPage = () => {
                                 }).toLowerCase() : 
                                 message.time || '';
 
-                            // Create unique key combining multiple identifiers
                             const uniqueKey = message._id || message.id || `msg-${index}-${message.content?.slice(0, 10) || 'empty'}`;
                             
-                            // System messages (centered)
                             if (message.messageType === 'system') {
-                                // Determine message styling based on content
                                 const isRejectedMessage = message.content?.includes('rejected');
                                 const bgColor = isRejectedMessage ? 'bg-red-500' : 'bg-green-500';
                                 const borderColor = isRejectedMessage ? 'border-red-500' : 'border-green-500';
@@ -722,16 +727,13 @@ const CleanerChatPage = () => {
                                     className={`flex ${isSentByCurrentUser ? 'justify-end' : 'justify-start'}`}
                                 >
                                     <div className={`flex items-start space-x-2 max-w-xs sm:max-w-md lg:max-w-lg ${isSentByCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                                        {/* Customer Avatar (left side) */}
                                         {!isSentByCurrentUser && (
                                             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                                                 <img src={UserIcon} alt="Customer" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </div>
                                         )}
                                         
-                                        {/* Message Content */}
                                         <div className="flex flex-col">
-                                        {/* Quote Message */}
                                         {message.messageType === 'quote' && message.quoteData && (
                                             <div className={`px-4 py-3 rounded-2xl font-medium mb-2 ${
                                                 isSentByCurrentUser
@@ -753,7 +755,6 @@ const CleanerChatPage = () => {
                                             </div>
                                         )}
                                         
-                                        {/* Budget Update Message */}
                                         {message.messageType === 'budget_update' && message.budgetData && (
                                             <div className={`px-4 py-3 rounded-2xl font-medium mb-2 ${
                                                 isSentByCurrentUser
@@ -770,7 +771,6 @@ const CleanerChatPage = () => {
                                             </div>
                                         )}
 
-                                        {/* Regular Text Message */}
                                         {(message.content || message.message) && (
                                             <div
                                                 className={`px-4 py-3 rounded-2xl font-medium ${
@@ -792,7 +792,6 @@ const CleanerChatPage = () => {
                                         )}
                                         </div>
                                         
-                                        {/* Cleaner Avatar (right side) */}
                                         {isSentByCurrentUser && (
                                             <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                                                 <img src={UserIcon} alt="You" className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -807,7 +806,7 @@ const CleanerChatPage = () => {
                 </div>
 
                 {/* Message Input */}
-                <div className="bg-white px-4 py-3 sm:px-6">
+                <div className="bg-white px-4 py-3 sm:px-6 flex-shrink-0">
                     <div className="flex items-center space-x-3">
                         <input
                             type="text"

@@ -298,10 +298,10 @@ const CustomerDashboard = () => {
 
         {/* 3 Features Cards */}
         <div
-          className="mb-6 sm:mb-8 p-[2px] rounded-[22px] 
+          className="mb-6 sm:mb-8 p-[2px] rounded-[16px] 
           bg-[linear-gradient(270deg,rgba(244,141,249,0.22),rgba(129,138,247,0.22))]"
         >
-          <div className="grid grid-cols-3 bg-[#F9FAFB] rounded-[20px] py-5 px-1 sm:px-4">
+          <div className="grid grid-cols-3 bg-[#F9FAFB] rounded-[15px] py-5 px-1 sm:px-4">
             <div className="flex flex-col items-center justify-start gap-2.5 relative">
               <div className="w-[60px] h-[60px] flex items-center justify-center bg-white rounded-full border border-[#F0F6FB] shadow-sm">
                 <img

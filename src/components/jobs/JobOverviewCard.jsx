@@ -138,13 +138,13 @@ const JobOverviewCard = ({
           )}
 
           {propertyType && (
-            <p className="text-sm sm:text-base font-semibold text-[#6B7280]">
+            <p className="text-sm sm:text-base font-semibold text-[#6B7280] capitalize">
               {propertyType}
             </p>
           )}
 
           {title && (
-            <h2 className="text-[20px]  font-semibold text-[#111827] leading-tight">
+            <h2 className="text-[20px]  font-semibold text-[#111827] leading-tight capitalize">
               {title === "Petsitting " ? "Pet Sitting" : title}
             </h2>
           )}
@@ -210,7 +210,7 @@ const JobOverviewCard = ({
         {/* Photos Grid */}
         {photos && photos.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-xs sm:text-sm text-primary-500 font-semibold uppercase tracking-wide">
+            <h4 className="text-xs sm:text-sm text-primary-500 font-semibold">
               Job Photos
             </h4>
             <div className="flex flex-wrap gap-2 sm:gap-3 bg-[#E5E7EB] rounded-xl p-[6px] w-fit">

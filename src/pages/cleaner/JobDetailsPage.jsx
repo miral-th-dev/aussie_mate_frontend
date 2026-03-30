@@ -412,8 +412,8 @@ const JobDetailsPage = () => {
                     className="w-12 h-12 rounded-full border border-gray-200 object-cover" 
                   />
                   <div>
-                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Posted by</p>
-                    <p className="text-lg font-semibold text-primary-500">{job.customerId.firstName} {job.customerId.lastName}.</p>
+                    <p className="text-xs text-gray-400 font-medium">Posted by</p>
+                    <p className="text-md font-medium text-primary-500 capitalize">{job.customerId.firstName} {job.customerId.lastName}</p>
                   </div>
                 </div>
                 
