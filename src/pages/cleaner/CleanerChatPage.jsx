@@ -663,12 +663,12 @@ const CleanerChatPage = () => {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100dvh-90px)] px-3 md:px-4 overflow-hidden">
-            <div className="max-w-6xl w-full mx-auto py-2 flex-shrink-0 px-1 capitalize">
+        <div className="flex flex-col h-[calc(100dvh-90px)] px-4 md:px-8 overflow-hidden">
+            <div className="max-w-7xl w-full mx-auto py-2 flex-shrink-0 capitalize">
                 <PageHeader title={getJobTitle(job)} onBack={() => navigate(-1)} />
             </div>
 
-            <div className="max-w-6xl w-full mx-auto flex flex-col flex-1 bg-white rounded-2xl shadow-custom overflow-hidden mb-2">
+            <div className="max-w-7xl w-full mx-auto flex flex-col flex-1 bg-white rounded-2xl shadow-custom overflow-hidden mb-2">
                 {/* Error Message */}
                 {error && (
                     <div className="px-4 py-2 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg mx-4 mt-4 flex-shrink-0">

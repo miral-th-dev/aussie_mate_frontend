@@ -100,12 +100,11 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
         <PageHeader
           title="Notifications"
           onBack={() => navigate(-1)}
-          className="mb-4 sm:mb-6"
-          titleClassName="text-xl sm:text-2xl font-semibold text-gray-900"
+          className="py-4"
           rightSlot={
             notifications.some(n => !n.isRead) && (
               <button 
