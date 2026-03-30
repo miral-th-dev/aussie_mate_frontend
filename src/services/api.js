@@ -1202,6 +1202,26 @@ export const faqsAPI = {
 export const supportTicketsAPI = {
   // Raise a new support ticket
   raiseTicket: async (ticketData) => {
+    // If ticketData is FormData, use fetch directly
+    if (ticketData instanceof FormData) {
+      const token = getAuthToken();
+      const response = await fetch(`${API_BASE_URL}/support-tickets`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: ticketData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to raise ticket with status ${response.status}`);
+      }
+
+      return await response.json();
+    }
+
+    // Fallback to JSON for backwards compatibility
     return apiRequest('/support-tickets', {
       method: 'POST',
       body: JSON.stringify(ticketData)

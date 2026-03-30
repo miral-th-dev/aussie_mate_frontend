@@ -264,7 +264,7 @@ const ProfilePage = () => {
           {/* User Details */}
           <div className="text-center">
             <h2 className="text-2xl sm:text-3xl font-semibold text-primary-500 mb-3 capitalize leading-tight">
-              {userProfile?.firstName || user?.firstName || user?.name || 'User Name'}
+              {user?.firstName} {user?.lastName}
             </h2>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">

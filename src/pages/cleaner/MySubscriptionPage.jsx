@@ -321,7 +321,7 @@ const MySubscriptionPage = () => {
                               ?.creditsPerMonth ||
                               activeSubscription?.planCredits ||
                               1)) *
-                            100,
+                          100,
                         ),
                       )}%`,
                     }}
@@ -356,8 +356,8 @@ const MySubscriptionPage = () => {
                   <span className="text-[#111827] ml-1 font-semibold">
                     {Math.floor(
                       activeSubscription.availableCredits /
-                        (activeSubscription.subscription?.planId
-                          ?.creditsPerLead || 1),
+                      (activeSubscription.subscription?.planId
+                        ?.creditsPerLead || 1),
                     )}{" "}
                     leads
                   </span>
@@ -380,7 +380,7 @@ const MySubscriptionPage = () => {
                     </div>
                   </div>
 
-              
+
                 </div>
 
                 <div className="divide-y divide-[#F9FAFB]">
@@ -395,19 +395,19 @@ const MySubscriptionPage = () => {
                             <Briefcase className="w-6 h-6" strokeWidth={1.5} />
                           </div> */}
                           <div>
-                      <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
-  {item.type === "debit" &&
-  item.jobId?.categoryId?.name &&
-  item.jobId?.serviceTypeId?.name
-    ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
-    : item.description}
+                            <p className="text-[16px] font-semibold text-[#111827] leading-tight mb-1">
+                              {item.type === "debit" &&
+                                item.jobId?.categoryId?.name &&
+                                item.jobId?.serviceTypeId?.name
+                                ? `${item.jobId.categoryId.name} - ${item.jobId.serviceTypeId.name}`
+                                : item.description}
 
-  {item.reason === "bonus_lead_usage" && (
-    <span className="ml-2 px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
-      Bonus Lead
-    </span>
-  )}
-</p>
+                              {item.reason === "bonus_lead_usage" && (
+                                <span className="ml-2 px-2 py-0.5 text-[10px] font-bold text-[#1F6FEB] bg-blue-50 rounded-full border border-blue-100 uppercase tracking-tight">
+                                  Bonus Lead
+                                </span>
+                              )}
+                            </p>
                             <p className="text-[13px] text-gray-400 font-medium">
                               {item.jobId ? (
                                 <>
@@ -676,9 +676,8 @@ const MySubscriptionPage = () => {
                     {selectedPlanCategories.map((type, idx) => (
                       <div
                         key={idx}
-                        className={`px-5 py-4 rounded-2xl transition-all cursor-default group ${
-                          idx === 0 ? 'bg-[#F9FAFB]' : 'hover:bg-[#F9FAFB]'
-                        }`}
+                        className={`px-5 py-4 rounded-2xl transition-all cursor-default group ${idx === 0 ? 'bg-[#F9FAFB]' : 'hover:bg-[#F9FAFB]'
+                          }`}
                       >
                         <span className=" font-medium text-[#111827] group-hover:text-black">
                           {type.name}

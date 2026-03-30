@@ -33,7 +33,7 @@ const RaiseTicketPage = () => {
     { label: "Booking Issue", value: "Booking Issue" },
     { label: "Payment Issue", value: "Payment Issue" },
     { label: "Profile Update", value: "Profile Update" },
-    { label: "Technical Bug", value: "Technical Bug" },
+    { label: "Technical", value: "Technical" },
     { label: "Other", value: "Other" },
   ];
 
@@ -93,24 +93,21 @@ const RaiseTicketPage = () => {
     setError("");
 
     try {
-      let attachmentUrls = [];
+      const ticketFormData = new FormData();
+      ticketFormData.append("name", formData.name);
+      ticketFormData.append(
+        "phone",
+        `${formData.countryCode}${formData.phoneNumber}`
+      );
+      ticketFormData.append("role", formData.role);
+      ticketFormData.append("category", formData.category);
+      ticketFormData.append("description", formData.description);
+
       if (formData.screenshot?.file) {
-        const uploadResponse = await uploadFile(formData.screenshot.file);
-        if (uploadResponse.success) {
-          attachmentUrls.push(uploadResponse.data.url || uploadResponse.data);
-        }
+        ticketFormData.append("attachments", formData.screenshot.file);
       }
 
-      const ticketData = {
-        name: formData.name,
-        phone: `${formData.countryCode}${formData.phoneNumber}`,
-        role: formData.role,
-        category: formData.category,
-        description: formData.description,
-        attachments: attachmentUrls,
-      };
-
-      const response = await supportTicketsAPI.raiseTicket(ticketData);
+      const response = await supportTicketsAPI.raiseTicket(ticketFormData);
       if (response.success) {
         setSuccess(true);
         setTimeout(() => navigate("/my-tickets"), 2000);

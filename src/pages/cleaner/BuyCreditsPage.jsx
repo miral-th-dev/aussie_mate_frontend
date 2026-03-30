@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ChevronLeft, 
-  Plus, 
-  CheckCircle2, 
-  CreditCard, 
+import {
+  ChevronLeft,
+  Plus,
+  CheckCircle2,
+  CreditCard,
   Info,
   Flame
 } from 'lucide-react';
@@ -51,7 +51,7 @@ const BuyCreditsPage = () => {
 
   const handleCheckout = async () => {
     if (!selectedPackage) return;
-    
+
     setCheckoutLoading(true);
     setError('');
     try {
@@ -85,11 +85,11 @@ const BuyCreditsPage = () => {
   }
 
   return (
-    <div className="pb-32">
-      <div className="max-w-xl mx-auto px-4 sm:px-6">
-        <PageHeader 
-          title="My Subscription" 
-          onBack={() => navigate(-1)} 
+    <div className="min-h-screen bg-gray-50 pb-32">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PageHeader
+          title="My Subscription"
+          onBack={() => navigate(-1)}
           className="py-4"
         />
 
@@ -107,16 +107,15 @@ const BuyCreditsPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {packages.map((pkg) => (
-            <div 
+            <div
               key={pkg._id}
               onClick={() => handlePackageSelect(pkg)}
-              className={`relative bg-white rounded-3xl p-6 border-2 transition-all duration-300 cursor-pointer group ${
-                selectedPackage?._id === pkg._id 
-                ? 'border-blue-600 shadow-xl shadow-blue-100 translate-y-[-2px]' 
-                : 'border-gray-100 hover:border-blue-200 hover:shadow-md'
-              }`}
+              className={`relative rounded-xl p-6 border-2 transition-all duration-300 cursor-pointer group ${selectedPackage?._id === pkg._id
+                  ? 'bg-[#F9FAFB] border-[#9CC0F6] shadow-xl shadow-blue-50 translate-y-[-2px]'
+                  : 'bg-[#F9FAFB] border-[#F3F3F3] hover:border-[#9CC0F6]/30'
+                }`}
             >
               {pkg.isPopular && (
                 <div className="absolute -top-3 right-6 bg-[#FEF3C7] text-[#D97706] px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-[#FDE68A] shadow-sm">
@@ -125,27 +124,27 @@ const BuyCreditsPage = () => {
                 </div>
               )}
 
-              <div className="flex justify-between items-center">
-                <div className="space-y-1.5">
-                  <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 text-xs font-medium rounded-full mb-1">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 space-y-1">
+                  <p className="text-sm font-medium text-[#6B7280]">
                     {pkg.credits} Credits
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <h3 className="text-2xl font-semibold text-[#111827]">
-                      {formatCurrency(pkg.price)}
-                    </h3>
-                  </div>
-                  <p className="text-sm font-semibold text-[#6B7280]">
+                  </p>
+                  <h3 className="text-3xl font-bold text-[#111827]">
+                    {formatCurrency(pkg.price)}
+                  </h3>
+                  <p className="text-sm font-medium text-[#6B7280]">
                     {pkg.approxLeads || "Approx. 5 leads"}
                   </p>
                 </div>
 
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                  selectedPackage?._id === pkg._id 
-                  ? 'bg-blue-600 text-white translate-x-1' 
-                  : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500'
-                }`}>
-                  <Plus className="w-6 h-6" strokeWidth={2.5} />
+                {/* Vertical Divider */}
+                <div className="w-px h-16 bg-[#F3F3F3] mx-8 hidden sm:block" />
+
+                <div className="flex items-center gap-2 text-[#1F6FEB] font-bold text-sm">
+                  <div className="w-5 h-5 rounded-full bg-[#1F6FEB] flex items-center justify-center transition-transform group-hover:scale-110">
+                    <Plus className="w-4 h-4 text-white" strokeWidth={3} />
+                  </div>
+                  <span>Purchase Credits</span>
                 </div>
               </div>
             </div>
@@ -155,8 +154,8 @@ const BuyCreditsPage = () => {
 
       {/* Optimized Bottom Bar for Web */}
       {selectedPackage && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 px-4 py-4 z-50">
-          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#F9FAFB] border-t border-[#E5E7EB] rounded-t-[36px] px-8 py-6 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="text-center sm:text-left">
               <p className=" font-medium text-[#6B7280]">
                 Selected Package
@@ -167,7 +166,7 @@ const BuyCreditsPage = () => {
               </div>
             </div>
 
-            <Button 
+            <Button
               className="w-full sm:w-auto px-8"
               onClick={handleCheckout}
               loading={checkoutLoading}
