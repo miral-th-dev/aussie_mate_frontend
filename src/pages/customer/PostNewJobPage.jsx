@@ -693,7 +693,7 @@ const PostNewJobPage = () => {
   );
 
   const renderFinalDetails = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 lg:py-12">
       <PageHeader
         title="Post New Job"
         onBack={handleBack}

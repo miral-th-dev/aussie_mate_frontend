@@ -38,7 +38,7 @@ const LocationPage = () => {
   const { user } = useAuth();
   const isFromApp = !!location.state?.fromPage;
   const isCleaner = user && (
-    ['Cleaner', 'cleaner', 'CLEANER'].includes(user.role) || 
+    ['Cleaner', 'cleaner', 'CLEANER'].includes(user.role) ||
     ['Cleaner', 'cleaner', 'CLEANER'].includes(user.userType) ||
     CLEANER_ROLES.map(r => r.toLowerCase()).includes((user.role || '').toLowerCase()) ||
     CLEANER_ROLES.map(r => r.toLowerCase()).includes((user.userType || '').toLowerCase())
@@ -84,7 +84,7 @@ const LocationPage = () => {
     googleMapsApiKey: apiKey,
     libraries: libraries
   });
-  
+
   // Load saved location on mount
   useEffect(() => {
     const loadSavedLocation = async () => {
@@ -103,7 +103,7 @@ const LocationPage = () => {
               const fullAddress = location.fullAddress || location.address || '';
               const lat = location.coordinates?.[1] || location.lat || -33.839;
               const lng = location.coordinates?.[0] || location.lng || 151.207;
-              
+
               const initialLocation = {
                 fullAddress,
                 lat,
@@ -184,7 +184,7 @@ const LocationPage = () => {
   const handleMapClick = (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
-    
+
     setIsLoading(true);
     const geocoder = new window.google.maps.Geocoder();
     geocoder.geocode({ location: { lat, lng } }, (results, status) => {
@@ -228,7 +228,7 @@ const LocationPage = () => {
               };
               setSelectedLocation(location);
               setSearchQuery(results[0].formatted_address);
-              
+
               // Pan map if it's available
               if (map) {
                 map.panTo({ lat: latitude, lng: longitude });
@@ -245,7 +245,7 @@ const LocationPage = () => {
       },
       (err) => {
         setIsLoading(false);
-        switch(err.code) {
+        switch (err.code) {
           case err.PERMISSION_DENIED:
             setError("Location access was denied. Please allow it in settings.");
             break;
@@ -380,9 +380,9 @@ const LocationPage = () => {
       // FIRE FRONTEND EVENT
       window.dispatchEvent(new CustomEvent("locationUpdated", {
         detail: {
-            address: selectedLocation.address || selectedLocation.fullAddress,
-            city: city,
-            coordinates: [selectedLocation.lng, selectedLocation.lat]
+          address: selectedLocation.address || selectedLocation.fullAddress,
+          city: city,
+          coordinates: [selectedLocation.lng, selectedLocation.lat]
         }
       }));
 
@@ -449,16 +449,16 @@ const LocationPage = () => {
                     onPlaceChanged={onPlaceChanged}
                   >
                     <div className="relative group">
+                      <div className="absolute left-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
+                        <MapPin className="w-5 h-5" />
+                      </div>
                       <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search for area, street name..."
-                        className="w-full pl-6 pr-14 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
+                        className="w-full pl-14 pr-6 py-4 border border-gray-200 rounded-full focus:outline-none focus:border-primary-600 text-gray-800 bg-white transition-all shadow-sm group-hover:border-gray-300 placeholder:text-gray-400"
                       />
-                      <div className="absolute right-5 top-1/2 -translate-y-1/2 p-2 bg-primary-50 rounded-full text-primary-600 group-focus-within:bg-primary-600 group-focus-within:text-white transition-all">
-                        <MapPin className="w-5 h-5" />
-                      </div>
                     </div>
                   </Autocomplete>
                 ) : (
@@ -523,22 +523,22 @@ const LocationPage = () => {
                   className="w-full p-3 border border-gray-300 rounded-lg! focus:outline-none resize-none text-primary-500 font-medium"
                   rows={3}
                 />
-                <div className="flex space-x-2">
-                  <Button
-                    type="submit"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Save Address
-                  </Button>
+                <div className="flex space-x-2 items-center justify-end">
                   <Button
                     type="button"
                     onClick={handleCancelManual}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className=""
                   >
                     Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className=""
+                  >
+                    Save Address
                   </Button>
                 </div>
               </form>
@@ -558,7 +558,7 @@ const LocationPage = () => {
                     {selectedLocation.fullAddress}
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3 self-end sm:self-auto">
                   <button
                     onClick={handleGetCurrentLocation}
@@ -580,27 +580,27 @@ const LocationPage = () => {
               {/* Distance Slider (Cleaner Only - Figma Style) */}
               {isCleaner && (
                 <div className="space-y-5">
-               <div className="">
-            <div className="flex justify-between text-base">
-              <span className="text-primary-200 font-medium">0 km</span>
-              <span className="font-semibold text-primary-500">{searchRadius} km</span>
-              <span className="text-primary-500 font-bold">50 km</span>
-            </div>
- 
-            <div className="relative">
-              <input
-                type="range"
-                min="0"
-                max="50"
-                value={searchRadius}
-                onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1F6FEB] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1F6FEB] [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-sm"
-                style={{
-                  background: `linear-gradient(to right, #1F6FEB 0%, #1F6FEB ${(searchRadius / 50) * 100}%, #E5E7EB ${(searchRadius / 50) * 100}%, #E5E7EB 100%)`
-                }}
-              />
-            </div>
-          </div>
+                  <div className="">
+                    <div className="flex justify-between text-base">
+                      <span className="text-primary-200 font-medium">0 km</span>
+                      <span className="font-semibold text-primary-500">{searchRadius} km</span>
+                      <span className="text-primary-500 font-bold">50 km</span>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={searchRadius}
+                        onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#1F6FEB] [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-sm [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#1F6FEB] [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-sm"
+                        style={{
+                          background: `linear-gradient(to right, #1F6FEB 0%, #1F6FEB ${(searchRadius / 50) * 100}%, #E5E7EB ${(searchRadius / 50) * 100}%, #E5E7EB 100%)`
+                        }}
+                      />
+                    </div>
+                  </div>
 
                   {/* Custom Value and Save Button Row */}
                   <div className="flex items-center gap-4">

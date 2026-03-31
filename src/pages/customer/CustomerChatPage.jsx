@@ -370,7 +370,6 @@ const CustomerChatPage = () => {
           </div>
         )}
 
- 
 
         {/* Chat Messages */}
         <div className="flex-1 px-3 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 overflow-y-auto">

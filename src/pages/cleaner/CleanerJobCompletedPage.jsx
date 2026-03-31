@@ -157,7 +157,7 @@ const CleanerJobCompletedPage = () => {
 
             {/* Assigned By Section */}
             <div className="space-y-3">
-              <h3 className="text-[#111827] font-medium text-lg px-1">Assigned By</h3>
+              <h3 className="text-[#111827] font-medium text-lg px-1"></h3>
               <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100">

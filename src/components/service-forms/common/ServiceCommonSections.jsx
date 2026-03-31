@@ -69,13 +69,13 @@ const ServiceCommonSections = ({
               <h4 className="text-xs sm:text-sm font-medium text-primary-500 text-left mb-2 sm:mb-3">
                 Selected Files ({selectedFiles.length}/10)
               </h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-3">
                 {selectedFiles.map((file, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={URL.createObjectURL(file)}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-200"
+                      className="w-full aspect-square object-cover rounded-lg border border-gray-200"
                     />
                     {onRemoveFile && (
                       <Button

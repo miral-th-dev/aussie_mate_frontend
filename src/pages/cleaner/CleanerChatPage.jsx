@@ -631,6 +631,8 @@ const CleanerChatPage = () => {
                     </div>
                 )}
 
+                {/* Safety Banner */}
+              
 
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">

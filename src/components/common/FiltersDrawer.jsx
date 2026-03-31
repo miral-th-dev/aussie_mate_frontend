@@ -46,14 +46,14 @@ const FiltersDrawer = ({
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black/40 p-4 flex items-center justify-center"
+      className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center"
       onClick={onClose}
     >
       <div
         className="w-full max-w-md bg-white shadow-2xl rounded-2xl flex flex-col max-h-[calc(100vh-2rem)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
           <button
             type="button"
@@ -64,12 +64,12 @@ const FiltersDrawer = ({
           </button>
         </div>
 
-        <div className="p-5 space-y-6 overflow-y-auto">
+        <div className="p-5 space-y-4 overflow-y-auto">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
               Categories
             </p>
-            <div className="mt-3 space-y-3">
+            <div className="mt-3">
               {categories.map((option) => (
                 <div
                   key={option.id}
@@ -84,7 +84,7 @@ const FiltersDrawer = ({
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="flex items-center px-2 py-2">
+                  <div className="flex items-center px-2 py-0.5">
                     <Checkbox
                       name={`filter-category-${option.id}`}
                       checked={draftCategories.includes(option.id)}
