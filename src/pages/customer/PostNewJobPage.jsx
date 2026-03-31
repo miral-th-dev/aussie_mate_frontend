@@ -725,7 +725,7 @@ const PostNewJobPage = () => {
                 fullWidth: true,
                 sx: {
                   '& .MuiInputBase-root': {
-                    borderRadius: '28px',
+                    borderRadius: '9999px',
                     border: 'gray-100',
                     backgroundColor: '',
                     paddingRight: '16px'

@@ -54,19 +54,19 @@ const Calendar = ({
             fullWidth: true,
             sx: {
               '& .MuiOutlinedInput-root': {
-                borderRadius: '36px',
+                borderRadius: '9999px',
                 backgroundColor: '#ffffff',
                 '& fieldset': {
                   borderColor: '#D1D5DB',
-                  borderRadius: '36px',
+                  borderRadius: '9999px',
                 },
                 '&:hover fieldset': {
                   borderColor: '#D1D5DB',
-                  borderRadius: '36px',
+                  borderRadius: '9999px',
                 },
                 '&.Mui-focused fieldset': {
                   borderColor: '#1F6FEB',
-                  borderRadius: '36px',
+                  borderRadius: '9999px',
                 },
               },
               '& .MuiOutlinedInput-input': {
