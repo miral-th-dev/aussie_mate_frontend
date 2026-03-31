@@ -53,6 +53,7 @@ const JobBookedSuccessfullyPage = () => {
   const [jobPhotos, setJobPhotos] = useState([]);
   const [cleaner, setCleaner] = useState(null);
   const [error, setError] = useState('');
+  const [showSuccessHeader, setShowSuccessHeader] = useState(true);
   // Show animation only once per booking (check sessionStorage)
   const [showAnimation, setShowAnimation] = useState(() => {
     const hasSeenAnimation = sessionStorage.getItem(`animation-seen-${jobId}`);
@@ -248,6 +249,16 @@ const JobBookedSuccessfullyPage = () => {
     }
   }, [showAnimation, jobId]);
 
+  // Hide success header message after 3 seconds of being visible
+  useEffect(() => {
+    if (!loading && !showAnimation) {
+      const timer = setTimeout(() => {
+        setShowSuccessHeader(false);
+      }, 3000); // Show for 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [loading, showAnimation]);
+
   const handleChatWithCleaner = () => {
     if (cleaner?.id) {
       navigate(`/customer-chat/${jobId}?cleaner=${cleaner.id}`);
@@ -309,11 +320,13 @@ const JobBookedSuccessfullyPage = () => {
 
       <div className="max-w-sm mx-auto sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl px-4 py-6">
         {/* Confirmation Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-primary-500 mb-2">
-            Your job is booked successfully with {cleaner?.name}
-          </h1>
-        </div>
+        {showSuccessHeader && (
+          <div className="text-center mb-8 animate-fadeIn">
+            <h1 className="text-2xl font-semibold text-primary-500 mb-2">
+              Your job is booked successfully with {cleaner?.name}
+            </h1>
+          </div>
+        )}
 
         {/* Job Details Card */}
         {jobData && (
