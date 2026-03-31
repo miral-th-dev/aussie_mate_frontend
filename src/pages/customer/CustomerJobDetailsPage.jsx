@@ -708,7 +708,7 @@ const CustomerJobDetailsPage = () => {
 
           {/* Photo Grid */}
           {jobPhotos.length > 0 && (
-            <div className="grid grid-cols-4 gap-2 mb-8 max-w-md">
+            <div className="grid grid-cols-4 gap-2 max-w-md">
               {jobPhotos.slice(0, 4).map((photo, index) => (
                 <div key={index} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
                   <img

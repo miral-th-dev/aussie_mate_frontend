@@ -73,6 +73,11 @@ const CleanerDashboard = () => {
     }
   }, [user]);
 
+  // Set origin flag for sub-pages back navigation
+  useEffect(() => {
+    localStorage.setItem('cleaner_last_main_page', 'dashboard');
+  }, []);
+
   const liveJobsLabel = loadingDashboard
     ? "Loading..."
     : `${liveJobsCount || 0} ${liveJobsCount === 1 ? "Job" : "Jobs"} Found`;
@@ -420,12 +425,12 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
     }
 
     if (status === "completed") {
-      navigate(`/cleaner-job-completed/${jobIdentifier}`);
-    } else if (["in_progress", "in progress", "in-progress"].includes(status)) {
-      navigate(`/in-progress-job/${jobIdentifier}`);
+      navigate(`/cleaner-job-completed/${jobIdentifier}`, { state: { from: 'dashboard' } });
+    } else if (["in_progress", "in progress", "in-progress", "accepted", "pending_customer_confirmation"].includes(status)) {
+      navigate(`/in-progress-job/${jobIdentifier}`, { state: { from: 'dashboard' } });
     } else {
       // Coming from dashboard "Live Jobs" context
-      navigate(`/job-details/${jobIdentifier}`, { state: { fromTab: "posted" } });
+      navigate(`/job-details/${jobIdentifier}`, { state: { fromTab: "posted", from: 'dashboard' } });
     }
   };
 

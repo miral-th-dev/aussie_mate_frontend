@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AlertTriangle, UserRound, X, CalendarDays, Clock3, CheckCircle, Circle, Calendar, Phone, Check, MapPin } from 'lucide-react';
 
 import { Button, MapWithPolyline, PageHeader } from '../../components';
@@ -72,6 +72,7 @@ const generateWeeklySchedule = (job, workProgress, occurrences) => {
 const InProgressJobDetailsPage = () => {
     const { jobId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [customer, setCustomer] = useState(null);
@@ -609,8 +610,13 @@ const InProgressJobDetailsPage = () => {
                     <PageHeader
                         title={headerTitle}
                         onBack={() => {
-                            const savedTab = localStorage.getItem('cleanerActiveTab');
-                            navigate('/cleaner-jobs', { state: { tab: savedTab || 'accepted' }, replace: true });
+                            const lastMainPage = localStorage.getItem('cleaner_last_main_page');
+                            if (lastMainPage === 'dashboard' || location.state?.from === 'dashboard') {
+                                navigate('/cleaner-dashboard');
+                            } else {
+                                const savedTab = localStorage.getItem('cleanerActiveTab');
+                                navigate('/cleaner-jobs', { state: { tab: savedTab || 'assigned' }, replace: true });
+                            }
                         }}
                         titleClassName="text-lg sm:text-xl font-semibold text-primary-500 truncate"
                     />

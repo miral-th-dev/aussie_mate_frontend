@@ -24,6 +24,12 @@ const CleanerJobsPage = () => {
     return normalizeTab(location.state?.tab) || 'posted';
   });
 
+  // Set origin flag and save current tab for navigation context
+  useEffect(() => {
+    localStorage.setItem('cleaner_last_main_page', 'jobs');
+    localStorage.setItem('cleanerActiveTab', activeTab);
+  }, [activeTab]);
+
   const [subFilter, setSubFilter] = useState('request_sent');
 
   // Update tab if location state changes (e.g. navigating from dashboard to a specific tab)

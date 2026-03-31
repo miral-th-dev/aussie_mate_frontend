@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Check, UserRound, CalendarDays, MapPin, X, Phone, MessageSquare } from 'lucide-react';
 import { Button, PageHeader, Loader } from '../../components';
 import { jobsAPI, jobPhotosAPI, reviewsAPI } from '../../services/api';
@@ -15,6 +15,7 @@ const resolveImageSrc = (image) => {
 const CleanerJobCompletedPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [jobData, setJobData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -115,7 +116,15 @@ const CleanerJobCompletedPage = () => {
           <PageHeader
             title={jobData.title || "Job Detail"}
             className="p-0 border-none shadow-none"
-            onBack={() => navigate('/cleaner-jobs')}
+            onBack={() => {
+              const lastMainPage = localStorage.getItem('cleaner_last_main_page');
+              if (lastMainPage === 'dashboard' || location.state?.from === 'dashboard') {
+                navigate('/cleaner-dashboard');
+              } else {
+                const savedTab = localStorage.getItem('cleanerActiveTab');
+                navigate('/cleaner-jobs', { state: { tab: savedTab || 'completed' }, replace: true });
+              }
+            }}
           />
           <div className="bg-[#E9FBF0] text-[#1EB154] px-3 py-1.5 rounded-full text-xs font-medium border border-[#D1F7E1]">
             Completed

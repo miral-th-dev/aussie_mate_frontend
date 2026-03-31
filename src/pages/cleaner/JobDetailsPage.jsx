@@ -365,8 +365,13 @@ const JobDetailsPage = () => {
         <PageHeader
           title={getJobTitle(job)}
           onBack={() => {
-            const savedTab = localStorage.getItem('cleanerActiveTab');
-            navigate('/cleaner-jobs', { state: { tab: savedTab || 'live-jobs' }, replace: true });
+            const lastMainPage = localStorage.getItem('cleaner_last_main_page');
+            if (lastMainPage === 'dashboard' || location.state?.from === 'dashboard') {
+              navigate('/cleaner-dashboard');
+            } else {
+              const savedTab = localStorage.getItem('cleanerActiveTab');
+              navigate('/cleaner-jobs', { state: { tab: savedTab || 'posted' }, replace: true });
+            }
           }}
           className="px-4 sm:px-6 lg:px-8 py-4"
         />

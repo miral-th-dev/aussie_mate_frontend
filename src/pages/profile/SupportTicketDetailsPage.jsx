@@ -66,7 +66,7 @@ const SupportTicketDetailsPage = () => {
               <span className="text-sm text-[#374151] mb-2 block">
                 Ticket ID #{ticket.ticketId}
               </span>
-              <h2 className="text-2xl font-semibold text-[#111827] tracking-tight">
+              <h2 className="text-2xl font-semibold text-[#111827] tracking-tight break-words">
                 {ticket.category}
               </h2>
             </div>
@@ -101,8 +101,8 @@ const SupportTicketDetailsPage = () => {
               <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
               Description
             </h3>
-            <div className="bg-[#F9FAFB] rounded-xl p-6 border border-gray-100/50">
-              <p className="text-[#4B5563] text-base leading-relaxed whitespace-pre-wrap font-medium">
+            <div className="bg-[#F9FAFB] rounded-xl p-4 border border-gray-100/50">
+              <p className="text-[#4B5563] text-base leading-relaxed whitespace-pre-wrap font-medium break-words">
                 {ticket.description}
               </p>
             </div>
@@ -142,7 +142,7 @@ const SupportTicketDetailsPage = () => {
                   </h3>
                   
                   <div className="relative pl-6 border-l-2 border-blue-200">
-                    <p className="text-[#374151] text-lg leading-relaxed font-semibold italic opacity-90">
+                    <p className="text-[#374151] text-lg leading-relaxed font-semibold italic opacity-90 break-words">
                       "{ticket.adminNote}"
                     </p>
                   </div>
