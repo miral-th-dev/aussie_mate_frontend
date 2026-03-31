@@ -220,7 +220,7 @@ const VerificationStatusPage = () => {
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm sm:text-base font-medium text-primary-500">ABN Number :-</span>
+                                    <span className="text-sm sm:text-base font-medium text-primary-500">ABN Number</span>
                                     {!isEditingAbn && (
                                         (documents?.documents?.abnVerified || documents?.verificationStatus === 'verified') ? (
                                             <Pill label="Verified" tone="green" />
@@ -279,7 +279,7 @@ const VerificationStatusPage = () => {
                     <div className="rounded-2xl border border-[#F3F3F3] bg-white p-4 sm:p-5 shadow-custom">
                         <div className="flex flex-col gap-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm sm:text-base font-medium text-primary-500">Bio :-</span>
+                                <span className="text-sm sm:text-base font-medium text-primary-500">Bio</span>
                                 {!isEditingBio && (
                                     <button
                                         onClick={() => {

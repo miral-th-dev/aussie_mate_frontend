@@ -385,7 +385,7 @@ const MySubscriptionPage = () => {
 
                 <div className="divide-y divide-[#F9FAFB]">
                   {history.length > 0 ? (
-                    history.map((item, idx) => (
+                    history.slice(0, 10).map((item, idx) => (
                       <div
                         key={item._id || idx}
                         className="px-6 py-5 hover:bg-[#F9FAFB] transition-colors flex justify-between items-center"
@@ -450,11 +450,11 @@ const MySubscriptionPage = () => {
                     </div>
                   )}
                 </div>
-                {history.length > 5 && (
+                {history.length > 10 && (
                   <div className="p-4 border-t border-gray-50 text-center">
                     <button
                       onClick={() => navigate("/lead-usage-history")}
-                      className="text-primary-600 font-semibold text-sm hover:underline flex items-center gap-1 mx-auto cursor-pointer"
+                      className="text-[#1F6FEB] font-semibold text-sm hover:underline flex items-center gap-1 mx-auto cursor-pointer"
                     >
                       View Full History <ChevronRight className="w-4 h-4" />
                     </button>
