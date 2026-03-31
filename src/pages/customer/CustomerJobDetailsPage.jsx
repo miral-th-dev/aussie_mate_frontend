@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Wallet,
   Clock3,
@@ -25,6 +25,7 @@ import { chatAPI } from '../../services/chatAPI';
 
 const CustomerJobDetailsPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { jobId } = useParams();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -629,8 +630,12 @@ const CustomerJobDetailsPage = () => {
         <PageHeader
           title={serviceDetail || `Job Details - ${job.serviceType || 'Cleaning'}`}
           onBack={() => {
-            const savedTab = localStorage.getItem('customerActiveTab');
-            navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            if (location.state?.from === 'dashboard') {
+              navigate('/customer-dashboard');
+            } else {
+              const savedTab = localStorage.getItem('customerActiveTab');
+              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            }
           }}
           backButtonClassName="cursor-pointer"
           rightSlot={

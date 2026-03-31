@@ -146,7 +146,7 @@ const HelpSupportPage = () => {
                         {cat.faqs.map((q) => (
                           <div
                             key={q._id || q.id}
-                            className={`bg-white rounded-3xl border transition-all duration-300 ${openFaq === (q._id || q.id) ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
+                            className={`bg-white rounded-xl border transition-all duration-300 ${openFaq === (q._id || q.id) ? 'border-gray-200 shadow-sm' : 'border-gray-50 shadow-sm hover:border-gray-200'
                               }`}
                           >
                             <button

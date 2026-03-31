@@ -516,11 +516,11 @@ const CustomerDashboard = () => {
                         job.rawStatus === "completed" ||
                         job.rawStatus === "pending_customer_confirmation"
                       ) {
-                        navigate(`/job-completed/${job.rawId}`);
+                        navigate(`/job-completed/${job.rawId}`, { state: { from: 'dashboard' } });
                       } else if (job.rawStatus === "in_progress") {
-                        navigate(`/customer-in-progress-job/${job.rawId}`);
+                        navigate(`/customer-in-progress-job/${job.rawId}`, { state: { from: 'dashboard' } });
                       } else {
-                        navigate(`/customer-job-details/${job.rawId}`);
+                        navigate(`/customer-job-details/${job.rawId}`, { state: { from: 'dashboard' } });
                       }
                     }}
                     className="bg-white rounded-2xl p-3 sm:p-4 border border-gray-200 shadow-custom h-44 sm:h-48 cursor-pointer hover:shadow-lg transition-shadow duration-200"

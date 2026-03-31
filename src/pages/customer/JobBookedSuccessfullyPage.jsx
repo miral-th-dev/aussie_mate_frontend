@@ -334,6 +334,7 @@ const JobBookedSuccessfullyPage = () => {
             <JobOverviewCard
               jobId={`#${jobData.jobId || jobId}`}
               title={jobData.title || `${jobData.serviceType}`}
+              serviceTypeId={jobData.serviceTypeId}
               serviceType={jobData.serviceType || jobData.category || jobData.service}
               serviceDetail={jobData.selectedServiceDetail || jobData.serviceDetail || jobData.service?.name || ''}
               instructions={jobData.specialInstructions || jobData.instructions || jobData.additionalNotes || ''}

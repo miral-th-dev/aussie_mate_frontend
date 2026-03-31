@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Check, UserRound, X, Phone, MessageSquare, Calendar, MapPin, CalendarDays } from 'lucide-react';
 import { Button, PageHeader, Loader } from '../../components';
 import RatingIcon from '../../assets/Rating1.svg';
@@ -15,6 +15,7 @@ import { handleAPIError } from '../../services/api';
 const JobDetailsCompletedPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedRating, setSelectedRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
@@ -422,8 +423,12 @@ const JobDetailsCompletedPage = () => {
           <div className="text-center">
             <div className="text-lg text-red-600 mb-4">{error}</div>
             <Button onClick={() => {
-              const savedTab = localStorage.getItem('customerActiveTab');
-              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+              if (location.state?.from === 'dashboard') {
+                navigate('/customer-dashboard');
+              } else {
+                const savedTab = localStorage.getItem('customerActiveTab');
+                navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+              }
             }}>Go Back</Button>
           </div>
         </div>
@@ -438,8 +443,12 @@ const JobDetailsCompletedPage = () => {
           <div className="text-center">
             <div className="text-lg text-gray-600">Job not found</div>
             <Button onClick={() => {
-              const savedTab = localStorage.getItem('customerActiveTab');
-              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+              if (location.state?.from === 'dashboard') {
+                navigate('/customer-dashboard');
+              } else {
+                const savedTab = localStorage.getItem('customerActiveTab');
+                navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+              }
             }}>Go Back</Button>
           </div>
         </div>
@@ -453,8 +462,12 @@ const JobDetailsCompletedPage = () => {
         <PageHeader
           title={`#${jobData.jobId} - ${jobData.title}`}
           onBack={() => {
-            const savedTab = localStorage.getItem('customerActiveTab');
-            navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            if (location.state?.from === 'dashboard') {
+              navigate('/customer-dashboard');
+            } else {
+              const savedTab = localStorage.getItem('customerActiveTab');
+              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            }
           }}
         />
 
