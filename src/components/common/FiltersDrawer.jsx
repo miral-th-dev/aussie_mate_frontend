@@ -19,7 +19,8 @@ const FiltersDrawer = ({
   onDateChange,
   onClear,
   onApply,
-}) => { useEffect(() => {
+}) => {
+  useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -119,30 +120,41 @@ const FiltersDrawer = ({
 
           <div>
             <p className="text-sm font-medium text-gray-900 mb-3">Date</p>
-            <div className="rounded-full border border-gray-300 px-3">
-              <Calendar
-                value={draftDate}
-                onChange={handleDateChange}
-                disablePast={false}
-                label=""
-                className="w-full"
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    placeholder: 'Select date',
-                    sx: {
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '1rem', // rounded-xl
-                        backgroundColor: '#ffffff',
-                        '& fieldset': {
-                          border: 'gray',
-                        },
+            <Calendar
+              value={draftDate}
+              onChange={handleDateChange}
+              disablePast={false}
+              label=""
+              className="w-full"
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  placeholder: 'Select date',
+                  sx: {
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '9999px',
+                      backgroundColor: '#ffffff',
+                      '& fieldset': {
+                        borderColor: '#D1D5DB',
+                        borderRadius: '9999px', // 👈 add this
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#D1D5DB',
+                        borderRadius: '9999px', // 👈 add this
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1F6FEB',
+                        borderRadius: '9999px', // 👈 add this
                       },
                     },
+                    '& .MuiOutlinedInput-input': {
+                      padding: '12px 20px',
+                      fontSize: '0.875rem',
+                    },
                   },
-                }}
-              />
-            </div>
+                },
+              }}
+            />
           </div>
         </div>
 
