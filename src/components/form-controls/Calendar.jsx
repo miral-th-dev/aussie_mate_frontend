@@ -52,6 +52,29 @@ const Calendar = ({
         slotProps={{
           textField: {
             fullWidth: true,
+            sx: {
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '36px',
+                backgroundColor: '#ffffff',
+                '& fieldset': {
+                  borderColor: '#D1D5DB',
+                  borderRadius: '36px',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#D1D5DB',
+                  borderRadius: '36px',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#1F6FEB',
+                  borderRadius: '36px',
+                },
+              },
+              '& .MuiOutlinedInput-input': {
+                padding: '12px 18px',
+                fontSize: '0.875rem',
+              },
+              ...textFieldProps?.sx,
+            },
             ...textFieldProps,
           },
           ...slotProps,

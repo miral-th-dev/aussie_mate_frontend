@@ -66,7 +66,7 @@ const FiltersDrawer = ({
 
         <div className="p-5 space-y-4 overflow-y-auto">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+            <p className="text-sm font-medium text-gray-900">
               Categories
             </p>
             <div className="mt-3">
@@ -126,33 +126,8 @@ const FiltersDrawer = ({
               disablePast={false}
               label=""
               className="w-full"
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  placeholder: 'Select date',
-                  sx: {
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '9999px',
-                      backgroundColor: '#ffffff',
-                      '& fieldset': {
-                        borderColor: '#D1D5DB',
-                        borderRadius: '9999px', // 👈 add this
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#D1D5DB',
-                        borderRadius: '9999px', // 👈 add this
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1F6FEB',
-                        borderRadius: '9999px', // 👈 add this
-                      },
-                    },
-                    '& .MuiOutlinedInput-input': {
-                      padding: '12px 20px',
-                      fontSize: '0.875rem',
-                    },
-                  },
-                },
+              textFieldProps={{
+                placeholder: 'Select date',
               }}
             />
           </div>

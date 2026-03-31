@@ -36,7 +36,7 @@ const Checkbox = ({
         />
         <label
           htmlFor={`checkbox-${name}`}
-          className={`${checkboxSize} border-2 border-gray-300 rounded cursor-pointer flex items-center justify-center transition-all peer-checked:bg-[#1F6FEB] peer-checked:border-[#1F6FEB]`}
+          className={`${checkboxSize} border-1 border-gray-300 rounded cursor-pointer flex items-center justify-center transition-all peer-checked:bg-[#1F6FEB] peer-checked:border-[#1F6FEB]`}
         >
           {checked && (
             <img src={checkboxIcon} alt="checked" className="w-3 h-3" />
