@@ -467,6 +467,7 @@ const CompleteJobPage = () => {
           {/* Job Overview */}
           <JobOverviewCard
             jobId={job?.jobId || job?._id || job?.id}
+            serviceTypeId={job?.serviceTypeId}
             title={job?.title}
             serviceType={job?.serviceType}
             serviceDetail={job?.serviceDetail || job?.serviceType}

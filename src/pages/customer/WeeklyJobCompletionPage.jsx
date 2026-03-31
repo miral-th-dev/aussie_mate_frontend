@@ -154,6 +154,7 @@ const WeeklyJobCompletionPage = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
         <JobOverviewCard
           jobId={job.jobId || job._id}
+          serviceTypeId={job.serviceTypeId}
           title={job.title}
           serviceType={job.serviceType}
           serviceDetail={job.serviceDetail}

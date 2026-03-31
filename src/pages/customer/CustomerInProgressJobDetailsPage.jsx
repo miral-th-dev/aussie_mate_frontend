@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Check, UserRound, X, CalendarDays, Clock3, Home as HomeIcon, Wallet, Ruler, AlertTriangle, CheckCircle, Circle, Calendar, MapPinIcon } from 'lucide-react';
 
 import { Button, MapWithPolyline, PageHeader, Loader, JobOverviewCard } from '../../components';
@@ -66,6 +66,7 @@ const generateWeeklySchedule = (job, workProgress, occurrences) => {
 const CustomerInProgressJobDetailsPage = () => {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [job, setJob] = useState(null);
   console.log("jobs 1 =", job);
 
@@ -633,8 +634,12 @@ const CustomerInProgressJobDetailsPage = () => {
         <PageHeader
           title={job.jobId ? ` ${job.categoryName}` : getJobTitle(job)}
           onBack={() => {
-            const savedTab = localStorage.getItem('customerActiveTab');
-            navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            if (location.state?.from === 'dashboard') {
+              navigate('/customer-dashboard');
+            } else {
+              const savedTab = localStorage.getItem('customerActiveTab');
+              navigate('/my-jobs', { state: { tab: savedTab || 'all' }, replace: true });
+            }
           }}
           titleClassName="text-lg font-semibold text-primary-500 truncate"
         />

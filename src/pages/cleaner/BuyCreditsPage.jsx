@@ -85,7 +85,7 @@ const BuyCreditsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-32">
+    <div className="bg-gray-50 pb-32 overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <PageHeader
           title="My Subscription"
@@ -118,7 +118,7 @@ const BuyCreditsPage = () => {
                 }`}
             >
               {pkg.isPopular && (
-                <div className="absolute -top-3 right-6 bg-[#FEF3C7] text-[#D97706] px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-[#FDE68A] shadow-sm">
+                <div className="absolute -top-3 right-6 bg-[#FEF3C7] text-[#D97706] px-4 py-1.5 rounded-full flex items-center gap-1.5 border border-[#FDE68A]">
                   <Flame className="w-3.5 h-3.5 fill-[#D97706]" />
                   <span className="text-[10px] sm:text-xs font-semibold tracking-wider">Most Popular</span>
                 </div>
@@ -129,7 +129,7 @@ const BuyCreditsPage = () => {
                   <p className="text-sm font-medium text-[#6B7280]">
                     {pkg.credits} Credits
                   </p>
-                  <h3 className="text-2xl font-medium text-[#111827]">
+                  <h3 className="text-2xl font-semibold text-[#111827]">
                     {formatCurrency(pkg.price)}
                   </h3>
                   <p className="text-sm font-medium text-[#6B7280]">
@@ -154,8 +154,8 @@ const BuyCreditsPage = () => {
 
       {/* Optimized Bottom Bar for Web */}
       {selectedPackage && (
-        <div className="max-w-7xl mx-auto fixed bottom-0 left-0 right-0 bg-[#F9FAFB] border-t border-[#E5E7EB] rounded-t-[36px] px-8 py-6 z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#F9FAFB] border-t border-[#E5E7EB] rounded-t-[36px] z-50 shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+          <div className="max-w-7xl mx-auto px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="text-center sm:text-left">
               <p className=" font-medium text-[#6B7280]">
                 Selected Package

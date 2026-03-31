@@ -32,6 +32,7 @@ const JobOverviewCard = ({
   viewerRole = 'customer',
   metaInfo = [],
   roleSections = {},
+  serviceTypeId,
 }) => {
   const [activePhotoIndex, setActivePhotoIndex] = useState(null);
 
@@ -143,9 +144,9 @@ const JobOverviewCard = ({
             </p>
           )}
 
-          {title && (
-            <h2 className="text-[20px]  font-semibold text-[#111827] leading-tight capitalize">
-              {title === "Petsitting " ? "Pet Sitting" : title}
+          {(serviceTypeId?.name || title) && (
+            <h2 className="text-[20px] font-semibold text-[#111827] leading-tight capitalize">
+              {serviceTypeId?.name || (title === "Petsitting " ? "Pet Sitting" : title)}
             </h2>
           )}
 
@@ -319,6 +320,10 @@ const JobOverviewCard = ({
 JobOverviewCard.propTypes = {
   jobId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   title: PropTypes.string,
+  serviceTypeId: PropTypes.shape({
+    _id: PropTypes.string,
+    name: PropTypes.string,
+  }),
   propertyType: PropTypes.string,
   quoteCount: PropTypes.number,
   showQuotePill: PropTypes.bool,
@@ -362,6 +367,7 @@ JobOverviewCard.propTypes = {
 JobOverviewCard.defaultProps = {
   jobId: '',
   title: '',
+  serviceTypeId: null,
   propertyType: '',
   quoteCount: 0,
   showQuotePill: true,

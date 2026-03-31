@@ -378,6 +378,7 @@ const JobDetailsPage = () => {
               jobId={job?.jobId || job?.referenceId || job?._id?.slice(-6)}
               // Figma: show Category / ServiceType on top line, and ServiceType as title
               propertyType={job?.categoryId?.name || job?.category || 'Cleaning'}
+              serviceTypeId={job?.serviceTypeId}
               title={job?.serviceTypeId?.name || getJobTitle(job)}
               showQuotePill={false}
               serviceType={job?.categoryId?.name || job?.category || ''}
