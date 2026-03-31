@@ -693,7 +693,7 @@ const PostNewJobPage = () => {
   );
 
   const renderFinalDetails = () => (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 sm:pt-4 pb-4 sm:pb-8 lg:pb-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4">
       <PageHeader
         title="Post New Job"
         onBack={handleBack}
@@ -725,12 +725,12 @@ const PostNewJobPage = () => {
                 fullWidth: true,
                 sx: {
                   '& .MuiInputBase-root': {
-                    borderRadius: '24px',
-                    border: 'none',
-                    backgroundColor: '#F9FAFB',
+                    borderRadius: '28px',
+                    border: 'gray-100',
+                    backgroundColor: '',
                     paddingRight: '16px'
                   },
-                  '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+                  '& .MuiOutlinedInput-notchedOutline': { border: 'gray-100' }
                 }
               }}
               slots={{

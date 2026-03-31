@@ -139,7 +139,7 @@ export default function DateRangePicker({ value, onChange, range, onRangeChange,
             {/* Input */}
             <div
                 onClick={() => disabled !== true && setOpen(!open)}
-                className={`h-[46px] px-3 flex items-center justify-between gap-x-2 rounded-xl border border-[#E5E7EB] bg-white cursor-pointer hover:border-gray-300 transition-colors ${disabled === true ? 'opacity-50 !cursor-not-allowed' : ''} ${inputClassName}`}
+                className={`h-[46px] px-3 flex items-center justify-between gap-x-2 rounded-full border border-[#E5E7EB] bg-white cursor-pointer hover:border-gray-300 transition-colors ${disabled === true ? 'opacity-50 !cursor-not-allowed' : ''} ${inputClassName}`}
             >
                 <div className="flex items-center gap-2 overflow-hidden flex-1">
                     <span className={`text-sm truncate ${displayValue() === placeholder ? "text-primary/50" : "text-primary"}`}>
