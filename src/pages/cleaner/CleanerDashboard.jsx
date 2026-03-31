@@ -548,13 +548,13 @@ console.log("formattedActiveJobs =",formattedActiveJobs);
                 </div>
 
                 {isExpired && (
-                  <div className="mt-4 bg-amber-50 rounded-2xl p-6 border border-amber-100 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in">
-                    <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-6 h-6 text-amber-600" />
+                  <div className="mt-4 bg-primary-200 rounded-2xl p-6 border border-primary-200 flex flex-col sm:flex-row items-center gap-4 animate-in fade-in">
+                    <div className="w-12 h-12 bg-primary-200 rounded-2xl border border-primary-200 flex items-center justify-center flex-shrink-0">
+                      <TrendingUp className="w-6 h-6 text-primary-600" />
                     </div>
                     <div className="text-center sm:text-left flex-1">
-                      <p className="text-gray-900 font-bold">Subscription Expired</p>
-                      <p className="text-gray-500 text-sm font-medium">Your subscription has ended. Renew now to continue getting new leads.</p>
+                      <p className="text-xl font-medium text-gray-900 mb-2">Subscription Expired</p>
+                      <p className="text-gray-500 font-normal max-w-4xl text-xs">Your subscription has ended. Renew now to continue getting new leads.</p>
                     </div>
                     <Button 
                       variant="primary" 

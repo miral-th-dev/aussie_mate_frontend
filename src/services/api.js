@@ -83,7 +83,7 @@ const apiRequest = async (endpoint, options = {}) => {
     }
 
     if (!response.ok) {
-      const errorMessage = data.error || data.message || `API request failed with status ${response.status}`;
+      const errorMessage = data.message || data.error || `API request failed with status ${response.status}`;
       const error = new Error(errorMessage);
       error.status = response.status;
       error.response = data;

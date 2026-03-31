@@ -9,7 +9,7 @@ import {
   Flame
 } from 'lucide-react';
 import { subscriptionsAPI } from '../../services/api';
-import { Button, Loader, PageHeader } from '../../components';
+import { Button, Loader, PageHeader, ConfirmationModal } from '../../components';
 
 const BuyCreditsPage = () => {
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const BuyCreditsPage = () => {
   const [packages, setPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -59,11 +60,11 @@ const BuyCreditsPage = () => {
       if (res.success && res.url) {
         window.location.href = res.url; // Redirect to Stripe
       } else {
-        setError('Failed to initiate checkout. Please try again.');
+        setError(res.message || 'Failed to initiate checkout. Please try again.');
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      setError('An error occurred during checkout.');
+      setError(err.message || 'An error occurred during checkout.');
     } finally {
       setCheckoutLoading(false);
     }
@@ -103,7 +104,7 @@ const BuyCreditsPage = () => {
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 flex items-center gap-3">
             <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-            <p className="text-sm font-semibold">{error}</p>
+            <p className="text-sm font-medium">{error}</p>
           </div>
         )}
 
@@ -168,7 +169,7 @@ const BuyCreditsPage = () => {
 
             <Button
               className="w-full sm:w-auto px-8"
-              onClick={handleCheckout}
+              onClick={() => setShowConfirmModal(true)}
               loading={checkoutLoading}
             >
               Continue & Pay
@@ -176,6 +177,20 @@ const BuyCreditsPage = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={() => {
+          handleCheckout();
+          setShowConfirmModal(false);
+        }}
+        title="Confirm Purchase"
+        message={`Are you sure you want to purchase ${selectedPackage?.credits} credits for ${formatCurrency(selectedPackage?.price || 0)}? You will be redirected to the secure payment page.`}
+        confirmText="Confirm & Pay"
+        cancelText="Cancel"
+        confirmButtonColor="bg-[#1F6FEB] hover:bg-blue-700"
+      />
     </div>
   );
 };
