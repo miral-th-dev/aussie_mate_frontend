@@ -33,6 +33,13 @@ const CustomerChatPage = () => {
   });
 
   const messagesEndRef = useRef(null);
+  const chatRoomIdRef = useRef(null);
+  const currentUserRef = useRef(null);
+
+  // Sync refs with state
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   // Initialize Socket Connection and User Data
   useEffect(() => {
@@ -50,14 +57,16 @@ const CustomerChatPage = () => {
     // Connect to socket
     socketService.connect(token);
 
-    // Socket event listeners
-    socketService.on('connectionStatus', setIsConnected);
-    socketService.on('chatJoined', (data) => {
+    // Socket event handlers
+    const onConnectionStatus = (status) => setIsConnected(status);
+    const onChatJoined = (data) => {
       setCurrentChatRoom(data);
-    });
-    socketService.on('chatHistory', (historyMessages) => {
+      if (data.chatRoomId) {
+        chatRoomIdRef.current = data.chatRoomId;
+      }
+    };
+    const onChatHistory = (historyMessages) => {
       if (historyMessages && historyMessages.length > 0) {
-        // Remove duplicates from chat history
         const uniqueMessages = historyMessages.filter((msg, index, self) =>
           index === self.findIndex(m =>
             (m._id && m._id === msg._id) ||
@@ -67,22 +76,17 @@ const CustomerChatPage = () => {
         );
         setMessages(uniqueMessages);
       } else {
-        // No history - start with empty messages
         setMessages([]);
       }
       setLoading(false);
-    });
-    socketService.on('newMessage', (message) => {
-      // Create a unique identifier for this message
+    };
+    const onNewMessage = (message) => {
       const messageId = message._id || message.id || `${message.content}-${message.senderId?._id}-${message.createdAt}`;
 
       setMessages(prev => {
         const incomingContent = message.content || message.message || '';
         const incomingId = message._id || message.id;
 
-        console.log('📨 [SOCKET] Received message:', { id: incomingId, content: incomingContent });
-
-        // 1. Check if message with this _id already exists
         const existsById = prev.some(msg => 
           !msg.isOptimistic && (
             (msg._id && msg._id === incomingId) || 
@@ -90,12 +94,9 @@ const CustomerChatPage = () => {
           )
         );
         if (existsById) {
-          console.log('🚫 [SOCKET] Message already exists by ID, skipping.');
           return prev;
         }
 
-        // 2. Check for optimistic match to replace
-        // We look for any optimistic message with matching content
         const optimisticIndex = prev.findIndex(msg => 
           msg.isOptimistic && (
             (msg.content && msg.content.trim() === incomingContent.trim()) || 
@@ -104,38 +105,60 @@ const CustomerChatPage = () => {
         );
 
         if (optimisticIndex !== -1) {
-          console.log('🔄 [SOCKET] Found optimistic match, replacing at index:', optimisticIndex);
           const updated = [...prev];
           updated[optimisticIndex] = { ...message, isOptimistic: false };
           return updated;
         }
 
-        console.log('➕ [SOCKET] Adding new message to list.');
         return [...prev, message];
       });
       scrollToBottom();
-    });
-    socketService.on('error', (error) => {
-      // Check if it's a phone validation error
+    };
+    const onSocketError = (error) => {
       if (error.message && error.message.includes('Phone numbers are not allowed')) {
         setPhoneValidationError(error.message);
         setShowPhoneAlert(true);
       } else if (error.message === 'Cleaner has not quoted on this job') {
-        // Suppress this error as we allow connections before quotes
         console.log('Socket: Cleaner has not quoted yet, but connection exists.');
         setLoading(false);
       } else {
         setError(error.message);
         setLoading(false);
       }
-    });
+    };
+
+    const onMessagesMarkedRead = (data) => {
+      console.log('📖 [SOCKET] Messages marked as read:', data);
+      
+      // Mark our sent messages as read. 
+      // Socket.io room scoping ensures we only get events for the active room.
+      setMessages(prev => prev.map(msg => {
+        const myId = currentUserRef.current?._id || currentUserRef.current?.id || currentUserRef.current?.userId;
+        const msgSenderId = msg.senderId?._id || msg.senderId;
+        const isSentByMe = msgSenderId === myId;
+        
+        if (isSentByMe) {
+          return { ...msg, isRead: true };
+        }
+        return msg;
+      }));
+    };
+
+    // Socket event listeners
+    socketService.on('connectionStatus', onConnectionStatus);
+    socketService.on('chatJoined', onChatJoined);
+    socketService.on('chatHistory', onChatHistory);
+    socketService.on('newMessage', onNewMessage);
+    socketService.on('messagesMarkedRead', onMessagesMarkedRead);
+    socketService.on('error', onSocketError);
 
     return () => {
-      socketService.off('connectionStatus', setIsConnected);
-      socketService.off('chatJoined', () => { });
-      socketService.off('chatHistory', () => { });
-      socketService.off('newMessage', () => { });
-      socketService.off('error', () => { });
+      socketService.off('connectionStatus', onConnectionStatus);
+      socketService.off('chatJoined', onChatJoined);
+      socketService.off('chatHistory', onChatHistory);
+      socketService.off('newMessage', onNewMessage);
+      socketService.off('messagesMarkedRead', onMessagesMarkedRead);
+      socketService.off('error', onSocketError);
       socketService.disconnect();
     };
   }, [navigate]);
@@ -184,6 +207,7 @@ const CustomerChatPage = () => {
               
               if (cleanerQuote.chatRoomId) {
                 setCurrentChatRoom({ chatRoomId: cleanerQuote.chatRoomId });
+                chatRoomIdRef.current = cleanerQuote.chatRoomId;
                 socketService.joinRoom(cleanerQuote.chatRoomId);
               } else {
                 socketService.joinChat(jobId, actualCleanerId || cleanerId);
@@ -237,10 +261,20 @@ const CustomerChatPage = () => {
 
   // Mark messages as read when chat is viewed
   useEffect(() => {
-    if (currentChatRoom?.chatRoomId) {
-      socketService.markAsRead(currentChatRoom.chatRoomId);
+    if (currentChatRoom?.chatRoomId && messages.length > 0) {
+      // Check if there are any unread messages from the OTHER user
+      const hasUnreadFromOther = messages.some(msg => {
+        const isSentByMe = msg.senderId?._id === (currentUser?._id || currentUser?.id || currentUser?.userId) || 
+                          msg.senderId === (currentUser?._id || currentUser?.id || currentUser?.userId);
+        return !isSentByMe && !msg.isRead;
+      });
+
+      if (hasUnreadFromOther) {
+        console.log('📖 [COMPONENT] Marking messages as read...');
+        socketService.markAsRead(currentChatRoom.chatRoomId);
+      }
     }
-  }, [currentChatRoom, messages]);
+  }, [currentChatRoom, messages, currentUser]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -445,8 +479,10 @@ const CustomerChatPage = () => {
 
                     <span className="text-xs text-gray-500 mt-1">
                       {messageTime}
-                      {msg.isRead && isSentByCurrentUser && (
-                        <span className="ml-1 text-green-500">✓✓</span>
+                      {isSentByCurrentUser && (
+                        <span className={`ml-1 font-bold ${msg.isRead ? 'text-green-500' : 'text-gray-400'}`}>
+                          {msg.isRead ? '✓✓' : '✓'}
+                        </span>
                       )}
                     </span>
                   </div>
