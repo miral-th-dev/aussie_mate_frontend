@@ -107,20 +107,23 @@ const Header = () => {
       {/* Main Header */}
       <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-2 sm:py-3 md:py-4 flex items-center">
         {/* Left: Location */}
-        <div className="flex-1 min-w-0 flex items-center space-x-2 sm:space-x-3 md:space-x-4">
+        <div 
+          onClick={handleChangeLocation}
+          className="flex-1 min-w-0 flex items-center space-x-2 sm:space-x-3 md:space-x-4 cursor-pointer group"
+        >
           <div className="flex items-center justify-center"> 
               <img src={HeaderLocationIcon} alt="Location" className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex-shrink-0" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs sm:text-sm md:text-base font-medium text-primary-500 truncate">
+            <div className="text-xs sm:text-sm md:text-base font-medium text-primary-500 truncate group-hover:text-primary-600 transition-colors">
               {userLocation.address}
             </div>
-            <div className="text-[10px] sm:text-xs md:text-sm text-primary-200 truncate">
+            <div className="text-[10px] sm:text-xs md:text-sm text-primary-200 truncate group-hover:text-primary-300 transition-colors">
               {userLocation.city || 'City not set'}
             </div>
           </div>
 
-          <div onClick={handleChangeLocation} className="hidden sm:block text-xs sm:text-sm md:text-base font-medium text-primary-600 cursor-pointer"> 
+          <div className="hidden sm:block text-xs sm:text-sm md:text-base font-medium text-primary-600"> 
             Change
           </div>
         </div>

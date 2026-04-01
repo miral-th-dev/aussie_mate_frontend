@@ -87,9 +87,9 @@ const CustomerChatPage = () => {
         const incomingContent = message.content || message.message || '';
         const incomingId = message._id || message.id;
 
-        const existsById = prev.some(msg => 
+        const existsById = prev.some(msg =>
           !msg.isOptimistic && (
-            (msg._id && msg._id === incomingId) || 
+            (msg._id && msg._id === incomingId) ||
             (msg.id && msg.id === incomingId)
           )
         );
@@ -97,9 +97,9 @@ const CustomerChatPage = () => {
           return prev;
         }
 
-        const optimisticIndex = prev.findIndex(msg => 
+        const optimisticIndex = prev.findIndex(msg =>
           msg.isOptimistic && (
-            (msg.content && msg.content.trim() === incomingContent.trim()) || 
+            (msg.content && msg.content.trim() === incomingContent.trim()) ||
             (msg.message && msg.message.trim() === incomingContent.trim())
           )
         );
@@ -129,14 +129,14 @@ const CustomerChatPage = () => {
 
     const onMessagesMarkedRead = (data) => {
       console.log('📖 [SOCKET] Messages marked as read:', data);
-      
+
       // Mark our sent messages as read. 
       // Socket.io room scoping ensures we only get events for the active room.
       setMessages(prev => prev.map(msg => {
         const myId = currentUserRef.current?._id || currentUserRef.current?.id || currentUserRef.current?.userId;
         const msgSenderId = msg.senderId?._id || msg.senderId;
         const isSentByMe = msgSenderId === myId;
-        
+
         if (isSentByMe) {
           return { ...msg, isRead: true };
         }
@@ -204,7 +204,7 @@ const CustomerChatPage = () => {
 
               // Join chat with the actual cleaner ID or room ID
               const actualCleanerId = cleanerQuote.cleanerId?._id || cleanerQuote.cleanerId?.id || cleanerQuote.cleanerId || cleanerQuote.id;
-              
+
               if (cleanerQuote.chatRoomId) {
                 setCurrentChatRoom({ chatRoomId: cleanerQuote.chatRoomId });
                 chatRoomIdRef.current = cleanerQuote.chatRoomId;
@@ -264,8 +264,8 @@ const CustomerChatPage = () => {
     if (currentChatRoom?.chatRoomId && messages.length > 0) {
       // Check if there are any unread messages from the OTHER user
       const hasUnreadFromOther = messages.some(msg => {
-        const isSentByMe = msg.senderId?._id === (currentUser?._id || currentUser?.id || currentUser?.userId) || 
-                          msg.senderId === (currentUser?._id || currentUser?.id || currentUser?.userId);
+        const isSentByMe = msg.senderId?._id === (currentUser?._id || currentUser?.id || currentUser?.userId) ||
+          msg.senderId === (currentUser?._id || currentUser?.id || currentUser?.userId);
         return !isSentByMe && !msg.isRead;
       });
 
@@ -328,7 +328,7 @@ const CustomerChatPage = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const cleanerIdToAssign = cleanerId;
       if (!cleanerIdToAssign) {
         setError('Cleaner information not found.');
@@ -467,8 +467,8 @@ const CustomerChatPage = () => {
                     {(msg.content || msg.message) && (
                       <div
                         className={`px-2.5 sm:px-3 py-2 sm:py-3 rounded-2xl text-primary-500 font-medium ${isSentByCurrentUser
-                            ? 'bg-white border border-gray-200'
-                            : 'bg-[#EBF2FD]'
+                          ? 'bg-white border border-gray-200'
+                          : 'bg-[#EBF2FD]'
                           }`}
                       >
                         <p className="text-xs sm:text-sm text-gray-800 leading-relaxed">
