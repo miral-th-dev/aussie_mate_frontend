@@ -85,7 +85,7 @@ const MySubscriptionPage = () => {
       }
     } catch (err) {
       console.error("Error fetching subscription data:", err);
-      setError("Failed to load subscription data. Please try again.");
+      setError(err.message || "Failed to load subscription data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,11 +98,11 @@ const MySubscriptionPage = () => {
       if (res.success && res.url) {
         window.location.href = res.url; // Redirect to Stripe
       } else {
-        setError("Failed to initiate checkout. Please try again.");
+        setError(res.message || "Failed to initiate checkout. Please try again.");
       }
     } catch (err) {
       console.error("Checkout error:", err);
-      setError("An error occurred during checkout.");
+      setError(err.message || "An error occurred during checkout.");
     } finally {
       setLoading(false);
     }
@@ -178,7 +178,7 @@ const MySubscriptionPage = () => {
                   <AlertTriangle className="w-10 h-10 text-red-500" />
                 </div>
                 <div className="text-center md:text-left flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-medium text-gray-900 mb-2">
                     You're out of credits!
                   </h3>
                   <p className="text-gray-500 font-medium max-w-xl">
@@ -469,15 +469,15 @@ const MySubscriptionPage = () => {
           /* "No Subscription" Plan Selection View */
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-8">
             {isExpired && activeSubscription && (
-              <div className="bg-amber-50 rounded-2xl p-10 shadow-sm border border-amber-100 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
-                <div className="w-20 h-20 bg-amber-100 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-10 h-10 text-amber-600" />
+              <div className="bg-primary-200 rounded-2xl p-4 shadow-sm border border-primary-200 flex flex-col md:flex-row items-center gap-8 animate-in zoom-in duration-500">
+                <div className="w-12 h-12 bg-primary-200 rounded-2xl border border-primary-200 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-6 h-6 text-primary-600" />
                 </div>
                 <div className="text-center md:text-left flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-medium text-gray-900 mb-2">
                     Subscription Expired!
                   </h3>
-                  <p className="text-gray-500 font-medium max-w-xl">
+                  <p className="text-gray-500 font-normal max-w-4xl text-xs">
                     Your subscription for{" "}
                     <b>{activeSubscription.subscription?.planId?.name}</b> ended
                     on{" "}

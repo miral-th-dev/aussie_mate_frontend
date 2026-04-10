@@ -27,6 +27,13 @@ const AdminChatPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   
   const messagesEndRef = useRef(null);
+  const chatRoomIdRef = useRef(null);
+  const userRef = useRef(null);
+
+  // Sync ref with state
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
   const timeoutRef = useRef(null);
   const fileInputRef = useRef(null);
   const { userId, adminId, userName } = location.state || {};
@@ -54,24 +61,25 @@ const AdminChatPage = () => {
     // Connect to socket
     socketService.connect(token);
 
-    // Socket event listeners
-    socketService.on('connectionStatus', (status) => {
+    // Socket event handlers
+    const onConnectionStatus = (status) => {
       setIsConnected(status);
       if (!status) {
         setLoading(false);
       }
-    });
-    
-    socketService.on('adminChatJoined', (data) => {
+    };
+    const onAdminChatJoined = (data) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
       setCurrentChatRoom(data);
+      if (data.adminChatRoomId) {
+        chatRoomIdRef.current = data.adminChatRoomId;
+      }
       setLoading(false);
-    });
-
-    socketService.on('adminChatHistory', (historyMessages) => {
+    };
+    const onAdminChatHistory = (historyMessages) => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -89,9 +97,8 @@ const AdminChatPage = () => {
         setMessages([]);
       }
       setLoading(false);
-    });
-
-    socketService.on('adminNewMessage', (message) => {
+    };
+    const onAdminNewMessage = (message) => {
       const messageId = message._id || message.id || `${message.content}-${message.senderId?._id}-${message.createdAt}`;
       
       setMessages(prev => {
@@ -107,9 +114,8 @@ const AdminChatPage = () => {
         return [...prev, message];
       });
       scrollToBottom();
-    });
-
-    socketService.on('error', (error) => {
+    };
+    const onSocketError = (error) => {
       setLoading(false);
       if (error.message && error.message.includes('Phone numbers are not allowed')) {
         setPhoneValidationError(error.message);
@@ -117,7 +123,32 @@ const AdminChatPage = () => {
       } else {
         setError(error.message || 'An error occurred');
       }
-    });
+    };
+
+    const onAdminMessagesMarkedRead = (data) => {
+      console.log('📖 [SOCKET] Admin messages marked as read:', data);
+      
+      // Mark our sent messages as read.
+      // Room scoping is handled by the socket room.
+      setMessages(prev => prev.map(msg => {
+        const myId = userRef.current?._id || userRef.current?.id || userRef.current?.userId;
+        const msgSenderId = msg.senderId?._id || msg.senderId;
+        const isSentByMe = msgSenderId === myId;
+        
+        if (isSentByMe) {
+          return { ...msg, isRead: true };
+        }
+        return msg;
+      }));
+    };
+
+    // Socket event listeners
+    socketService.on('connectionStatus', onConnectionStatus);
+    socketService.on('adminChatJoined', onAdminChatJoined);
+    socketService.on('adminChatHistory', onAdminChatHistory);
+    socketService.on('adminNewMessage', onAdminNewMessage);
+    socketService.on('adminMessagesMarkedRead', onAdminMessagesMarkedRead);
+    socketService.on('error', onSocketError);
 
     // Join chat room
     if (userId && roomId) {
@@ -126,11 +157,12 @@ const AdminChatPage = () => {
 
     // Cleanup
     return () => {
-      socketService.off('connectionStatus', setIsConnected);
-      socketService.off('adminChatJoined', () => {});
-      socketService.off('adminChatHistory', () => {});
-      socketService.off('adminNewMessage', () => {});
-      socketService.off('error', () => {});
+      socketService.off('connectionStatus', onConnectionStatus);
+      socketService.off('adminChatJoined', onAdminChatJoined);
+      socketService.off('adminChatHistory', onAdminChatHistory);
+      socketService.off('adminNewMessage', onAdminNewMessage);
+      socketService.off('adminMessagesMarkedRead', onAdminMessagesMarkedRead);
+      socketService.off('error', onSocketError);
       socketService.leaveAdminChat();
     };
   }, [navigate, userId, roomId, adminId, user]);
@@ -248,10 +280,20 @@ const AdminChatPage = () => {
 
   // Mark messages as read when viewing
   useEffect(() => {
-    if (currentChatRoom?.adminChatRoomId) {
-      socketService.markAdminMessagesAsRead(currentChatRoom.adminChatRoomId);
+    if (currentChatRoom?.adminChatRoomId && messages.length > 0) {
+      // Check if there are unread messages from the OTHER user
+      const hasUnreadFromOther = messages.some(msg => {
+        const isSentByMe = msg.senderId?._id === (user?._id || user?.id || user?.userId) || 
+                          msg.senderId === (user?._id || user?.id || user?.userId);
+        return !isSentByMe && !msg.isRead;
+      });
+
+      if (hasUnreadFromOther) {
+        console.log('📖 [COMPONENT] Marking admin messages as read...');
+        socketService.markAdminMessagesAsRead(currentChatRoom.adminChatRoomId);
+      }
     }
-  }, [currentChatRoom, messages]);
+  }, [currentChatRoom, messages, user]);
 
   const handleBack = () => {
     navigate('/admin/chat-dashboard');
@@ -363,8 +405,13 @@ const AdminChatPage = () => {
                         )}
                       </div>
                       
-                      <span className="text-xs text-gray-500 mt-1">
+                      <span className="text-xs text-gray-500 mt-1 flex items-center">
                         {messageTime}
+                        {isSentByCurrentUser && (
+                          <span className={`ml-1 font-bold ${msg.isRead ? 'text-green-500' : 'text-gray-400'}`}>
+                            {msg.isRead ? '✓✓' : '✓'}
+                          </span>
+                        )}
                       </span>
                     </div>
                     

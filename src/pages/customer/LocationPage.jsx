@@ -563,14 +563,14 @@ const LocationPage = () => {
                   <button
                     onClick={handleGetCurrentLocation}
                     disabled={isLoading}
-                    className="flex items-center space-x-2 px-4 py-2 border border-primary-600 rounded-full text-primary-600 text-sm font-medium hover:bg-blue-50 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 border border-primary-600 rounded-full text-primary-600 text-sm font-medium hover:bg-blue-50 transition-colors cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Navigation className="w-4 h-4" />
                     <span>Use Current Location</span>
                   </button>
                   <button
                     onClick={handleChangeLocation}
-                    className="text-primary-600 hover:text-primary-700 text-sm font-semibold ml-2"
+                    className="text-primary-600 hover:text-primary-700 text-sm font-semibold ml-2 cursor-pointer"
                   >
                     Change
                   </button>

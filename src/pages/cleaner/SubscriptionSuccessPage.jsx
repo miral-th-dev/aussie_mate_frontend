@@ -78,7 +78,7 @@ const SubscriptionSuccessPage = () => {
           </div>
 
           <div className="mb-8">
-            <h1 className="text-3xl font-black text-gray-900 leading-tight flex items-center justify-center gap-2">
+            <h1 className="text-xl font-semibold leading-tight flex items-center justify-center gap-2">
               Payment Confirmed! <Sparkles className="w-6 h-6 text-yellow-500 fill-yellow-500" />
             </h1>
             <p className="mt-3 text-gray-500 font-medium leading-relaxed max-w-[280px] mx-auto">
@@ -119,7 +119,7 @@ const SubscriptionSuccessPage = () => {
           <div className="space-y-3">
             <button
               onClick={() => navigate('/cleaner-dashboard')}
-              className="w-full h-14 bg-gray-900 hover:bg-black text-white rounded-2xl font-black text-lg transition-all duration-300 shadow-xl shadow-gray-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer group"
+              className="w-full h-14 bg-[#1F6FEB] hover:bg-[#1F6FEB] text-white rounded-2xl font-black text-lg transition-all duration-300 shadow-xl shadow-gray-200 active:scale-95 flex items-center justify-center gap-2 cursor-pointer group"
             >
               Back to Dashboard
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

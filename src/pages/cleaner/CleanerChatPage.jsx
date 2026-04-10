@@ -42,6 +42,13 @@ const CleanerChatPage = () => {
     const [isLoadingMessages, setIsLoadingMessages] = useState(true);
     const [isSubscriptionExpired, setIsSubscriptionExpired] = useState(false);
     const messagesEndRef = useRef(null);
+    const chatRoomIdRef = useRef(null);
+    const currentUserRef = useRef(null);
+
+    // Sync ref with state
+    useEffect(() => {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
     const lastMessageRef = useRef(null);
 
     // Lock body scroll when budget modal is open
@@ -91,21 +98,18 @@ const CleanerChatPage = () => {
 
         fetchSubscriptionStatus();
 
-        // Socket event listeners
-        socketService.on('connectionStatus', (status) => {
-            setIsConnected(status);
-        });
-        socketService.on('chatJoined', (data) => {
+        // Socket event handlers
+        const onConnectionStatus = (status) => setIsConnected(status);
+        const onChatJoined = (data) => {
             setCurrentChatRoom(data);
-        });
-        socketService.on('chatNotFound', (data) => {
-            // Silently handle chat room join failure - room might not exist yet for first contact
-            setMessages([]);
-        });
-        socketService.on('chatHistory', (historyMessages) => {
+            if (data.chatRoomId) {
+                chatRoomIdRef.current = data.chatRoomId;
+            }
+        };
+        const onChatNotFound = (data) => setMessages([]);
+        const onChatHistory = (historyMessages) => {
             setIsLoadingMessages(false);
             if (historyMessages && historyMessages.length > 0) {
-                // Remove duplicates from chat history
                 const uniqueMessages = historyMessages.filter((msg, index, self) => 
                     index === self.findIndex(m => 
                         (m._id && m._id === msg._id) || 
@@ -117,12 +121,10 @@ const CleanerChatPage = () => {
             } else {
                 setMessages([]);
             }
-        });
-        socketService.on('newMessage', (message) => {
-            // Create a unique identifier for this message
+        };
+        const onNewMessage = (message) => {
             const messageId = message._id || message.id || `${message.content || message.message}-${message.senderId?._id}-${message.createdAt}`;
             
-            // Check if this exact message was just processed
             if (lastMessageRef.current === messageId) {
                 return;
             }
@@ -131,9 +133,6 @@ const CleanerChatPage = () => {
                 const incomingContent = message.content || message.message || '';
                 const incomingId = message._id || message.id;
                 
-                console.log('📨 [SOCKET] Received message:', { id: incomingId, content: incomingContent });
-
-                // 1. Check if message with this real _id already exists
                 const existsById = prev.some(msg => 
                     !msg.isOptimistic && (
                         (msg._id && msg._id === incomingId) || 
@@ -142,12 +141,9 @@ const CleanerChatPage = () => {
                 );
                 
                 if (existsById) {
-                    console.log('🚫 [SOCKET] Message already exists by ID, skipping.');
                     return prev;
                 }
 
-                // 2. Check for optimistic match to replace
-                // We look for any optimistic message with matching content
                 const optimisticIndex = prev.findIndex(msg => 
                     msg.isOptimistic && (
                         (msg.content && msg.content.trim() === incomingContent.trim()) || 
@@ -156,45 +152,68 @@ const CleanerChatPage = () => {
                 );
 
                 if (optimisticIndex !== -1) {
-                    console.log('🔄 [SOCKET] Found optimistic match, replacing at index:', optimisticIndex);
                     const updated = [...prev];
                     updated[optimisticIndex] = { ...message, isOptimistic: false };
                     return updated;
                 }
 
-                console.log('➕ [SOCKET] Adding new message to list.');
                 return [...prev, message];
             });
             
             lastMessageRef.current = messageId;
             scrollToBottom();
-        });
-        socketService.on('error', (error) => {
-            // Check if it's a phone validation error
+        };
+        const onSocketError = (error) => {
             if (error.message && error.message.includes('Phone numbers are not allowed')) {
                 setPhoneValidationError(error.message);
                 setShowPhoneAlert(true);
-                // No auto-hide - user must manually close
             } else if (error.message === 'Failed to join chat') {
-                // Silently handle chat room join failure
+                // Silently handle
             } else if (error.message === 'You must submit a quote for this job first. Once the customer accepts your quote, you can start chatting.') {
-                // Silently handle quote requirement message
+                // Silently handle
             } else if (error.message === 'Access denied. Please check your login status or contact support.') {
                 setError('You do not have permission to access this chat. Please contact support if this is an error.');
             } else if (error.message === 'Failed to send quote') {
-                // Ignore this error - it's a backend bug that sends error even when quote is successful
+                // Ignore
             } else {
                 setError(error.message);
             }
-        });
+        };
+
+        const onMessagesMarkedRead = (data) => {
+            console.log('📖 [SOCKET] Messages marked as read:', data);
+            
+            // Mark our sent messages as read.
+            // Socket.io room scoping helps ensure we only get relevant events.
+            setMessages(prev => prev.map(msg => {
+                const myId = currentUserRef.current?._id || currentUserRef.current?.id;
+                const msgSenderId = msg.senderId?._id || msg.senderId;
+                const isSentByMe = msgSenderId === myId;
+                
+                if (isSentByMe) {
+                    return { ...msg, isRead: true };
+                }
+                return msg;
+            }));
+        };
+
+        // Socket event listeners
+        socketService.on('connectionStatus', onConnectionStatus);
+        socketService.on('chatJoined', onChatJoined);
+        socketService.on('chatNotFound', onChatNotFound);
+        socketService.on('chatHistory', onChatHistory);
+        socketService.on('newMessage', onNewMessage);
+        socketService.on('messagesMarkedRead', onMessagesMarkedRead);
+        socketService.on('error', onSocketError);
 
         return () => {
-            socketService.off('connectionStatus', setIsConnected);
-            socketService.off('chatJoined', () => {});
-            socketService.off('chatNotFound', () => {});
-            socketService.off('chatHistory', () => {});
-            socketService.off('newMessage', () => {});
-            socketService.off('error', () => {});
+            socketService.off('connectionStatus', onConnectionStatus);
+            socketService.off('chatJoined', onChatJoined);
+            socketService.off('chatNotFound', onChatNotFound);
+            socketService.off('chatHistory', onChatHistory);
+            socketService.off('newMessage', onNewMessage);
+            socketService.off('messagesMarkedRead', onMessagesMarkedRead);
+            socketService.off('error', onSocketError);
             socketService.disconnect();
         };
     }, [navigate]);
@@ -334,6 +353,7 @@ const CleanerChatPage = () => {
 
             if (myInfo?.chatRoomId) {
                 setCurrentChatRoom({ chatRoomId: myInfo.chatRoomId });
+                chatRoomIdRef.current = myInfo.chatRoomId;
                 socketService.joinRoom(myInfo.chatRoomId);
             } else {
                 socketService.joinChat(jobId, effectiveCleanerId);
@@ -342,7 +362,7 @@ const CleanerChatPage = () => {
             // If no effectiveCleanerId, initialize as empty
             setMessages([]);
         }
-    }, [jobId, effectiveCleanerId, isConnected]);
+    }, [jobId, effectiveCleanerId, isConnected, job]);
 
     // Automatically fetch job details but remove quote modal logic
     useEffect(() => {
@@ -351,10 +371,20 @@ const CleanerChatPage = () => {
 
     // Mark messages as read when chat is viewed
     useEffect(() => {
-        if (currentChatRoom?.chatRoomId) {
-            socketService.markAsRead(currentChatRoom.chatRoomId);
+        if (currentChatRoom?.chatRoomId && messages.length > 0) {
+            // Check if there are unread messages from the OTHER user
+            const hasUnreadFromOther = messages.some(msg => {
+                const isSentByMe = msg.senderId?._id === (currentUser?.id || currentUser?._id) || 
+                                  msg.senderId === (currentUser?.id || currentUser?._id);
+                return !isSentByMe && !msg.isRead;
+            });
+
+            if (hasUnreadFromOther) {
+                console.log('📖 [COMPONENT] Marking messages as read...');
+                socketService.markAsRead(currentChatRoom.chatRoomId);
+            }
         }
-    }, [currentChatRoom, messages]);
+    }, [currentChatRoom, messages, currentUser]);
 
     useEffect(() => {
         scrollToBottom();
@@ -731,9 +761,11 @@ const CleanerChatPage = () => {
                                                 <p className="text-xs mt-1 text-primary-200">
                                                     {messageTime}
                                                 </p>
-                                                {message.isRead && isSentByCurrentUser && (
+                                                {isSentByCurrentUser && (
                                                     <div className="flex justify-end mt-1">
-                                                        <span className="text-xs text-green-500">✓✓</span>
+                                                        <span className={`text-[10px] font-bold ${message.isRead ? 'text-green-500' : 'text-gray-400'}`}>
+                                                            {message.isRead ? '✓✓' : '✓'}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
